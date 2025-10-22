@@ -4,227 +4,217 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Palace Cars - Panneau d'Administration</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        'primary-blue': '#0A74DA',
-                        'secondary-dark': '#1F2937',
-                    }
-                }
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+    </style>
 </head>
-<body class="font-sans bg-gray-50 text-secondary-dark min-h-screen">
+<body>
 
-    <header class="bg-secondary-dark text-white py-6 shadow-lg">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-3xl font-bold">Palace Cars - Boîte de Réception</h1>
-            <p class="text-gray-400 mt-1">Gérez les demandes de réservation en temps réel.</p>
+<div class="max-w-4xl mx-auto p-6 lg:p-10">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Accès Administrateur Palace Cars</h1>
+
+    <!-- Authentication Section -->
+    <div id="authSection" class="bg-white p-8 rounded-xl shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-gray-700">Authentification</h2>
+        <div class="flex flex-col sm:flex-row gap-4">
+            <input type="password" id="passwordInput" placeholder="Entrez le mot de passe" class="flex-grow px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <button id="loginButton" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-150 shadow-md">
+                Connexion
+            </button>
         </div>
-    </header>
+        <p id="authMessage" class="mt-4 text-red-500 font-medium hidden">Mot de passe incorrect. Veuillez réessayer.</p>
+    </div>
 
-    <main class="py-10">
-        <div class="container mx-auto px-4 max-w-5xl">
+    <!-- Admin Panel (Hidden by default) -->
+    <div id="adminPanel" class="hidden mt-8">
+        <h2 class="text-2xl font-bold text-blue-700 mb-4">Boîte de Réception des Réservations (Admin)</h2>
+        <p class="mb-4 text-gray-600">Liste des demandes de réservation en temps réel. Cette page se met à jour automatiquement.</p>
 
-            <!-- Authentication Section -->
-            <div id="auth-section" class="bg-white p-8 rounded-xl shadow-xl max-w-md mx-auto mb-10 text-center">
-                <h2 class="text-2xl font-bold mb-4 text-secondary-dark">Accès Administrateur</h2>
-                <div class="mb-4">
-                    <input type="password" id="admin-password" placeholder="Entrez le mot de passe" 
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary-blue focus:border-primary-blue transition duration-300 text-center"
-                           onkeypress="if(event.key === 'Enter') document.getElementById('login-button').click()">
-                </div>
-                <button id="login-button" 
-                        class="w-full bg-primary-blue text-white font-semibold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
-                    Connexion
-                </button>
-                <p id="auth-message" class="text-red-500 mt-3 hidden"></p>
-            </div>
-            
-            <!-- Admin Content Section (Hidden by default) -->
-            <div id="admin-content" class="hidden">
-                <h2 class="text-2xl font-bold mb-6 text-primary-blue border-b pb-2">Nouvelles Demandes</h2>
-                
-                <div id="bookings-list" class="space-y-4">
-                    <p id="loading-status" class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-md">Chargement des réservations...</p>
-                    <!-- Les réservations seront insérées ici -->
-                </div>
-                
-                <p class="mt-8 text-center text-sm text-gray-500">
-                    Chaque demande est un enregistrement dans Firestore. Cliquez sur le bouton WhatsApp pour contacter le client.
-                </p>
-            </div>
+        <!-- Loading / Error Message -->
+        <div id="statusMessage" class="p-4 bg-yellow-100 text-yellow-700 rounded-lg font-medium mb-4">
+            Chargement des données...
         </div>
-    </main>
 
-    <!-- Firebase Imports & Logic for Admin Panel -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        <div id="bookingsList" class="space-y-4">
+            <!-- Booking Cards will be inserted here -->
+            <p id="noBookings" class="text-gray-500 hidden">Aucune réservation trouvée pour le moment.</p>
+        </div>
+    </div>
+</div>
 
-        // IMPORTANT: Use the global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        // CORRECTION: La variable globale __initial_auth_token doit être utilisée, et non la variable locale
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
-        
-        const CORRECT_PASSWORD = '12234';
-        const BOOKINGS_COLLECTION_PATH = `artifacts/${appId}/public/data/bookings`;
-        
-        let db, auth;
-        let unsubscribeBookings = null;
+<script type="module">
+    // --- Configuration Firebase ---
+    // 🛑 VOTRE CONFIGURATION FIREBASE EST MAINTENANT COLLÉE ICI 
+    const firebaseConfig = {
+        apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+        authDomain: "palace-cars.firebaseapp.com",
+        projectId: "palace-cars",
+        storageBucket: "palace-cars.firebasestorage.app",
+        messagingSenderId: "469852272715",
+        appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+        // measurementId: "G-KCEF4WBW0G" // Optionnel, retiré pour la simplicité
+    };
+    
+    // Mot de passe pour l'accès
+    const ADMIN_PASSWORD = '12234';
 
-        // Function to initialize Firebase
-        async function initializeFirebase() {
-            if (!firebaseConfig) {
-                console.error("Firebase config is missing.");
-                return false;
-            }
-
-            try {
-                // setLogLevel('debug'); // Uncomment to see Firebase logs
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Authenticate using custom token or anonymously
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                console.log("Firebase et Firestore initialisés pour l'Admin.");
-                return true;
-                
-            } catch (error) {
-                console.error("Erreur lors de l'initialisation de Firebase:", error);
-                document.getElementById('auth-message').textContent = 'Erreur: Impossible de se connecter au service de base de données.';
-                document.getElementById('auth-message').classList.remove('hidden');
-                return false;
-            }
-        }
-
-        // Fonction pour rendre la liste des réservations
-        function renderBookings(bookings) {
-            const bookingsList = document.getElementById('bookings-list');
-            bookingsList.innerHTML = ''; // Clear existing list
-
-            if (bookings.length === 0) {
-                bookingsList.innerHTML = '<p class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-md">Aucune réservation en attente pour le moment.</p>';
-                return;
-            }
-
-            // Tri par date de réservation (la plus récente en premier)
-            bookings.sort((a, b) => new Date(b.reservationDate) - new Date(a.reservationDate));
-
-
-            bookings.forEach(booking => {
-                const date = new Date(booking.reservationDate).toLocaleString('fr-FR', {
-                    dateStyle: 'short',
-                    timeStyle: 'short'
-                });
-                
-                // Lien WhatsApp direct pour contacter le client
-                const whatsappLink = `https://wa.me/${booking.clientPhone}?text=Bonjour ${booking.clientName}, c'est Palace Cars. Nous confirmons la réception de votre demande de réservation et souhaitons la finaliser.`;
-
-                const bookingElement = `
-                    <div class="bg-white p-5 rounded-lg shadow-xl border-l-4 border-primary-blue transition duration-300">
-                        <div class="flex justify-between items-start mb-3 border-b pb-2">
-                            <h3 class="text-xl font-bold text-secondary-dark">${booking.clientName}</h3>
-                            <span class="text-sm text-gray-500">Reçu le: ${date}</span>
-                        </div>
-                        <ul class="text-sm text-gray-700 space-y-1 mb-4">
-                            <li><strong>Téléphone:</strong> <a href="tel:+${booking.clientPhone}" class="text-primary-blue font-semibold hover:underline">${booking.clientPhone}</a></li>
-                            <li><strong>Départ:</strong> ${booking.pickupLocation} le ${booking.pickupDate} à ${booking.pickupTime}</li>
-                            <li><strong>Retour:</strong> ${booking.returnLocation} le ${booking.returnDate} à ${booking.returnTime}</li>
-                        </ul>
-                        <a href="${whatsappLink}" target="_blank" 
-                           class="inline-flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-green-700 transition duration-300 transform hover:scale-[1.01]">
-                            <!-- WhatsApp Icon (Inline SVG) -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12.031 0.794c-6.223 0-11.272 5.049-11.272 11.272 0 1.981 0.523 3.856 1.523 5.496l-1.585 5.811 5.922-1.554c1.579 0.865 3.375 1.341 5.312 1.341h0.005c6.223 0 11.272-5.049 11.272-11.272s-5.049-11.272-11.272-11.272zm0 20.697c-1.748 0-3.376-0.455-4.793-1.246l-0.342-0.203-3.52 0.925 0.94-3.456-0.225-0.354c-0.87-1.42-1.334-3.064-1.334-4.787 0-5.466 4.434-9.9 9.9-9.9s9.9 4.434 9.9 9.9-4.434 9.9-9.9 9.9zm4.646-7.854c-0.256-0.128-1.503-0.74-1.737-0.825-0.234-0.086-0.404-0.128-0.575 0.128-0.17 0.256-0.662 0.825-0.811 0.995-0.149 0.17-0.298 0.192-0.554 0.064-0.256-0.128-1.082-0.398-2.059-1.267-0.784-0.67-1.314-1.496-1.47-1.752-0.155-0.256-0.017-0.404 0.111-0.532 0.116-0.111 0.256-0.256 0.384-0.384 0.128-0.108 0.17-0.17 0.256-0.426 0.086-0.256 0.043-0.48-0.021-0.608-0.064-0.128-0.575-1.388-0.787-1.898-0.203-0.51-0.409-0.44-0.575-0.44-0.149 0-0.32-0.017-0.489-0.017s-0.434 0.064-0.668 0.32c-0.234 0.256-0.893 0.87-0.893 2.112 0 1.242 0.913 2.456 1.041 2.626 0.128 0.17 1.776 2.71 4.312 3.824 0.528 0.238 0.944 0.38 1.267 0.485 0.536 0.179 1.028 0.154 1.41-0.084 0.426-0.256 0.825-1.042 0.94-1.248 0.115-0.205 0.115-0.384 0.086-0.532-0.028-0.148-0.298-0.234-0.554-0.362z"/>
-                            </svg>
-                            <span>Contacter le Client</span>
-                        </a>
-                    </div>
-                `;
-                bookingsList.insertAdjacentHTML('beforeend', bookingElement);
-            });
-        }
-
-
-        // Fonction pour écouter les réservations en temps réel
-        function listenForBookings() {
-            if (!db || !auth) {
-                console.warn("Base de données non initialisée.");
-                return;
-            }
-
-            const q = query(collection(db, BOOKINGS_COLLECTION_PATH));
-
-            // Arrête l'écoute précédente si elle existe
-            if (unsubscribeBookings) {
-                unsubscribeBookings();
-            }
-
-            // Écoute en temps réel des changements
-            unsubscribeBookings = onSnapshot(q, (snapshot) => {
-                const bookings = [];
-                snapshot.forEach((doc) => {
-                    bookings.push({ id: doc.id, ...doc.data() });
-                });
-                renderBookings(bookings);
-            }, (error) => {
-                console.error("Erreur lors de l'écoute des réservations:", error);
-                const bookingsList = document.getElementById('bookings-list');
-                bookingsList.innerHTML = `<p class="text-center text-red-500 p-6 bg-white rounded-lg shadow-md">Erreur de connexion à la base de données. Impossible de charger les demandes.</p>`;
-            });
-        }
-        
-        // --- Authentication Logic ---
-        async function handleLogin() {
-            const passwordInput = document.getElementById('admin-password');
-            const message = document.getElementById('auth-message');
-            const adminContent = document.getElementById('admin-content');
-            const authSection = document.getElementById('auth-section');
-
-            message.classList.add('hidden');
-
-            if (passwordInput.value === CORRECT_PASSWORD) {
-                const firebaseReady = await initializeFirebase();
-                
-                if (firebaseReady) {
-                    authSection.classList.add('hidden');
-                    adminContent.classList.remove('hidden');
-                    listenForBookings();
-                }
-            } else {
-                message.textContent = 'Mot de passe incorrect. Veuillez réessayer.';
-                message.classList.remove('hidden');
-                passwordInput.value = '';
-                passwordInput.focus();
-            }
-        }
-
-        // Initialize on page load
+    // Si la configuration est manquante
+    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
         document.addEventListener('DOMContentLoaded', () => {
-            const loginButton = document.getElementById('login-button');
-            loginButton.addEventListener('click', handleLogin);
-            
-            // Pour charger l'interface d'authentification sans attendre Firebase
-            const loadingStatus = document.getElementById('loading-status');
-            if(loadingStatus) loadingStatus.textContent = ''; 
+            const status = document.getElementById('statusMessage');
+            if (status) {
+                status.classList.remove('bg-yellow-100', 'text-yellow-700');
+                status.classList.add('bg-red-100', 'text-red-700');
+                status.textContent = "Erreur: La configuration Firebase est manquante. Veuillez l'ajouter au code.";
+            }
         });
+    }
 
-    </script>
+    // --- Firebase Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    setLogLevel('error'); 
+
+    // --- DOM Elements ---
+    const authSection = document.getElementById('authSection');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginButton = document.getElementById('loginButton');
+    const authMessage = document.getElementById('authMessage');
+    const adminPanel = document.getElementById('adminPanel');
+    const statusMessage = document.getElementById('statusMessage');
+    const bookingsList = document.getElementById('bookingsList');
+    const noBookings = document.getElementById('noBookings');
+
+    let db;
+    let auth;
+    let unsubscribe = null; 
+
+    // --- Authentication Logic ---
+    loginButton.addEventListener('click', () => {
+        if (passwordInput.value === ADMIN_PASSWORD) {
+            authSection.classList.add('hidden');
+            adminPanel.classList.remove('hidden');
+            authMessage.classList.add('hidden');
+            initializeAdminPanel();
+        } else {
+            authMessage.classList.remove('hidden');
+        }
+    });
+
+    // --- Firebase Initialization and Data Fetching ---
+    async function initializeAdminPanel() {
+        if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
+            return;
+        }
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Authentification anonyme
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700');
+            statusMessage.classList.add('bg-green-100', 'text-green-700');
+            statusMessage.textContent = "Connexion réussie. Écoute des nouvelles réservations...";
+            
+            startBookingsListener();
+
+        } catch (error) {
+            console.error("Erreur d'initialisation Admin Firebase:", error);
+            statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700', 'bg-green-100', 'text-green-700');
+            statusMessage.classList.add('bg-red-100', 'text-red-700');
+            statusMessage.textContent = "Erreur de connexion à la base de données. Vérifiez votre configuration et les règles de sécurité.";
+        }
+    }
+
+    function startBookingsListener() {
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
+        const bookingCollectionPath = `artifacts/${appId}/public/data/bookings`;
+        
+        const q = query(collection(db, bookingCollectionPath));
+        
+        if (unsubscribe) {
+            unsubscribe();
+        }
+
+        unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const bookings = [];
+            querySnapshot.forEach((doc) => {
+                bookings.push({ id: doc.id, ...doc.data() });
+            });
+            
+            bookings.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+            
+            renderBookings(bookings);
+        }, (error) => {
+            console.error("Erreur Firestore en temps réel:", error);
+            statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700', 'bg-green-100', 'text-green-700');
+            statusMessage.classList.add('bg-red-100', 'text-red-700');
+            statusMessage.textContent = "Erreur de lecture en temps réel. Vérifiez les règles de sécurité Firebase.";
+        });
+    }
+
+    function renderBookings(bookings) {
+        bookingsList.innerHTML = '';
+        if (bookings.length === 0) {
+            noBookings.classList.remove('hidden');
+            return;
+        }
+        noBookings.classList.add('hidden');
+
+        bookings.forEach(booking => {
+            const date = new Date(booking.timestamp).toLocaleString('fr-FR');
+            const pickupDate = new Date(booking.pickupDateTime).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+
+            const whatsappMessage = encodeURIComponent(
+                `Bonjour ${booking.fullName},\n\n` +
+                `Je vous contacte concernant votre demande de réservation Palace Cars (ID: ${booking.id}).\n\n` +
+                `Détails:\n` +
+                `- Prise en charge: ${booking.pickupLocation} le ${pickupDate}.\n` +
+                `- Retour: ${booking.returnLocation}.\n\n` +
+                `Veuillez confirmer si ces détails sont corrects afin de finaliser la réservation.`
+            );
+            const whatsappLink = `https://wa.me/212659198122?text=${whatsappMessage}`;
+
+            const card = document.createElement('div');
+            card.className = 'bg-white p-6 rounded-lg shadow-md border border-l-4 border-blue-500';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Demande Reçue le ${date}</p>
+                        <h3 class="text-xl font-bold text-gray-900">${booking.fullName}</h3>
+                    </div>
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">${booking.status}</span>
+                </div>
+                
+                <div class="space-y-2 text-gray-700 text-sm">
+                    <p><strong>Téléphone :</strong> <a href="tel:${booking.phone}" class="text-blue-600 hover:underline">${booking.phone}</a></p>
+                    <p><strong>Lieu de Prise :</strong> ${booking.pickupLocation}</p>
+                    <p><strong>Lieu de Retour :</strong> ${booking.returnLocation}</p>
+                    <p><strong>Date de Prise :</strong> ${pickupDate}</p>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="${whatsappLink}" target="_blank" class="w-full inline-flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-green-600 transition duration-150">
+                        Contacter via WhatsApp
+                    </a>
+                </div>
+            `;
+            bookingsList.appendChild(card);
+        });
+    }
+
+</script>
 </body>
 </html>
