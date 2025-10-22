@@ -254,6 +254,9 @@
         appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
         // measurementId: "G-KCEF4WBW0G" // Optionnel, retiré pour la simplicité
     };
+
+    // Nom de la collection de la base de données, simplifié pour éviter les problèmes de chemin
+    const BOOKING_COLLECTION_NAME = 'palace_cars_bookings';
     
     // Si la configuration est manquante (ne devrait plus arriver)
     if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
@@ -267,7 +270,7 @@
     }
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     setLogLevel('error'); 
@@ -286,14 +289,8 @@
             db = getFirestore(app);
             auth = getAuth(app);
             
-            // Tente d'utiliser le token de l'environnement Canvas, sinon signe anonymement
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
-                await signInAnonymously(auth);
-            }
+            // Authentification anonyme simplifiée pour Vercel
+            await signInAnonymously(auth);
             
             userId = auth.currentUser?.uid || crypto.randomUUID();
             console.log('Firebase initialisé. Utilisateur ID:', userId);
@@ -354,10 +351,8 @@
         };
 
         try {
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
-            const bookingCollectionPath = `artifacts/${appId}/public/data/bookings`;
-            
-            const docRef = await addDoc(collection(db, bookingCollectionPath), bookingData);
+            // Utilisation du chemin simplifié
+            const docRef = await addDoc(collection(db, BOOKING_COLLECTION_NAME), bookingData);
             
             console.log("Réservation enregistrée avec succès dans Firestore. ID du document:", docRef.id);
 
