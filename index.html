@@ -270,8 +270,8 @@
     }
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"; // Import de getAuth pour l'initialisation
 
     setLogLevel('error'); 
 
@@ -280,20 +280,18 @@
     let auth;
     let userId;
 
-    // --- Firebase Initialization and Authentication ---
+    // --- Firebase Initialization ---
     async function initializeFirebase() {
         if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) return false; 
 
         try {
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
-            auth = getAuth(app);
+            auth = getAuth(app); 
             
-            // Authentification anonyme simplifiée pour Vercel
-            await signInAnonymously(auth);
-            
-            userId = auth.currentUser?.uid || crypto.randomUUID();
-            console.log('Firebase initialisé. Utilisateur ID:', userId);
+            // Simuler un ID utilisateur pour la réservation (bonne pratique)
+            userId = 'public_user_' + Math.random().toString(36).substring(2, 9);
+            console.log('Firebase initialisé.');
 
             const errorElement = document.getElementById('dbErrorMessage');
             if (errorElement) {
@@ -302,11 +300,11 @@
 
             return true;
         } catch (error) {
-            console.error("Erreur d'initialisation de Firebase ou d'authentification:", error);
+            console.error("Erreur d'initialisation de Firebase:", error);
             const errorElement = document.getElementById('dbErrorMessage');
             if (errorElement) {
                 errorElement.classList.remove('hidden');
-                errorElement.innerHTML = `<strong>Erreur de service:</strong> La connexion à la base de données a échoué. Vérifiez votre configuration Firebase et vos règles de sécurité.`;
+                errorElement.innerHTML = `<strong>Erreur de service:</strong> La connexion à la base de données a échoué. Vérifiez votre configuration Firebase.`;
             }
             return false;
         }
@@ -370,7 +368,7 @@
             
             // Échec
             dbErrorMessage.classList.remove('hidden');
-            dbErrorMessage.innerHTML = `<strong>Erreur de service:</strong> La soumission a échoué. Veuillez vérifier si vous avez bien configuré les règles de sécurité Firestore.`;
+            dbErrorMessage.innerHTML = `<strong>Erreur de service:</strong> La soumission a échoué. Vérifiez vos règles de sécurité Firestore.`;
             
         } finally {
             submitButton.disabled = false;
