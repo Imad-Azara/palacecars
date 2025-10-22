@@ -59,6 +59,8 @@
     
     // Mot de passe pour l'accès
     const ADMIN_PASSWORD = '12234';
+    // Nom de la collection de la base de données, simplifié pour éviter les problèmes de chemin
+    const BOOKING_COLLECTION_NAME = 'palace_cars_bookings';
 
     // Si la configuration est manquante
     if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
@@ -117,12 +119,8 @@
             auth = getAuth(app);
 
             // Authentification anonyme
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
-                await signInAnonymously(auth);
-            }
+            // Nous n'utilisons plus __initial_auth_token car il n'est pas disponible sur Vercel
+            await signInAnonymously(auth);
 
             statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700');
             statusMessage.classList.add('bg-green-100', 'text-green-700');
@@ -139,10 +137,8 @@
     }
 
     function startBookingsListener() {
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id'; 
-        const bookingCollectionPath = `artifacts/${appId}/public/data/bookings`;
-        
-        const q = query(collection(db, bookingCollectionPath));
+        // Chemin simplifié : nous utilisons directement le nom de la collection
+        const q = query(collection(db, BOOKING_COLLECTION_NAME));
         
         if (unsubscribe) {
             unsubscribe();
