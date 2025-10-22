@@ -76,7 +76,7 @@
 
     // --- Firebase Imports ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, query, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     setLogLevel('error'); 
@@ -117,11 +117,9 @@
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-
-            // Authentification anonyme
-            // Nous n'utilisons plus __initial_auth_token car il n'est pas disponible sur Vercel
-            await signInAnonymously(auth);
-
+            
+            // Nous n'avons pas besoin d'authentification, nous nous appuyons sur les règles de sécurité publiques.
+            
             statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700');
             statusMessage.classList.add('bg-green-100', 'text-green-700');
             statusMessage.textContent = "Connexion réussie. Écoute des nouvelles réservations...";
