@@ -397,7 +397,8 @@
 
                      if (result.success) {
                          console.log('Web3Forms Success:', result);
-                         showMessage("Demande Envoyée avec Succès ! Vous recevrez bientôt un email de confirmation.", 'success'); // Message unique pour les deux succès
+                         // MODIFICATION: Changement du message de succès (déjà effectué)
+                         showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
                          form.reset(); // Vider le formulaire
                      } else {
                          console.error('Web3Forms Error:', result);
