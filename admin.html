@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#3b82f6"/>
-    <link rel="manifest" href="manifest.json"> <!-- Gardé pour l'instant -->
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png"> <!-- Gardé pour l'instant -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
     <title>Palace Cars - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome (avec integrity corrigé) -->
+    <!-- Icônes Font Awesome (integrity corrigé) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3fSLbcaL8S/V5fR07H/aLSWcaOXYjM4QdMW7Xb43p2Cwv0A5/5V9iwQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -316,16 +316,17 @@
             bookingsContainer.innerHTML = '';
             errorDisplay.classList.add('hidden');
 
-            // !! REQUÊTE SIMPLIFIÉE !! (Temporairement sans le filtre 'deleted')
+            // !! REQUÊTE ENCORE PLUS SIMPLIFIÉE !! (Suppression de orderBy)
             let q;
             try {
                 if (currentFilter === 'new') {
-                    // Nouvelles demandes : juste non confirmées, triées par date
-                     q = query(bookingsCollection, where("confirmed", "==", false), orderBy("timestamp", "desc"));
+                    // Nouvelles demandes : juste non confirmées
+                     q = query(bookingsCollection, where("confirmed", "==", false)); // Suppression de orderBy("timestamp", "desc")
                 } else { // confirmed
-                     // Demandes confirmées : juste confirmées, triées par date
-                     q = query(bookingsCollection, where("confirmed", "==", true), orderBy("timestamp", "desc"));
+                     // Demandes confirmées : juste confirmées
+                     q = query(bookingsCollection, where("confirmed", "==", true)); // Suppression de orderBy("timestamp", "desc")
                 }
+                 console.log(`Requête Firestore pour filtre '${currentFilter}' effectuée.`);
             } catch (queryError) {
                  console.error("Erreur lors de la construction de la requête Firestore:", queryError);
                  displayError("Erreur interne lors de la préparation de la requête.");
@@ -337,15 +338,16 @@
 
             unsubscribe = onSnapshot(q, (snapshot) => {
                 loadingSpinner.classList.add('hidden');
-                bookingsContainer.innerHTML = '';
+                bookingsContainer.innerHTML = ''; // Vider avant d'afficher les nouveaux résultats
                 let hasVisibleBookings = false;
+                let bookingsData = []; // Array pour trier côté client
 
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === "added" && currentFilter === 'new') {
                         const booking = change.doc.data();
                         const bookingId = change.doc.id;
-                        // Simplification : Notifier si confirmed est false (ne vérifie plus deleted ici)
-                        if (!booking.confirmed && !notifiedBookingIds.has(bookingId) && !change.doc.metadata.hasPendingWrites) {
+                        // Notifier si confirmed est false (et pas une écriture locale)
+                        if (!booking.confirmed && !booking.deleted && !notifiedBookingIds.has(bookingId) && !change.doc.metadata.hasPendingWrites) {
                              notifiedBookingIds.add(bookingId);
                              showNotification(
                                  'Nouvelle Réservation Palace Cars!',
@@ -355,25 +357,28 @@
                     }
                  });
 
-
-                snapshot.forEach((doc) => {
+                 snapshot.forEach((doc) => {
                     const bookingData = doc.data();
-                    // On ne filtre plus ici via JS, la requête s'en charge
-                    // if (currentFilter === 'new' && !bookingData.confirmed && !bookingData.deleted) { // Ancienne logique
-                    //     hasVisibleBookings = true;
-                    //     const card = createBookingCard(bookingData, doc.id, currentFilter);
-                    //     bookingsContainer.appendChild(card);
-                    // } else if (currentFilter === 'confirmed' && bookingData.confirmed && !bookingData.deleted) { // Ancienne logique
-                    //     hasVisibleBookings = true;
-                    //     const card = createBookingCard(bookingData, doc.id, currentFilter);
-                    //     bookingsContainer.appendChild(card);
-                    // }
-                    // Nouvelle logique simplifiée (la requête fait déjà le filtre confirmed)
-                    hasVisibleBookings = true;
-                    const card = createBookingCard(bookingData, doc.id, currentFilter);
-                    bookingsContainer.appendChild(card);
+                    // Ajout d'une condition pour ne pas afficher les 'deleted' côté client
+                    if (bookingData.deleted !== true) {
+                        bookingsData.push({ id: doc.id, data: bookingData });
+                    }
+                 });
 
-                });
+                 // Trier les données côté client par timestamp (du plus récent au plus ancien)
+                 bookingsData.sort((a, b) => {
+                    const timeA = a.data.timestamp?.toDate ? a.data.timestamp.toDate().getTime() : 0;
+                    const timeB = b.data.timestamp?.toDate ? b.data.timestamp.toDate().getTime() : 0;
+                    return timeB - timeA; // Tri descendant
+                 });
+
+                 // Afficher les cartes triées
+                 bookingsData.forEach(bookingDoc => {
+                    hasVisibleBookings = true;
+                    const card = createBookingCard(bookingDoc.data, bookingDoc.id, currentFilter);
+                    bookingsContainer.appendChild(card);
+                 });
+
 
                 if (!hasVisibleBookings) {
                     noBookingsMessage.textContent = currentFilter === 'new' ? "Aucune nouvelle demande de réservation." : "Aucune réservation confirmée.";
@@ -381,13 +386,14 @@
                 } else {
                     noBookingsMessage.classList.add('hidden');
                 }
+                 console.log(`Affichage de ${bookingsData.length} réservations pour le filtre '${currentFilter}'.`);
 
             }, (error) => {
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
+                console.error("Détails de l'erreur Firestore:", error.code, error.message); // Log plus détaillé
                 let friendlyMessage = "Impossible de charger les réservations.";
                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    // !! IMPORTANT: Si cette erreur réapparaît, un NOUVEL index est nécessaire !!
-                    friendlyMessage = "Index Firestore manquant pour la requête simplifiée. Veuillez suivre le lien dans la console (F12) pour le créer.";
+                    friendlyMessage = "Index Firestore manquant ou en cours de création. Veuillez suivre le lien dans la console (F12) ou patienter.";
                 } else if (error.code === 'permission-denied') {
                     friendlyMessage = "Permission refusée. Vérifiez les règles de sécurité Firestore.";
                 }
@@ -460,7 +466,7 @@
              const deleteButton = document.createElement('button');
              deleteButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Supprimer';
              deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
-             // Modification : Ne pas supprimer définitivement, mais marquer comme supprimé
+             // Utilise maintenant markAsDeleted au lieu de deleteDoc
              deleteButton.onclick = (e) => { e.stopPropagation(); markAsDeleted(id); };
 
              actionsDiv.appendChild(deleteButton);
@@ -487,10 +493,9 @@
             if (!db) return;
             const bookingRef = doc(db, "palace_cars_bookings", bookingId);
             try {
-                // Mettre confirmed à true et deleted à false (au cas où elle était marquée supprimée avant)
                 await updateDoc(bookingRef, {
                     confirmed: true,
-                    deleted: false, // Assurer qu'elle n'est pas supprimée
+                    deleted: false,
                     confirmedTimestamp: serverTimestamp()
                  });
                 console.log(`Réservation ${bookingId} marquée comme confirmée.`);
@@ -500,26 +505,20 @@
             }
         }
 
-        // Nouvelle fonction pour marquer comme supprimé (soft delete)
+        // Marque comme supprimé (soft delete)
         async function markAsDeleted(bookingId) {
              if (!db) return;
-             if (!confirm("Êtes-vous sûr de vouloir marquer cette demande comme supprimée ?")) return;
+             if (!confirm("Êtes-vous sûr de vouloir marquer cette demande comme supprimée ? Elle n'apparaîtra plus dans les listes.")) return;
 
              const bookingRef = doc(db, "palace_cars_bookings", bookingId);
              try {
-                // Mettre juste le flag 'deleted' à true
-                await updateDoc(bookingRef, { deleted: true });
+                await updateDoc(bookingRef, { deleted: true }); // Mettre à jour le champ deleted
                 console.log(`Réservation ${bookingId} marquée comme supprimée.`);
-                // L'UI se met à jour via onSnapshot car la requête filtre sur deleted == false
              } catch (error) {
                  console.error("Erreur marquage suppression: ", error);
                   displayError(`Erreur lors du marquage comme supprimé de la réservation ${bookingId}. Code: ${error.code}`);
              }
         }
-
-        // La fonction deleteBooking n'est plus appelée directement par le bouton
-        // async function deleteBooking(bookingId) { ... } // (ancienne fonction de suppression définitive)
-
 
         // Initialiser au chargement global
         updateNotificationButton();
