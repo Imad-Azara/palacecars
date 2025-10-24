@@ -3,380 +3,455 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palace Cars - Location de Voitures</title>
+    <title>Palace Cars - Location de Voitures Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
-        .hero-bg { background-image: url('https://placehold.co/1920x800/25385C/ffffff?text=Palace+Cars+Agadir'); background-size: cover; background-position: center; }
-        /* Style pour masquer/afficher le panneau de confirmation */
-        #confirmationMessage { transition: all 0.3s ease-in-out; }
+        body { font-family: 'Inter', sans-serif; }
+        .hero-bg { background-image: url('https://images.unsplash.com/photo-1555529771-83c80ae1f2a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wzNjAzNTV8MHwxfGFsbHx8fHx8fHx8fDE2NzU0MzgyNzZ8&ixlib=rb-4.0.3&q=80&w=1080'); background-size: cover; background-position: center; }
+        .feature-card img { transition: transform 0.3s ease; }
+        .feature-card:hover img { transform: scale(1.05); }
+        /* Style pour le message de confirmation/erreur */
+        .feedback-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            max-width: 90%;
+            text-align: center;
+        }
+        .feedback-message.show { opacity: 1; }
+        .feedback-success { background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+        .feedback-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* Style pour le spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100">
 
-<!-- Header -->
-<header class="bg-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <div class="text-2xl font-bold text-blue-800">PALACECARS</div>
-        <nav class="hidden md:flex space-x-8 text-gray-700 font-medium">
-            <a href="#" class="hover:text-blue-600 transition duration-150">Accueil</a>
-            <a href="#" class="hover:text-blue-600 transition duration-150">Flotte</a>
-            <a href="#" class="hover:text-blue-600 transition duration-150">Services</a>
-            <a href="#" class="hover:text-blue-600 transition duration-150">FAQ</a>
-            <a href="#" class="hover:text-blue-600 transition duration-150">Contact</a>
+    <!-- Header -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-blue-600">PalaceCars</a>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="#accueil" class="text-gray-600 hover:text-blue-600">Accueil</a>
+                <a href="#flotte" class="text-gray-600 hover:text-blue-600">Flotte</a>
+                <a href="#services" class="text-gray-600 hover:text-blue-600">Services</a>
+                <a href="#faq" class="text-gray-600 hover:text-blue-600">FAQ</a>
+                <a href="#contact" class="text-gray-600 hover:text-blue-600">Contact</a>
+                <a href="#booking-form" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200">Réserver Maintenant</a>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
         </nav>
-        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-150 shadow-md">
-            Réserver Maintenant
-        </button>
-    </div>
-</header>
-
-<!-- Hero Section and Booking Form -->
-<div class="hero-bg py-20 md:py-32 flex items-center justify-center">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div class="text-center text-white mb-12">
-            <h1 class="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">
-                Découvrez notre flotte diversifiée, offrant luxe, économie et 4x4 pour chaque aventure.
-            </h1>
-            <p class="text-xl font-medium">Location de voitures à Agadir, Maroc, au meilleur prix garanti.</p>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white shadow-lg absolute top-full left-0 w-full z-40">
+            <a href="#accueil" class="block px-4 py-3 text-gray-600 hover:bg-blue-50">Accueil</a>
+            <a href="#flotte" class="block px-4 py-3 text-gray-600 hover:bg-blue-50">Flotte</a>
+            <a href="#services" class="block px-4 py-3 text-gray-600 hover:bg-blue-50">Services</a>
+            <a href="#faq" class="block px-4 py-3 text-gray-600 hover:bg-blue-50">FAQ</a>
+            <a href="#contact" class="block px-4 py-3 text-gray-600 hover:bg-blue-50">Contact</a>
+            <a href="#booking-form" class="block px-4 py-3 bg-blue-600 text-white text-center rounded-b-md hover:bg-blue-700">Réserver Maintenant</a>
         </div>
+    </header>
 
-        <!-- Booking Form Card (Fast Reservation) -->
-        <div id="booking-form-card" class="bg-white p-6 sm:p-10 rounded-xl shadow-2xl max-w-4xl mx-auto transform -translate-y-8">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-6 border-b pb-3">Réservation Rapide</h2>
+    <!-- Hero Section -->
+    <section id="accueil" class="hero-bg text-white py-24 md:py-40 text-center relative">
+        <div class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4">Location de Voitures à Agadir</h1>
+            <p class="text-lg md:text-xl mb-8">Découvrez notre flotte diversifiée, offrant luxe, économie et 4x4 pour chaque aventure.</p>
+            <a href="#booking-form" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md text-lg transition duration-200">Réservez Votre Voiture</a>
+        </div>
+    </section>
 
-            <!-- Confirmation Message Box (Hidden by Default) -->
-            <div id="confirmationMessage" class="hidden p-4 rounded-lg text-center font-semibold mb-4 opacity-0 transition duration-300"></div>
-
-            <form id="bookingForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <!-- Nom et Prénom -->
-                <div>
-                    <label for="fullName" class="block text-sm font-medium text-gray-700">Nom et Prénom</label>
-                    <input type="text" id="fullName" name="fullName" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Numéro de Téléphone -->
-                <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700">Numéro de Téléphone</label>
-                    <input type="tel" id="phone" name="phone" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: 06 XX XX XX XX">
-                </div>
-
-                <!-- Lieu de Prise en Charge -->
-                <div>
-                    <label for="pickupLocation" class="block text-sm font-medium text-gray-700">Lieu de Prise en Charge</label>
-                    <input type="text" id="pickupLocation" name="pickupLocation" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Lieu de Retour -->
-                <div>
-                    <label for="returnLocation" class="block text-sm font-medium text-gray-700">Lieu de Retour</label>
-                    <input type="text" id="returnLocation" name="returnLocation" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Date et Heure de Prise en Charge -->
-                <div class="grid grid-cols-2 gap-4">
+    <!-- Booking Form Section -->
+    <section id="booking-form" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <div class="bg-white p-6 md:p-10 rounded-lg shadow-xl max-w-4xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">Réservation Rapide</h2>
+                <form id="quick-booking-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nom et Prénom -->
                     <div>
-                        <label for="pickupDate" class="block text-sm font-medium text-gray-700">Date de Prise en Charge</label>
-                        <input type="date" id="pickupDate" name="pickupDate" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <label for="nomPrenom" class="block text-sm font-medium text-gray-700 mb-1">Nom et Prénom</label>
+                        <input type="text" id="nomPrenom" name="nomPrenom" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Votre nom complet">
                     </div>
+                    <!-- Numéro de Téléphone -->
                     <div>
-                        <label for="pickupTime" class="block text-sm font-medium text-gray-700">Heure</label>
-                        <input type="time" id="pickupTime" name="pickupTime" value="10:00" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">Numéro de Téléphone</label>
+                        <input type="tel" id="telephone" name="telephone" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="+212 6 XX XX XX XX">
                     </div>
-                </div>
-
-                <!-- Date et Heure de Retour -->
-                <div class="grid grid-cols-2 gap-4">
+                     <!-- Email -->
+                    <div class="md:col-span-1">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Adresse E-mail</label>
+                        <input type="email" id="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="exemple@email.com">
+                    </div>
+                     <!-- Choix de Voiture -->
+                     <div class="md:col-span-1">
+                        <label for="voiture" class="block text-sm font-medium text-gray-700 mb-1">Choisissez une voiture</label>
+                        <select id="voiture" name="voiture" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                            <option value="">-- Sélectionner --</option>
+                            <option value="Dacia Logan">Dacia Logan</option>
+                            <option value="Renault Clio">Renault Clio</option>
+                            <option value="Hyundai i10">Hyundai i10</option>
+                            <option value="Dacia Duster 4x4">Dacia Duster 4x4</option>
+                            <option value="Peugeot 301">Peugeot 301</option>
+                            <option value="Autre">Autre (préciser si possible)</option>
+                        </select>
+                    </div>
+                    <!-- Lieu de Prise en Charge -->
                     <div>
-                        <label for="returnDate" class="block text-sm font-medium text-gray-700">Date de Retour</label>
-                        <input type="date" id="returnDate" name="returnDate" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <label for="lieuPriseEnCharge" class="block text-sm font-medium text-gray-700 mb-1">Lieu de Prise en Charge</label>
+                        <input type="text" id="lieuPriseEnCharge" name="lieuPriseEnCharge" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Aéroport Agadir Al Massira">
                     </div>
+                    <!-- Lieu de Retour -->
                     <div>
-                        <label for="returnTime" class="block text-sm font-medium text-gray-700">Heure</label>
-                        <input type="time" id="returnTime" name="returnTime" value="10:00" required class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <label for="lieuRetour" class="block text-sm font-medium text-gray-700 mb-1">Lieu de Retour</label>
+                        <input type="text" id="lieuRetour" name="lieuRetour" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Hôtel Taghazout">
+                    </div>
+                    <!-- Date et Heure de Prise en Charge -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="datePriseEnCharge" class="block text-sm font-medium text-gray-700 mb-1">Date Prise en Charge</label>
+                            <input type="date" id="datePriseEnCharge" name="datePriseEnCharge" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="heurePriseEnCharge" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                            <input type="time" id="heurePriseEnCharge" name="heurePriseEnCharge" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <!-- Date et Heure de Retour -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="dateRetour" class="block text-sm font-medium text-gray-700 mb-1">Date Retour</label>
+                            <input type="date" id="dateRetour" name="dateRetour" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="heureRetour" class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                            <input type="time" id="heureRetour" name="heureRetour" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <!-- Bouton Soumettre -->
+                    <div class="md:col-span-2 text-center mt-4">
+                        <button type="submit" id="submit-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 inline-flex items-center justify-center">
+                           Soumettre la Demande de Réservation
+                           <span id="submit-spinner" class="loader ml-2 hidden"></span>
+                        </button>
+                    </div>
+                </form>
+                <!-- Message de retour -->
+                <div id="feedback-message-container"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Cars Section -->
+    <section id="flotte" class="py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Notre Flotte Populaire</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Car Card 1 -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden feature-card">
+                    <img src="https://placehold.co/600x400/e2e8f0/cbd5e0?text=Dacia+Logan" alt="Dacia Logan" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Dacia Logan</h3>
+                        <p class="text-gray-600 mb-4 text-sm">Économique et fiable, parfaite pour les trajets en ville et les excursions.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-blue-600">À partir de 20€/jour</span>
+                            <a href="#booking-form" class="text-blue-600 hover:underline text-sm font-medium">Réserver</a>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Submit Button -->
-                <div class="md:col-span-2 mt-4">
-                    <button type="submit" id="submitButton" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-xl text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150">
-                        <span id="buttonText">Soumettre la Demande de Réservation</span>
-                        <svg id="loadingSpinner" class="hidden animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </button>
-                    <!-- Error Message Display -->
-                    <div id="dbErrorMessage" class="mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg hidden"></div>
+                <!-- Car Card 2 -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden feature-card">
+                    <img src="https://placehold.co/600x400/bfdbfe/93c5fd?text=Renault+Clio" alt="Renault Clio" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Renault Clio</h3>
+                        <p class="text-gray-600 mb-4 text-sm">Compacte, moderne et confortable pour tous vos déplacements.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-blue-600">À partir de 22€/jour</span>
+                            <a href="#booking-form" class="text-blue-600 hover:underline text-sm font-medium">Réserver</a>
+                        </div>
+                    </div>
                 </div>
-            </form>
+                <!-- Car Card 3 -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden feature-card">
+                    <img src="https://placehold.co/600x400/dbeafe/93c5fd?text=Dacia+Duster+4x4" alt="Dacia Duster 4x4" class="w-full h-48 object-cover">
+                     <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">Dacia Duster 4x4</h3>
+                        <p class="text-gray-600 mb-4 text-sm">Robuste et spacieux, idéal pour explorer les environs d'Agadir.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-blue-600">À partir de 30€/jour</span>
+                            <a href="#booking-form" class="text-blue-600 hover:underline text-sm font-medium">Réserver</a>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Ajouter plus de cartes si nécessaire -->
+            </div>
         </div>
-    </div>
-</div>
+    </section>
 
-<!-- Featured Cars Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-extrabold text-gray-900 mb-4">Notre Flotte Populaire</h2>
-        <p class="text-xl text-gray-600 mb-12">Des véhicules neufs et bien entretenus pour tous les budgets.</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Car Card 1 -->
-            <div class="bg-gray-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-                <img src="https://placehold.co/400x250/25385C/ffffff?text=Voiture+Economique" alt="Voiture Économique" class="w-full h-40 object-cover rounded-lg mb-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Dacia Logan</h3>
-                <p class="text-gray-600 mb-4">Compacte et économique, idéale pour les déplacements en ville.</p>
-                <div class="flex justify-between items-center text-lg font-semibold">
-                    <span class="text-blue-600">350 MAD / jour</span>
-                    <button class="text-blue-600 hover:text-blue-800 transition duration-150">Voir Détails</button>
+    <!-- Services Section -->
+    <section id="services" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Nos Services</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <svg class="w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="text-xl font-semibold mb-2">Livraison Aéroport</h3>
+                    <p class="text-gray-600 text-sm">Récupérez et déposez votre voiture directement à l'aéroport Agadir Al Massira.</p>
                 </div>
-            </div>
-
-            <!-- Car Card 2 -->
-            <div class="bg-gray-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-                <img src="https://placehold.co/400x250/34495e/ffffff?text=Voiture+Familiale" alt="Voiture Familiale" class="w-full h-40 object-cover rounded-lg mb-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Hyundai Tucson</h3>
-                <p class="text-gray-600 mb-4">Confortable et spacieuse, parfaite pour les familles et les longs trajets.</p>
-                <div class="flex justify-between items-center text-lg font-semibold">
-                    <span class="text-blue-600">600 MAD / jour</span>
-                    <button class="text-blue-600 hover:text-blue-800 transition duration-150">Voir Détails</button>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                     <svg class="w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <h3 class="text-xl font-semibold mb-2">Assistance 24/7</h3>
+                    <p class="text-gray-600 text-sm">Une assistance routière disponible à tout moment pour votre tranquillité d'esprit.</p>
                 </div>
-            </div>
-
-            <!-- Car Card 3 -->
-            <div class="bg-gray-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-                <img src="https://placehold.co/400x250/474747/ffffff?text=Voiture+4x4+Luxe" alt="Voiture 4x4 Luxe" class="w-full h-40 object-cover rounded-lg mb-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Range Rover Evoque</h3>
-                <p class="text-gray-600 mb-4">Luxe et performance, pour une expérience de conduite inoubliable.</p>
-                <div class="flex justify-between items-center text-lg font-semibold">
-                    <span class="text-blue-600">1500 MAD / jour</span>
-                    <button class="text-blue-600 hover:text-blue-800 transition duration-150">Voir Détails</button>
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                     <svg class="w-12 h-12 text-blue-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="text-xl font-semibold mb-2">Assurance Incluse</h3>
+                    <p class="text-gray-600 text-sm">Toutes nos locations incluent une assurance de base pour une conduite sereine.</p>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Services Section -->
-<section class="py-16 bg-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-extrabold text-gray-900 mb-4">Nos Engagements</h2>
-        <p class="text-xl text-gray-600 mb-12">Pourquoi choisir Palace Cars pour votre location à Agadir.</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <!-- Service 1 -->
-            <div class="p-6 bg-white rounded-xl shadow-md">
-                <svg class="w-10 h-10 mx-auto text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3 .895 3 2s-1.343 2-3 2h-1v4m-2-4v4m2-4v4m1-9h1a2 2 0 012 2v2a2 2 0 01-2 2h-1m2-4a2 2 0 00-2 2v2a2 2 0 002 2h1"></path></svg>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Prix Transparents</h3>
-                <p class="text-gray-600 text-sm">Pas de frais cachés. Le prix affiché est le prix que vous payez.</p>
+    <!-- FAQ Section -->
+    <section id="faq" class="py-16">
+        <div class="container mx-auto px-4 max-w-3xl">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Questions Fréquentes</h2>
+            <div class="space-y-4">
+                <details class="bg-white p-4 rounded-lg shadow-sm group">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer text-gray-700">
+                        Quels documents sont nécessaires pour louer une voiture ?
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <p class="text-gray-600 mt-3 text-sm">Vous aurez besoin de votre permis de conduire valide (depuis au moins un an), d'une pièce d'identité (passeport ou CNI) et d'une carte de crédit pour la caution.</p>
+                </details>
+                <details class="bg-white p-4 rounded-lg shadow-sm group">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer text-gray-700">
+                        Quel est l'âge minimum pour louer ?
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <p class="text-gray-600 mt-3 text-sm">L'âge minimum requis est généralement de 21 ans, avec un permis de conduire valide depuis au moins un an. Des conditions spécifiques peuvent s'appliquer pour certaines catégories de véhicules.</p>
+                </details>
+                 <details class="bg-white p-4 rounded-lg shadow-sm group">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer text-gray-700">
+                        L'assurance est-elle incluse ?
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <p class="text-gray-600 mt-3 text-sm">Oui, une assurance responsabilité civile et dommages (avec franchise) est incluse. Des options d'assurance complémentaire (réduction de franchise, etc.) sont disponibles.</p>
+                </details>
+                 <details class="bg-white p-4 rounded-lg shadow-sm group">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer text-gray-700">
+                        Puis-je voyager en dehors d'Agadir avec la voiture ?
+                        <svg class="w-5 h-5 text-gray-500 transform group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <p class="text-gray-600 mt-3 text-sm">Oui, vous pouvez voyager dans tout le Maroc. Cependant, il est interdit de sortir du territoire marocain avec nos véhicules.</p>
+                </details>
             </div>
+        </div>
+    </section>
 
-            <!-- Service 2 -->
-            <div class="p-6 bg-white rounded-xl shadow-md">
-                <svg class="w-10 h-10 mx-auto text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Qualité Garantie</h3>
-                <p class="text-gray-600 text-sm">Tous nos véhicules sont neufs, bien entretenus et assurés.</p>
+    <!-- Footer -->
+    <footer id="contact" class="bg-gray-800 text-gray-300 py-12">
+        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h4 class="text-lg font-semibold text-white mb-3">PalaceCars</h4>
+                <p class="text-sm">Votre partenaire de confiance pour la location de voitures à Agadir. Explorez le Maroc en toute liberté.</p>
             </div>
-
-            <!-- Service 3 -->
-            <div class="p-6 bg-white rounded-xl shadow-md">
-                <svg class="w-10 h-10 mx-auto text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Service 24/7</h3>
-                <p class="text-gray-600 text-sm">Assistance routière disponible jour et nuit pour votre tranquillité.</p>
+            <div>
+                <h4 class="text-lg font-semibold text-white mb-3">Liens Rapides</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#accueil" class="hover:text-white">Accueil</a></li>
+                    <li><a href="#flotte" class="hover:text-white">Notre Flotte</a></li>
+                    <li><a href="#services" class="hover:text-white">Services</a></li>
+                    <li><a href="#faq" class="hover:text-white">FAQ</a></li>
+                </ul>
             </div>
-
-            <!-- Service 4 -->
-            <div class="p-6 bg-white rounded-xl shadow-md">
-                <svg class="w-10 h-10 mx-auto text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Livraison Partout</h3>
-                <p class="text-gray-600 text-sm">Livraison et récupération du véhicule à l'aéroport ou à votre hôtel.</p>
+            <div>
+                <h4 class="text-lg font-semibold text-white mb-3">Contactez-nous</h4>
+                <p class="text-sm mb-1">Adresse: [Votre Adresse], Agadir, Maroc</p>
+                <p class="text-sm mb-1">Téléphone: <a href="tel:+212659198122" class="hover:text-white">+212 659 198 122</a></p>
+                <p class="text-sm">Email: <a href="mailto:contact@palacecars.ma" class="hover:text-white">contact@palacecars.ma</a></p>
+                 <!-- Section Admin retirée de la vue publique -->
             </div>
         </div>
-    </div>
-</section>
-
-
-<!-- Footer -->
-<footer class="bg-gray-800 text-white py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-        <!-- Logo and About -->
-        <div>
-            <div class="text-2xl font-bold text-blue-400 mb-3">PALACECARS</div>
-            <p class="text-gray-400 text-sm">Votre partenaire de confiance pour la location de voitures à Agadir.</p>
+        <div class="text-center text-gray-500 text-sm mt-8 pt-8 border-t border-gray-700">
+            © 2025 PalaceCars. Tous droits réservés.
         </div>
+    </footer>
 
-        <!-- Quick Links -->
-        <div>
-            <h3 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Liens Rapides</h3>
-            <ul class="space-y-2 text-sm">
-                <li><a href="#" class="text-gray-400 hover:text-white transition duration-150">Flotte Complète</a></li>
-                <li><a href="#" class="text-gray-400 hover:text-white transition duration-150">Conditions Générales</a></li>
-                <li><a href="#" class="text-gray-400 hover:text-white transition duration-150">FAQ</a></li>
-            </ul>
-        </div>
-
-        <!-- Contact Info -->
-        <div>
-            <h3 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Contactez-nous</h3>
-            <p class="text-sm text-gray-400 mb-2">
-                <span class="font-medium text-white">Téléphone :</span> +212 659198122
-            </p>
-            <p class="text-sm text-gray-400 mb-2">
-                <span class="font-medium text-white">Email :</span> contact@palacecars.ma
-            </p>
-        </div>
-
-        <!-- Admin Access Note (Removed for Vercel) -->
-        <div>
-            <h3 class="text-lg font-semibold mb-4 border-b border-gray-700 pb-2">Admin</h3>
-            <p class="text-gray-400 text-sm">
-                Ouvrez le fichier `admin_panel.html` pour la boîte de réception des réservations.
-            </p>
-        </div>
-    </div>
-    <div class="text-center mt-8 text-gray-500 text-sm border-t border-gray-700 pt-6">
-        &copy; 2024 Palace Cars. Tous droits réservés.
-    </div>
-</footer>
+     <!-- Feedback Message Element (invisible par défaut) -->
+    <div id="feedback-message" class="feedback-message"></div>
 
 
-<!-- FIREBASE SCRIPTS -->
-<script type="module">
-    // 🛑 VOTRE CONFIGURATION FIREBASE EST MAINTENANT COLLÉE ICI 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
-        authDomain: "palace-cars.firebaseapp.com",
-        projectId: "palace-cars",
-        storageBucket: "palace-cars.firebasestorage.app",
-        messagingSenderId: "469852272715",
-        appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
-        // measurementId: "G-KCEF4WBW0G" // Optionnel, retiré pour la simplicité
-    };
+    <!-- Script Firebase -->
+    <script type="module">
+        // Import functions from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Nom de la collection de la base de données, simplifié pour éviter les problèmes de chemin
-    const BOOKING_COLLECTION_NAME = 'palace_cars_bookings';
-    
-    // Si la configuration est manquante (ne devrait plus arriver)
-    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-        document.addEventListener('DOMContentLoaded', () => {
-            const errorElement = document.getElementById('dbErrorMessage');
-            if (errorElement) {
-                errorElement.classList.remove('hidden');
-                errorElement.innerHTML = `<strong>Erreur de Configuration:</strong> La clé API Firebase est manquante.`;
-            }
-        });
-    }
-
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"; // Import de getAuth pour l'initialisation
-
-    setLogLevel('error'); 
-
-    let app;
-    let db;
-    let auth;
-    let userId;
-
-    // --- Firebase Initialization ---
-    async function initializeFirebase() {
-        if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) return false; 
-
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app); 
-            
-            // Simuler un ID utilisateur pour la réservation (bonne pratique)
-            userId = 'public_user_' + Math.random().toString(36).substring(2, 9);
-            console.log('Firebase initialisé.');
-
-            const errorElement = document.getElementById('dbErrorMessage');
-            if (errorElement) {
-                errorElement.classList.add('hidden');
-            }
-
-            return true;
-        } catch (error) {
-            console.error("Erreur d'initialisation de Firebase:", error);
-            const errorElement = document.getElementById('dbErrorMessage');
-            if (errorElement) {
-                errorElement.classList.remove('hidden');
-                errorElement.innerHTML = `<strong>Erreur de service:</strong> La connexion à la base de données a échoué. Vérifiez votre configuration Firebase.`;
-            }
-            return false;
-        }
-    }
-
-    // --- Booking Submission Handler ---
-    document.getElementById('bookingForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        const submitButton = document.getElementById('submitButton');
-        const buttonText = document.getElementById('buttonText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const confirmationMessage = document.getElementById('confirmationMessage');
-        const dbErrorMessage = document.getElementById('dbErrorMessage');
-
-        // Réinitialisation de l'état
-        confirmationMessage.classList.add('hidden', 'opacity-0');
-        dbErrorMessage.classList.add('hidden');
-        buttonText.textContent = "Soumettre la Demande de Réservation";
-        submitButton.disabled = true;
-        loadingSpinner.classList.remove('hidden');
-
-        // 1. Initialiser Firebase
-        const isReady = await initializeFirebase();
-        if (!isReady) {
-            submitButton.disabled = false;
-            loadingSpinner.classList.add('hidden');
-            return;
-        }
-
-        const formData = new FormData(this);
-        const bookingData = {
-            fullName: formData.get('fullName'),
-            phone: formData.get('phone'),
-            pickupLocation: formData.get('pickupLocation'),
-            returnLocation: formData.get('returnLocation'),
-            pickupDateTime: new Date(formData.get('pickupDate') + 'T' + formData.get('pickupTime')).toISOString(),
-            returnDateTime: new Date(formData.get('returnDate') + 'T' + formData.get('returnTime')).toISOString(),
-            status: 'Nouvelle Demande',
-            timestamp: new Date().toISOString(),
-            clientId: userId, 
+        // --- Configuration Firebase (REMPLIR AVEC VOS VRAIES CLÉS) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+            authDomain: "palace-cars.firebaseapp.com",
+            projectId: "palace-cars",
+            storageBucket: "palace-cars.firebasestorage.app",
+            messagingSenderId: "469852272715",
+            appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+            measurementId: "G-KCEF4WBW0G"
         };
 
-        try {
-            // Utilisation du chemin simplifié
-            const docRef = await addDoc(collection(db, BOOKING_COLLECTION_NAME), bookingData);
-            
-            console.log("Réservation enregistrée avec succès dans Firestore. ID du document:", docRef.id);
 
-            // Succès
-            confirmationMessage.classList.remove('hidden');
-            confirmationMessage.classList.remove('bg-red-100', 'text-red-700', 'border-red-400');
-            confirmationMessage.classList.add('bg-green-100', 'text-green-700', 'border-green-400', 'border');
-            confirmationMessage.innerHTML = 'Demande Envoyée avec Succès ! Nous vous contacterons rapidement au ' + bookingData.phone + ' pour confirmer votre réservation.';
-            setTimeout(() => confirmationMessage.classList.remove('opacity-0'), 10); 
+        // --- Initialisation Firebase ---
+        let app;
+        let db;
+        let bookingsCollection;
+        let firebaseInitialized = false; // Flag pour savoir si Firebase est prêt
 
-            this.reset();
-            
-        } catch (e) {
-            console.error("Erreur d'écriture de la base de données:", e);
-            
-            // Échec
-            dbErrorMessage.classList.remove('hidden');
-            dbErrorMessage.innerHTML = `<strong>Erreur de service:</strong> La soumission a échoué. Vérifiez vos règles de sécurité Firestore.`;
-            
-        } finally {
-            submitButton.disabled = false;
-            loadingSpinner.classList.add('hidden');
-            buttonText.textContent = "Soumettre la Demande de Réservation";
+        function initializeFirebase() {
+             // Vérifie si la configuration est valide (au moins apiKey)
+            if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("VOTRE_CLE")) {
+                 console.error("Configuration Firebase manquante ou invalide. Veuillez l'ajouter dans le script.");
+                 showFeedbackMessage("Erreur de configuration du service. Veuillez contacter le support.", true);
+                 return false;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                // Utiliser le chemin de collection simple et absolu
+                bookingsCollection = collection(db, "palace_cars_bookings");
+                console.log("Firebase initialisé.");
+                firebaseInitialized = true;
+                // setLogLevel('debug'); // Pour le débogage
+                return true;
+            } catch (error) {
+                console.error("Erreur lors de l'initialisation de Firebase: ", error);
+                showFeedbackMessage("Erreur technique lors de la connexion au service de réservation.", true);
+                return false;
+            }
         }
-    });
 
-</script>
+         // Initialiser Firebase au chargement de la page
+        initializeFirebase();
+
+
+        // --- Gestion du Formulaire de Réservation ---
+        const form = document.getElementById('quick-booking-form');
+        const submitButton = document.getElementById('submit-button');
+        const submitSpinner = document.getElementById('submit-spinner');
+        const feedbackContainer = document.getElementById('feedback-message-container'); // Container for messages
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Empêche le rechargement de la page
+
+             if (!firebaseInitialized) {
+                showFeedbackMessage("Le service de réservation n'est pas prêt. Réessayez dans quelques instants.", true);
+                return; // Ne pas soumettre si Firebase n'est pas prêt
+            }
+
+            submitButton.disabled = true; // Désactiver le bouton
+            submitSpinner.classList.remove('hidden'); // Afficher le spinner
+            clearFeedbackMessage(); // Nettoyer les anciens messages
+
+            // Récupérer les données du formulaire
+            const bookingData = {
+                nomPrenom: document.getElementById('nomPrenom').value,
+                telephone: document.getElementById('telephone').value,
+                email: document.getElementById('email').value, // Récupération de l'email
+                voiture: document.getElementById('voiture').value, // Récupération de la voiture
+                lieuPriseEnCharge: document.getElementById('lieuPriseEnCharge').value,
+                lieuRetour: document.getElementById('lieuRetour').value,
+                datePriseEnCharge: document.getElementById('datePriseEnCharge').value,
+                heurePriseEnCharge: document.getElementById('heurePriseEnCharge').value,
+                dateRetour: document.getElementById('dateRetour').value,
+                heureRetour: document.getElementById('heureRetour').value,
+                timestamp: serverTimestamp(), // Ajouter la date/heure de la soumission
+                confirmed: false, // Statut initial
+                deleted: false // Statut initial
+            };
+
+            // Ajouter les données à Firestore
+            try {
+                const docRef = await addDoc(bookingsCollection, bookingData);
+                console.log("Réservation enregistrée avec ID: ", docRef.id);
+                showFeedbackMessage("Demande Envoyée avec Succès ! Nous vous contacterons bientôt pour confirmer.", false);
+                form.reset(); // Réinitialiser le formulaire
+            } catch (error) {
+                console.error("Erreur lors de l'ajout du document: ", error);
+                showFeedbackMessage("Erreur lors de l'envoi de la demande. Veuillez réessayer ou nous contacter.", true);
+            } finally {
+                submitButton.disabled = false; // Réactiver le bouton
+                submitSpinner.classList.add('hidden'); // Cacher le spinner
+            }
+        });
+
+        // --- Affichage des Messages de Feedback ---
+        const feedbackElement = document.getElementById('feedback-message');
+
+        function showFeedbackMessage(message, isError) {
+             feedbackElement.textContent = message;
+             feedbackElement.className = 'feedback-message'; // Reset classes
+             if (isError) {
+                 feedbackElement.classList.add('feedback-error');
+             } else {
+                 feedbackElement.classList.add('feedback-success');
+             }
+             feedbackElement.classList.add('show');
+
+             // Cacher le message après 5 secondes
+             setTimeout(() => {
+                 feedbackElement.classList.remove('show');
+             }, 5000);
+        }
+
+        function clearFeedbackMessage() {
+             feedbackElement.classList.remove('show');
+             feedbackElement.textContent = '';
+        }
+
+
+        // --- Menu Mobile ---
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Fermer le menu si on clique sur un lien (pour les ancres)
+        mobileMenu.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+                mobileMenu.classList.add('hidden');
+            }
+        });
+
+    </script>
+
 </body>
 </html>
+
