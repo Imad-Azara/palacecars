@@ -6,209 +6,338 @@
     <title>Palace Cars - Panneau d'Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Icônes Font Awesome : Correction de l'attribut integrity et suppression du code superflu -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3fSLbcaL8S/V5fR07H/aLSWcaOXYjM4QdMW7Xb43p2Cwv0A5/5V9iwQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        body { font-family: 'Inter', sans-serif; }
+        .booking-card {
+            transition: all 0.3s ease-in-out;
+        }
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .status-new { background-color: #e0f2fe; color: #0c4a6e; }
+        .status-confirmed { background-color: #d1fae5; color: #065f46; }
+        .status-deleted { background-color: #fee2e2; color: #991b1b; }
+        .action-button {
+            transition: background-color 0.2s ease;
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
 
-<div class="max-w-4xl mx-auto p-6 lg:p-10">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Accès Administrateur Palace Cars</h1>
+    <div class="container mx-auto p-4 md:p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Accès Administrateur Palace Cars</h1>
 
-    <!-- Authentication Section -->
-    <div id="authSection" class="bg-white p-8 rounded-xl shadow-lg">
-        <h2 class="text-xl font-semibold mb-4 text-gray-700">Authentification</h2>
-        <div class="flex flex-col sm:flex-row gap-4">
-            <input type="password" id="passwordInput" placeholder="Entrez le mot de passe" class="flex-grow px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-            <button id="loginButton" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-150 shadow-md">
+        <!-- Section de Connexion -->
+        <div id="login-section" class="bg-white p-6 md:p-8 rounded-lg shadow-md max-w-md mx-auto">
+            <h2 class="text-xl font-semibold mb-4 text-center">Connexion Administrateur</h2>
+            <div class="mb-4">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de Passe</label>
+                <input type="password" id="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Entrez le mot de passe">
+            </div>
+            <p id="error-message" class="text-red-500 text-sm mb-4 hidden">Mot de passe incorrect.</p>
+            <button id="login-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 action-button">
                 Connexion
             </button>
         </div>
-        <p id="authMessage" class="mt-4 text-red-500 font-medium hidden">Mot de passe incorrect. Veuillez réessayer.</p>
+
+        <!-- Section Boîte de Réception (cachée initialement) -->
+        <div id="admin-panel" class="hidden mt-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Boîte de Réception des Réservations (Admin)</h2>
+            <p class="text-center text-gray-600 mb-6">Liste des demandes de réservation en temps réel. Cette page se met à jour automatiquement.</p>
+
+            <div id="error-display" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 hidden" role="alert">
+                <strong class="font-bold">Erreur de connexion à la base de données.</strong>
+                <span class="block sm:inline">Vérifiez votre configuration et les règles de sécurité.</span>
+            </div>
+
+            <div id="loading-spinner" class="text-center py-10 hidden">
+                 <i class="fas fa-spinner fa-spin fa-3x text-blue-600"></i>
+                 <p class="mt-2 text-gray-600">Chargement des réservations...</p>
+            </div>
+
+            <!-- Conteneur pour les cartes de réservation -->
+            <div id="bookings-container" class="space-y-4">
+                <!-- Les cartes de réservation seront injectées ici par JavaScript -->
+            </div>
+             <p id="no-bookings" class="text-center text-gray-500 py-10 hidden">Aucune nouvelle demande de réservation pour le moment.</p>
+        </div>
     </div>
 
-    <!-- Admin Panel (Hidden by default) -->
-    <div id="adminPanel" class="hidden mt-8">
-        <h2 class="text-2xl font-bold text-blue-700 mb-4">Boîte de Réception des Réservations (Admin)</h2>
-        <p class="mb-4 text-gray-600">Liste des demandes de réservation en temps réel. Cette page se met à jour automatiquement.</p>
+    <!-- Script Firebase -->
+    <script type="module">
+        // Import functions from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        <!-- Loading / Error Message -->
-        <div id="statusMessage" class="p-4 bg-yellow-100 text-yellow-700 rounded-lg font-medium mb-4">
-            Chargement des données...
-        </div>
+        // Votre configuration Firebase (remplacée par vos vraies clés)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+            authDomain: "palace-cars.firebaseapp.com",
+            projectId: "palace-cars",
+            storageBucket: "palace-cars.firebasestorage.app",
+            messagingSenderId: "469852272715",
+            appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+            measurementId: "G-KCEF4WBW0G"
+        };
 
-        <div id="bookingsList" class="space-y-4">
-            <!-- Booking Cards will be inserted here -->
-            <p id="noBookings" class="text-gray-500 hidden">Aucune réservation trouvée pour le moment.</p>
-        </div>
-    </div>
-</div>
+        // --- Initialisation Firebase ---
+        let app;
+        let db;
+        let bookingsCollection;
+        let unsubscribe = null; // Pour pouvoir arrêter l'écouteur Firestore
 
-<script type="module">
-    // --- Configuration Firebase ---
-    // 🛑 VOTRE CONFIGURATION FIREBASE EST MAINTENANT COLLÉE ICI 
-    const firebaseConfig = {
-        apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
-        authDomain: "palace-cars.firebaseapp.com",
-        projectId: "palace-cars",
-        storageBucket: "palace-cars.firebasestorage.app",
-        messagingSenderId: "469852272715",
-        appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
-        // measurementId: "G-KCEF4WBW0G" // Optionnel, retiré pour la simplicité
-    };
-    
-    // Mot de passe pour l'accès
-    const ADMIN_PASSWORD = '12234';
-    // Nom de la collection de la base de données, simplifié pour éviter les problèmes de chemin
-    const BOOKING_COLLECTION_NAME = 'palace_cars_bookings';
+        function initializeFirebase() {
+            try {
+                // Initialize Firebase
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                // Utiliser le chemin de collection simple
+                bookingsCollection = collection(db, "palace_cars_bookings");
+                console.log("Firebase initialisé avec succès.");
+                // Optionnel: Active les logs de débogage pour Firestore
+                // setLogLevel('debug');
+                return true;
+            } catch (error) {
+                console.error("Erreur d'initialisation Firebase:", error);
+                displayError("Erreur d'initialisation de Firebase. Impossible de se connecter.");
+                return false;
+            }
+        }
 
-    // Si la configuration est manquante
-    if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-        document.addEventListener('DOMContentLoaded', () => {
-            const status = document.getElementById('statusMessage');
-            if (status) {
-                status.classList.remove('bg-yellow-100', 'text-yellow-700');
-                status.classList.add('bg-red-100', 'text-red-700');
-                status.textContent = "Erreur: La configuration Firebase est manquante. Veuillez l'ajouter au code.";
+        // --- Gestion de la Connexion Admin ---
+        const loginSection = document.getElementById('login-section');
+        const adminPanel = document.getElementById('admin-panel');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('login-button');
+        const errorMessage = document.getElementById('error-message');
+        const correctPassword = "12234"; // Votre mot de passe
+
+        loginButton.addEventListener('click', () => {
+            if (passwordInput.value === correctPassword) {
+                loginSection.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+                // Initialiser Firebase SEULEMENT après connexion réussie
+                if (initializeFirebase()) {
+                    loadBookings(); // Charger les réservations après l'initialisation
+                }
+            } else {
+                errorMessage.classList.remove('hidden');
             }
         });
-    }
 
-    // --- Firebase Imports ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Permettre la connexion avec la touche Entrée
+        passwordInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                loginButton.click();
+            }
+        });
 
-    setLogLevel('error'); 
-
-    // --- DOM Elements ---
-    const authSection = document.getElementById('authSection');
-    const passwordInput = document.getElementById('passwordInput');
-    const loginButton = document.getElementById('loginButton');
-    const authMessage = document.getElementById('authMessage');
-    const adminPanel = document.getElementById('adminPanel');
-    const statusMessage = document.getElementById('statusMessage');
-    const bookingsList = document.getElementById('bookingsList');
-    const noBookings = document.getElementById('noBookings');
-
-    let db;
-    let auth;
-    let unsubscribe = null; 
-
-    // --- Authentication Logic ---
-    loginButton.addEventListener('click', () => {
-        if (passwordInput.value === ADMIN_PASSWORD) {
-            authSection.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
-            authMessage.classList.add('hidden');
-            initializeAdminPanel();
-        } else {
-            authMessage.classList.remove('hidden');
-        }
-    });
-
-    // --- Firebase Initialization and Data Fetching ---
-    async function initializeAdminPanel() {
-        if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-            return;
+        // --- Affichage des Erreurs ---
+        const errorDisplay = document.getElementById('error-display');
+        function displayError(message) {
+            if (errorDisplay) {
+                errorDisplay.textContent = message;
+                errorDisplay.classList.remove('hidden');
+            }
+             const loadingSpinner = document.getElementById('loading-spinner');
+             if(loadingSpinner) loadingSpinner.classList.add('hidden');
         }
 
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            
-            // Nous n'avons pas besoin d'authentification, nous nous appuyons sur les règles de sécurité publiques.
-            
-            statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700');
-            statusMessage.classList.add('bg-green-100', 'text-green-700');
-            statusMessage.textContent = "Connexion réussie. Écoute des nouvelles réservations...";
-            
-            startBookingsListener();
+        // --- Chargement et Affichage des Réservations ---
+        const bookingsContainer = document.getElementById('bookings-container');
+        const noBookingsMessage = document.getElementById('no-bookings');
+        const loadingSpinner = document.getElementById('loading-spinner');
 
-        } catch (error) {
-            console.error("Erreur d'initialisation Admin Firebase:", error);
-            statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700', 'bg-green-100', 'text-green-700');
-            statusMessage.classList.add('bg-red-100', 'text-red-700');
-            statusMessage.textContent = "Erreur de connexion à la base de données. Vérifiez votre configuration et les règles de sécurité.";
-        }
-    }
+        function loadBookings() {
+            if (!db || !bookingsCollection) {
+                displayError("La base de données n'est pas prête.");
+                return;
+            }
 
-    function startBookingsListener() {
-        // Chemin simplifié : nous utilisons directement le nom de la collection
-        const q = query(collection(db, BOOKING_COLLECTION_NAME));
-        
-        if (unsubscribe) {
-            unsubscribe();
-        }
+            loadingSpinner.classList.remove('hidden'); // Afficher le spinner
+            noBookingsMessage.classList.add('hidden'); // Cacher "aucune réservation"
 
-        unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const bookings = [];
-            querySnapshot.forEach((doc) => {
-                bookings.push({ id: doc.id, ...doc.data() });
+            // Créer une requête pour trier par date de création, plus récent en premier
+            const q = query(bookingsCollection, orderBy("timestamp", "desc"));
+
+
+            // Arrêter l'ancien écouteur s'il existe
+            if (unsubscribe) {
+                unsubscribe();
+            }
+
+            // Écouter les changements en temps réel
+             unsubscribe = onSnapshot(q, (snapshot) => {
+                loadingSpinner.classList.add('hidden'); // Cacher le spinner une fois les données chargées
+                bookingsContainer.innerHTML = ''; // Vider le conteneur
+                let hasVisibleBookings = false;
+
+                if (snapshot.empty) {
+                    noBookingsMessage.classList.remove('hidden');
+                } else {
+                    noBookingsMessage.classList.add('hidden');
+                    snapshot.forEach((doc) => {
+                        const booking = doc.data();
+                        const bookingId = doc.id;
+
+                         // Afficher uniquement les réservations non confirmées et non supprimées
+                        if (!booking.confirmed && !booking.deleted) {
+                            hasVisibleBookings = true;
+                            const card = createBookingCard(booking, bookingId);
+                            bookingsContainer.appendChild(card);
+                        }
+                    });
+                     // Si après filtrage, il n'y a plus de réservations visibles
+                    if (!hasVisibleBookings) {
+                         noBookingsMessage.classList.remove('hidden');
+                    }
+                }
+            }, (error) => {
+                console.error("Erreur lors de la récupération des réservations: ", error);
+                displayError("Impossible de charger les réservations. Vérifiez votre connexion ou les règles Firestore.");
+                loadingSpinner.classList.add('hidden');
             });
-            
-            bookings.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-            
-            renderBookings(bookings);
-        }, (error) => {
-            console.error("Erreur Firestore en temps réel:", error);
-            statusMessage.classList.remove('bg-yellow-100', 'text-yellow-700', 'bg-green-100', 'text-green-700');
-            statusMessage.classList.add('bg-red-100', 'text-red-700');
-            statusMessage.textContent = "Erreur de lecture en temps réel. Vérifiez les règles de sécurité Firebase.";
-        });
-    }
-
-    function renderBookings(bookings) {
-        bookingsList.innerHTML = '';
-        if (bookings.length === 0) {
-            noBookings.classList.remove('hidden');
-            return;
         }
-        noBookings.classList.add('hidden');
 
-        bookings.forEach(booking => {
-            const date = new Date(booking.timestamp).toLocaleString('fr-FR');
-            const pickupDate = new Date(booking.pickupDateTime).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-
-            const whatsappMessage = encodeURIComponent(
-                `Bonjour ${booking.fullName},\n\n` +
-                `Je vous contacte concernant votre demande de réservation Palace Cars (ID: ${booking.id}).\n\n` +
-                `Détails:\n` +
-                `- Prise en charge: ${booking.pickupLocation} le ${pickupDate}.\n` +
-                `- Retour: ${booking.returnLocation}.\n\n` +
-                `Veuillez confirmer si ces détails sont corrects afin de finaliser la réservation.`
-            );
-            const whatsappLink = `https://wa.me/212659198122?text=${whatsappMessage}`;
-
+        // --- Création d'une Carte de Réservation ---
+        function createBookingCard(booking, id) {
             const card = document.createElement('div');
-            card.className = 'bg-white p-6 rounded-lg shadow-md border border-l-4 border-blue-500';
-            card.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="text-xs text-gray-500">Demande Reçue le ${date}</p>
-                        <h3 class="text-xl font-bold text-gray-900">${booking.fullName}</h3>
-                    </div>
-                    <span class="px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">${booking.status}</span>
-                </div>
-                
-                <div class="space-y-2 text-gray-700 text-sm">
-                    <p><strong>Téléphone :</strong> <a href="tel:${booking.phone}" class="text-blue-600 hover:underline">${booking.phone}</a></p>
-                    <p><strong>Lieu de Prise :</strong> ${booking.pickupLocation}</p>
-                    <p><strong>Lieu de Retour :</strong> ${booking.returnLocation}</p>
-                    <p><strong>Date de Prise :</strong> ${pickupDate}</p>
-                </div>
+            card.className = 'bg-white p-5 rounded-lg shadow-md border border-gray-200 booking-card flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0';
+            card.dataset.id = id; // Ajouter l'ID pour référence
 
-                <div class="mt-4 pt-4 border-t border-gray-100">
-                    <a href="${whatsappLink}" target="_blank" class="w-full inline-flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-green-600 transition duration-150">
-                        Contacter via WhatsApp
-                    </a>
-                </div>
+            // Conversion du timestamp Firestore en date lisible
+            let timestampStr = "Date inconnue";
+            if (booking.timestamp && booking.timestamp.toDate) {
+                try {
+                    timestampStr = booking.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+                } catch (e) {
+                    console.warn("Impossible de convertir le timestamp:", booking.timestamp);
+                     // Essayer de traiter comme une chaîne si ce n'est pas un objet Timestamp
+                    if (typeof booking.timestamp === 'string') {
+                         try {
+                            timestampStr = new Date(booking.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+                         } catch (e2) {
+                            console.warn("Impossible de parser la date string:", booking.timestamp);
+                         }
+                    }
+                }
+            } else if (booking.timestamp) { // Si c'est déjà une chaîne ou un nombre
+                 try {
+                     timestampStr = new Date(booking.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+                 } catch(e) {
+                      console.warn("Timestamp non standard:", booking.timestamp);
+                 }
+            }
+
+
+            // Informations de la réservation
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'space-y-2 text-sm';
+            infoDiv.innerHTML = `
+                <p><strong class="font-semibold text-gray-700">Reçu le :</strong> ${timestampStr}</p>
+                <p><strong class="font-semibold text-gray-700">Nom:</strong> ${booking.nomPrenom || 'Non spécifié'}</p>
+                <p><strong class="font-semibold text-gray-700">Téléphone:</strong> <a href="https://wa.me/${formatPhoneNumber(booking.telephone)}" target="_blank" class="text-blue-600 hover:underline">${booking.telephone || 'Non spécifié'}</a></p>
+                <p><strong class="font-semibold text-gray-700">Email:</strong> <a href="mailto:${booking.email}" class="text-blue-600 hover:underline">${booking.email || 'Non spécifié'}</a></p>
+                <p><strong class="font-semibold text-gray-700">Voiture:</strong> ${booking.voiture || 'Non spécifiée'}</p>
+                <p><strong class="font-semibold text-gray-700">Prise en charge:</strong> ${booking.lieuPriseEnCharge} - ${booking.datePriseEnCharge} à ${booking.heurePriseEnCharge}</p>
+                <p><strong class="font-semibold text-gray-700">Retour:</strong> ${booking.lieuRetour} - ${booking.dateRetour} à ${booking.heureRetour}</p>
+                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full status-new mt-2">
+                    <i class="fas fa-hourglass-start mr-1"></i> Nouvelle Demande
+                </span>
             `;
-            bookingsList.appendChild(card);
-        });
-    }
 
-</script>
+            // Boutons d'action
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto mt-4 md:mt-0';
+
+            const confirmButton = document.createElement('button');
+            confirmButton.innerHTML = '<i class="fas fa-check mr-1"></i> Confirmer';
+            confirmButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
+            confirmButton.onclick = () => confirmBooking(id);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Supprimer';
+            deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
+            deleteButton.onclick = () => deleteBooking(id);
+
+            actionsDiv.appendChild(confirmButton);
+            actionsDiv.appendChild(deleteButton);
+
+            card.appendChild(infoDiv);
+            card.appendChild(actionsDiv);
+
+            return card;
+        }
+
+        // --- Actions sur les Réservations ---
+
+        // Formatter le numéro pour le lien WhatsApp (+212xxxxxxxxx)
+        function formatPhoneNumber(phone) {
+            if (!phone) return '';
+            let cleaned = phone.replace(/\D/g, ''); // Enlève tout ce qui n'est pas un chiffre
+            if (cleaned.startsWith('0')) {
+                cleaned = '212' + cleaned.substring(1); // Remplace le 0 initial par 212
+            } else if (!cleaned.startsWith('212')) {
+                 cleaned = '212' + cleaned; // Ajoute 212 si absent
+            }
+            return cleaned;
+        }
+
+
+        // Marquer une réservation comme confirmée
+        async function confirmBooking(bookingId) {
+            if (!db) return;
+            console.log(`Confirmation de la réservation ${bookingId}...`);
+            const bookingRef = doc(db, "palace_cars_bookings", bookingId);
+            try {
+                await updateDoc(bookingRef, {
+                    confirmed: true,
+                    // Optionnel: Ajouter un timestamp de confirmation
+                    // confirmedAt: serverTimestamp()
+                });
+                console.log(`Réservation ${bookingId} marquée comme confirmée.`);
+                // La mise à jour de l'UI se fera automatiquement grâce à onSnapshot
+            } catch (error) {
+                console.error("Erreur lors de la confirmation: ", error);
+                alert("Erreur lors de la confirmation de la réservation."); // Remplacer par un meilleur feedback UI si possible
+            }
+        }
+
+        // Marquer une réservation comme supprimée (soft delete)
+        async function deleteBooking(bookingId) {
+             if (!db) return;
+             // Demander confirmation avant suppression
+            if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette demande ?")) {
+                 return;
+             }
+             console.log(`Suppression (logique) de la réservation ${bookingId}...`);
+             const bookingRef = doc(db, "palace_cars_bookings", bookingId);
+             try {
+                await updateDoc(bookingRef, {
+                    deleted: true,
+                     // Optionnel: Ajouter un timestamp de suppression
+                    // deletedAt: serverTimestamp()
+                });
+                console.log(`Réservation ${bookingId} marquée comme supprimée.`);
+                 // La mise à jour de l'UI se fera automatiquement grâce à onSnapshot
+             } catch (error) {
+                 console.error("Erreur lors de la suppression: ", error);
+                 alert("Erreur lors de la suppression de la réservation."); // Remplacer par un meilleur feedback UI si possible
+             }
+        }
+
+
+         // --- Initialisation au chargement ---
+         // L'initialisation de Firebase et le chargement des réservations
+         // se font maintenant après la connexion réussie.
+
+    </script>
+
 </body>
 </html>
+
