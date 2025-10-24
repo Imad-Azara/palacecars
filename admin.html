@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palace Cars - Panneau d'Administration</title>
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6"/> <!-- Couleur thème pour la barre d'adresse (bleu) -->
+    <link rel="manifest" href="manifest.json"> <!-- Lien vers le manifest -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png"> <!-- Icône pour iOS -->
+
+    <title>Palace Cars - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Icônes Font Awesome -->
@@ -19,10 +24,12 @@
         }
         .status-new { background-color: #e0f2fe; color: #0c4a6e; }
         .status-confirmed { background-color: #d1fae5; color: #065f46; }
-        /* Style pour le bouton de notification */
         #notification-button.enabled { background-color: #10b981; } /* Vert si activé */
         #notification-button.disabled { background-color: #f87171; } /* Rouge si refusé */
         #notification-button.pending { background-color: #f59e0b; } /* Orange pendant la demande */
+        .action-button {
+            transition: background-color 0.2s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -59,8 +66,8 @@
             <p class="text-center text-gray-600 mb-6">Liste des demandes de réservation en temps réel. Cette page se met à jour automatiquement.</p>
 
             <div id="error-display" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 hidden" role="alert">
-                <strong class="font-bold">Erreur de connexion à la base de données.</strong>
-                <span class="block sm:inline">Vérifiez votre configuration et les règles de sécurité.</span>
+                <strong class="font-bold">Erreur :</strong>
+                <span id="error-content" class="block sm:inline">Un problème est survenu.</span>
             </div>
 
             <div id="loading-spinner" class="text-center py-10 hidden">
@@ -68,15 +75,22 @@
                  <p class="mt-2 text-gray-600">Chargement des réservations...</p>
             </div>
 
+             <!-- Filtres (Nouvelles / Confirmées) -->
+            <div class="flex justify-center space-x-4 mb-6">
+                <button id="filter-new" class="px-4 py-2 rounded-md bg-blue-600 text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-400">Nouvelles Demandes</button>
+                <button id="filter-confirmed" class="px-4 py-2 rounded-md bg-gray-300 text-gray-700 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400">Réservations Confirmées</button>
+             </div>
+
+
             <!-- Conteneur pour les cartes de réservation -->
             <div id="bookings-container" class="space-y-4">
                 <!-- Les cartes de réservation seront injectées ici par JavaScript -->
             </div>
-             <p id="no-bookings" class="text-center text-gray-500 py-10 hidden">Aucune nouvelle demande de réservation pour le moment.</p>
+             <p id="no-bookings" class="text-center text-gray-500 py-10 hidden">Aucune demande de réservation trouvée.</p>
         </div>
     </div>
 
-    <!-- Script Firebase & Notifications -->
+    <!-- Script Firebase & Notifications & PWA -->
     <script type="module">
         // Import functions from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -99,7 +113,8 @@
         let db;
         let bookingsCollection;
         let unsubscribe = null;
-        let notifiedBookingIds = new Set(); // Pour suivre les notifs déjà envoyées dans cette session
+        let notifiedBookingIds = new Set();
+        let currentFilter = 'new'; // 'new' or 'confirmed'
 
         // --- Éléments UI ---
         const loginSection = document.getElementById('login-section');
@@ -108,11 +123,14 @@
         const loginButton = document.getElementById('login-button');
         const errorMessage = document.getElementById('error-message');
         const errorDisplay = document.getElementById('error-display');
+        const errorContent = document.getElementById('error-content');
         const bookingsContainer = document.getElementById('bookings-container');
         const noBookingsMessage = document.getElementById('no-bookings');
         const loadingSpinner = document.getElementById('loading-spinner');
         const notificationButton = document.getElementById('notification-button');
         const notificationStatus = document.getElementById('notification-status');
+        const filterNewButton = document.getElementById('filter-new');
+        const filterConfirmedButton = document.getElementById('filter-confirmed');
         const correctPassword = "12234";
 
         // --- Initialisation Firebase ---
@@ -122,7 +140,7 @@
                 db = getFirestore(app);
                 bookingsCollection = collection(db, "palace_cars_bookings");
                 console.log("Firebase initialisé avec succès.");
-                // setLogLevel('debug'); // Décommenter pour logs détaillés
+                // setLogLevel('debug');
                 return true;
             } catch (error) {
                 console.error("Erreur d'initialisation Firebase:", error);
@@ -131,8 +149,23 @@
             }
         }
 
+         // --- Enregistrement du Service Worker pour PWA ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js') // Assurez-vous que sw.js est à la racine
+                    .then(registration => {
+                        console.log('ServiceWorker enregistré avec succès:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Échec de l\'enregistrement ServiceWorker:', error);
+                    });
+            });
+        }
+
+
         // --- Gestion des Notifications ---
-        function updateNotificationButton() {
+        // (Le code pour updateNotificationButton, notificationButton listener, et showNotification reste le même qu'avant)
+         function updateNotificationButton() {
             if (!("Notification" in window)) {
                 notificationButton.textContent = "Notifications non supportées";
                 notificationButton.disabled = true;
@@ -146,17 +179,17 @@
                     notificationButton.textContent = "Notifications Activées";
                     notificationButton.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-red-500', 'bg-yellow-500');
                     notificationButton.classList.add('bg-green-500', 'cursor-default');
-                    notificationButton.disabled = true; // Déjà activé
-                    notificationStatus.textContent = "Vous recevrez des alertes pour les nouvelles réservations.";
+                    notificationButton.disabled = true;
+                    notificationStatus.textContent = "Alertes activées.";
                     break;
                 case 'denied':
                     notificationButton.textContent = "Notifications Bloquées";
                     notificationButton.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-green-500', 'bg-yellow-500');
                     notificationButton.classList.add('bg-red-500', 'cursor-not-allowed');
                     notificationButton.disabled = true;
-                    notificationStatus.textContent = "Vous avez bloqué les notifications. Réactivez-les dans les paramètres du navigateur.";
+                    notificationStatus.textContent = "Réactivez dans les paramètres du navigateur.";
                     break;
-                default: // 'default' ou inconnu
+                default:
                     notificationButton.textContent = "Activer les Notifications";
                     notificationButton.classList.remove('bg-green-500', 'bg-red-500', 'bg-yellow-500');
                     notificationButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
@@ -167,7 +200,8 @@
         }
 
         notificationButton.addEventListener('click', async () => {
-            if (!("Notification" in window)) return;
+            // ... (code inchangé pour demander la permission) ...
+             if (!("Notification" in window)) return;
 
             if (Notification.permission === 'default') {
                 notificationButton.textContent = "Demande en cours...";
@@ -180,44 +214,30 @@
                     console.error("Erreur lors de la demande de permission:", error);
                     notificationStatus.textContent = "Erreur lors de la demande d'autorisation.";
                 } finally {
-                     updateNotificationButton(); // Met à jour l'état du bouton après la réponse
+                     updateNotificationButton();
                 }
             }
         });
 
         function showNotification(title, body) {
-            if (!("Notification" in window)) {
+            // ... (code inchangé pour afficher la notification) ...
+             if (!("Notification" in window)) {
                 console.log("Ce navigateur ne supporte pas les notifications.");
                 return;
             }
 
             if (Notification.permission === "granted") {
-                 // Optionnel : Ajouter une icône
-                // const iconUrl = 'url/to/your/icon.png';
-                const notification = new Notification(title, {
-                    body: body,
-                    // icon: iconUrl // Décommentez si vous avez une icône
-                });
-
-                // Optionnel : Rendre la notification cliquable pour ouvrir la page admin
+                const notification = new Notification(title, { body: body });
                 notification.onclick = function(event) {
-                    event.preventDefault(); // Empêche le navigateur de focaliser une éventuelle ancienne fenêtre
-                    window.open(window.location.href, '_blank'); // Ouvre un nouvel onglet vers la page admin
+                    event.preventDefault();
+                    window.open(window.location.href, '_blank');
                 }
-
             } else if (Notification.permission !== "denied") {
-                // Si la permission n'est ni accordée ni refusée, redemander.
-                // Note : Certains navigateurs bloquent les demandes répétées.
-                console.log("Permission non accordée, demande...");
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
-                        showNotification(title, body); // Réessayer si la permission est accordée
-                    } else {
-                         console.log("Permission refusée après nouvelle demande.");
+                        showNotification(title, body);
                     }
                 });
-            } else {
-                 console.log("Permission de notification refusée par l'utilisateur.");
             }
         }
 
@@ -229,24 +249,51 @@
                 adminPanel.classList.remove('hidden');
                 errorMessage.classList.add('hidden');
                 if (initializeFirebase()) {
-                    updateNotificationButton(); // Mettre à jour l'état initial du bouton de notification
-                    loadBookings();
+                    updateNotificationButton();
+                    loadBookings(); // Charger les réservations initiales (nouvelles par défaut)
                 }
             } else {
                 errorMessage.classList.remove('hidden');
             }
         });
+        passwordInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') loginButton.click(); });
 
-        passwordInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                loginButton.click();
+        // --- Gestion des Filtres ---
+        filterNewButton.addEventListener('click', () => {
+            if (currentFilter !== 'new') {
+                currentFilter = 'new';
+                updateFilterButtons();
+                loadBookings();
             }
         });
+
+        filterConfirmedButton.addEventListener('click', () => {
+             if (currentFilter !== 'confirmed') {
+                currentFilter = 'confirmed';
+                updateFilterButtons();
+                loadBookings();
+            }
+        });
+
+        function updateFilterButtons() {
+            if (currentFilter === 'new') {
+                filterNewButton.classList.remove('bg-gray-300', 'text-gray-700', 'hover:bg-gray-400');
+                filterNewButton.classList.add('bg-blue-600', 'text-white');
+                filterConfirmedButton.classList.remove('bg-blue-600', 'text-white');
+                filterConfirmedButton.classList.add('bg-gray-300', 'text-gray-700', 'hover:bg-gray-400');
+            } else { // confirmed
+                filterConfirmedButton.classList.remove('bg-gray-300', 'text-gray-700', 'hover:bg-gray-400');
+                filterConfirmedButton.classList.add('bg-blue-600', 'text-white');
+                filterNewButton.classList.remove('bg-blue-600', 'text-white');
+                filterNewButton.classList.add('bg-gray-300', 'text-gray-700', 'hover:bg-gray-400');
+            }
+        }
+
 
         // --- Affichage des Erreurs ---
         function displayError(message) {
             if (errorDisplay) {
-                errorDisplay.textContent = message;
+                errorContent.textContent = message;
                 errorDisplay.classList.remove('hidden');
             }
             if (loadingSpinner) loadingSpinner.classList.add('hidden');
@@ -261,48 +308,51 @@
 
             loadingSpinner.classList.remove('hidden');
             noBookingsMessage.classList.add('hidden');
+            bookingsContainer.innerHTML = ''; // Toujours vider avant de recharger
 
-            const q = query(bookingsCollection, orderBy("timestamp", "desc"));
+            // Construire la requête en fonction du filtre
+            let q;
+            if (currentFilter === 'new') {
+                // Nouvelles demandes : non confirmées ET non supprimées
+                 q = query(bookingsCollection, where("confirmed", "==", false), where("deleted", "==", false), orderBy("timestamp", "desc"));
+            } else { // confirmed
+                 // Demandes confirmées : confirmées ET non supprimées
+                 q = query(bookingsCollection, where("confirmed", "==", true), where("deleted", "==", false), orderBy("timestamp", "desc"));
+            }
+
 
             if (unsubscribe) unsubscribe(); // Nettoyer l'ancien listener
 
             unsubscribe = onSnapshot(q, (snapshot) => {
                 loadingSpinner.classList.add('hidden');
-                bookingsContainer.innerHTML = '';
+                bookingsContainer.innerHTML = ''; // Vider avant d'afficher les nouveaux résultats
                 let hasVisibleBookings = false;
-                let newBookingsFound = false; // Pour savoir si on doit notifier
 
                 snapshot.docChanges().forEach((change) => {
-                     // Vérifier seulement les ajouts récents
-                    if (change.type === "added") {
+                    if (change.type === "added" && currentFilter === 'new') { // Notifier seulement pour les nouvelles ajoutées
                         const booking = change.doc.data();
                         const bookingId = change.doc.id;
-                        // Si c'est une nouvelle réservation (non confirmée/supprimée) ET qu'on ne l'a pas déjà notifiée
                         if (!booking.confirmed && !booking.deleted && !notifiedBookingIds.has(bookingId)) {
-                             newBookingsFound = true;
-                             notifiedBookingIds.add(bookingId); // Marquer comme notifiée pour cette session
-                             console.log("Nouvelle réservation détectée:", bookingId);
+                             notifiedBookingIds.add(bookingId);
                              showNotification(
                                  'Nouvelle Réservation Palace Cars!',
                                  `Client: ${booking.nomPrenom || 'Inconnu'} - Voiture: ${booking.voiture || 'Non spécifiée'}`
                              );
                         }
                     }
-                });
+                 });
 
-                // Mettre à jour l'affichage complet
+
                 snapshot.forEach((doc) => {
+                    hasVisibleBookings = true;
                     const booking = doc.data();
                     const bookingId = doc.id;
-                    if (!booking.confirmed && !booking.deleted) {
-                        hasVisibleBookings = true;
-                        const card = createBookingCard(booking, bookingId);
-                        bookingsContainer.appendChild(card); // Ajoute au début pour les plus récentes en haut
-                    }
+                    const card = createBookingCard(booking, bookingId, currentFilter);
+                    bookingsContainer.appendChild(card);
                 });
 
-
                 if (!hasVisibleBookings) {
+                    noBookingsMessage.textContent = currentFilter === 'new' ? "Aucune nouvelle demande de réservation." : "Aucune réservation confirmée.";
                     noBookingsMessage.classList.remove('hidden');
                 } else {
                     noBookingsMessage.classList.add('hidden');
@@ -317,13 +367,15 @@
 
 
         // --- Création d'une Carte de Réservation ---
-        function createBookingCard(booking, id) {
+        // Ajout du paramètre 'filterType' pour ajuster l'affichage et les actions
+        function createBookingCard(booking, id, filterType) {
              const card = document.createElement('div');
              card.className = 'bg-white p-5 rounded-lg shadow-md border border-gray-200 booking-card flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0';
              card.dataset.id = id;
 
              let timestampStr = "Date inconnue";
-             if (booking.timestamp && booking.timestamp.toDate) {
+             // ... (logique de formatage de date inchangée) ...
+              if (booking.timestamp && booking.timestamp.toDate) {
                  try {
                      timestampStr = booking.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
                  } catch (e) { console.warn("Timestamp invalide:", booking.timestamp); }
@@ -333,6 +385,11 @@
                   } catch(e) { console.warn("Timestamp non standard:", booking.timestamp); }
              }
 
+             const statusBadge = filterType === 'new'
+                ? `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full status-new mt-2"><i class="fas fa-hourglass-start mr-1"></i> Nouvelle Demande</span>`
+                : `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full status-confirmed mt-2"><i class="fas fa-check-circle mr-1"></i> Confirmée</span>`;
+
+
              const infoDiv = document.createElement('div');
              infoDiv.className = 'space-y-2 text-sm';
              infoDiv.innerHTML = `
@@ -341,27 +398,28 @@
                  <p><strong class="font-semibold text-gray-700">Téléphone:</strong> <a href="https://wa.me/${formatPhoneNumber(booking.telephone)}" target="_blank" class="text-blue-600 hover:underline">${booking.telephone || 'Non spécifié'}</a></p>
                  <p><strong class="font-semibold text-gray-700">Email:</strong> <a href="mailto:${booking.email}" class="text-blue-600 hover:underline">${booking.email || 'Non spécifié'}</a></p>
                  <p><strong class="font-semibold text-gray-700">Voiture:</strong> ${booking.voiture || 'Non spécifiée'}</p>
-                 <p><strong class="font-semibold text-gray-700">Prise en charge:</strong> ${booking.lieuPriseEnCharge} - ${booking.datePriseEnCharge} à ${booking.heurePriseEnCharge}</p>
-                 <p><strong class="font-semibold text-gray-700">Retour:</strong> ${booking.lieuRetour} - ${booking.dateRetour} à ${booking.heureRetour}</p>
-                 <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full status-new mt-2">
-                     <i class="fas fa-hourglass-start mr-1"></i> Nouvelle Demande
-                 </span>
+                 <p><strong class="font-semibold text-gray-700">Prise en charge:</strong> ${booking.lieuPriseEnCharge || '?'} - ${booking.datePriseEnCharge || '?'} à ${booking.heurePriseEnCharge || '?'}</p>
+                 <p><strong class="font-semibold text-gray-700">Retour:</strong> ${booking.lieuRetour || '?'} - ${booking.dateRetour || '?'} à ${booking.heureRetour || '?'}</p>
+                 ${statusBadge}
              `;
 
              const actionsDiv = document.createElement('div');
              actionsDiv.className = 'flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto mt-4 md:mt-0';
 
-             const confirmButton = document.createElement('button');
-             confirmButton.innerHTML = '<i class="fas fa-check mr-1"></i> Confirmer';
-             confirmButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
-             confirmButton.onclick = () => confirmBooking(id);
+             // Afficher le bouton Confirmer seulement pour les nouvelles demandes
+             if (filterType === 'new') {
+                const confirmButton = document.createElement('button');
+                confirmButton.innerHTML = '<i class="fas fa-check mr-1"></i> Confirmer';
+                confirmButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
+                confirmButton.onclick = () => confirmBooking(id);
+                actionsDiv.appendChild(confirmButton);
+             }
 
              const deleteButton = document.createElement('button');
              deleteButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Supprimer';
              deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
              deleteButton.onclick = () => deleteBooking(id);
 
-             actionsDiv.appendChild(confirmButton);
              actionsDiv.appendChild(deleteButton);
 
              card.appendChild(infoDiv);
@@ -372,6 +430,7 @@
 
         // --- Actions sur les Réservations ---
         function formatPhoneNumber(phone) {
+            // ... (code inchangé) ...
             if (!phone) return '';
             let cleaned = phone.replace(/\D/g, '');
             if (cleaned.startsWith('0')) {
@@ -388,28 +447,50 @@
             try {
                 await updateDoc(bookingRef, { confirmed: true });
                 console.log(`Réservation ${bookingId} marquée comme confirmée.`);
+                 // Optionnel: feedback visuel temporaire
+                const card = bookingsContainer.querySelector(`[data-id="${bookingId}"]`);
+                if (card) {
+                    card.style.opacity = '0.5';
+                    setTimeout(() => card.remove(), 500); // Disparition douce
+                }
             } catch (error) {
                 console.error("Erreur confirmation: ", error);
-                // Utiliser une méthode plus discrète pour l'erreur si alert() n'est pas souhaité
-                 displayError(`Erreur lors de la confirmation de ${bookingId}.`);
+                 displayError(`Erreur lors de la confirmation de la réservation ${bookingId}.`);
             }
         }
 
         async function deleteBooking(bookingId) {
              if (!db) return;
-             if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette demande ?")) return; // window.confirm est souvent bloqué en iframe, remplacer si besoin
+             // Utilisation d'un modal simple pour la confirmation serait mieux qu'alert/confirm
+             if (!confirm("Êtes-vous sûr de vouloir supprimer cette demande ?\nCette action est irréversible si elle est supprimée définitivement.")) return;
+
              const bookingRef = doc(db, "palace_cars_bookings", bookingId);
              try {
-                // Utilisation de updateDoc pour un "soft delete"
+                // Pour une suppression définitive:
+                await deleteDoc(bookingRef);
+                console.log(`Réservation ${bookingId} supprimée définitivement.`);
+                 // Optionnel: feedback visuel temporaire
+                const card = bookingsContainer.querySelector(`[data-id="${bookingId}"]`);
+                if (card) {
+                    card.style.opacity = '0.5';
+                    setTimeout(() => card.remove(), 500); // Disparition douce
+                }
+
+                /* // Pour un "soft delete" (marquer comme supprimé):
                 await updateDoc(bookingRef, { deleted: true });
-                // Ou pour une suppression définitive: await deleteDoc(bookingRef);
                 console.log(`Réservation ${bookingId} marquée comme supprimée.`);
+                // La mise à jour de l'UI se fera automatiquement par onSnapshot si le filtre n'exclut pas 'deleted:true'
+                */
              } catch (error) {
                  console.error("Erreur suppression: ", error);
-                  // Utiliser une méthode plus discrète pour l'erreur si alert() n'est pas souhaité
-                 displayError(`Erreur lors de la suppression de ${bookingId}.`);
+                  displayError(`Erreur lors de la suppression de la réservation ${bookingId}.`);
              }
         }
+
+        // Initialiser au chargement global
+        // Le login déclenchera le chargement initial des données
+        updateNotificationButton(); // Met à jour l'état du bouton de notif même avant connexion admin
+
 
     </script>
 
