@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#3b82f6"/>
+    <!-- Lien vers le Manifest -->
     <link rel="manifest" href="manifest.json">
+    <!-- Icône pour iOS -->
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
     <title>Palace Cars - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome (integrity corrigé) -->
+    <!-- Icônes Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3fSLbcaL8S/V5fR07H/aLSWcaOXYjM4QdMW7Xb43p2Cwv0A5/5V9iwQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -67,7 +69,7 @@
 
             <div id="error-display" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 hidden" role="alert">
                 <strong class="font-bold">Erreur :</strong>
-                <span id="error-content" class="block sm:inline">Impossible de charger les réservations. Vérifiez la console (F12) pour plus de détails (index manquant ?).</span>
+                <span id="error-content" class="block sm:inline">Impossible de charger les réservations. Vérifiez la console (F12) pour plus de détails.</span>
             </div>
 
             <div id="loading-spinner" class="text-center py-10 hidden">
@@ -138,7 +140,6 @@
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                // Utiliser le chemin de collection simplifié
                 bookingsCollection = collection(db, "palace_cars_bookings");
                 console.log("Firebase initialisé avec succès.");
                 // setLogLevel('debug'); // Décommenter pour plus de logs Firebase
@@ -150,10 +151,13 @@
             }
         }
 
-        // --- Enregistrement du Service Worker (toujours désactivé pour le test) ---
-        /*
+        // --- Enregistrement du Service Worker ---
+        // On réactive cette section pour la fonctionnalité PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                // S'assurer que le chemin est correct par rapport à l'emplacement de admin.html
+                // Si admin.html est à la racine, '/sw.js' est correct.
+                // S'il est dans un dossier (ex: /admin/admin.html), ajuster le chemin si nécessaire.
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('ServiceWorker enregistré avec succès:', registration.scope);
@@ -163,7 +167,7 @@
                     });
             });
         }
-        */
+
 
         // --- Gestion des Notifications ---
          function updateNotificationButton() {
@@ -226,9 +230,11 @@
             }
 
             if (Notification.permission === "granted") {
-                // Tenter d'afficher la notification via le service worker s'il est actif
-                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                     navigator.serviceWorker.controller.postMessage({ type: 'show-notification', title: title, options: { body: body } });
+                // Essayer d'utiliser le service worker pour la notification si possible
+                if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                     navigator.serviceWorker.ready.then(function(registration) {
+                        registration.showNotification(title, { body: body });
+                     });
                 } else {
                     // Fallback si le service worker n'est pas prêt ou non supporté
                     const notification = new Notification(title, { body: body });
@@ -316,17 +322,15 @@
             bookingsContainer.innerHTML = '';
             errorDisplay.classList.add('hidden');
 
-            // !! REQUÊTE ENCORE PLUS SIMPLIFIÉE !! (Suppression de orderBy)
+            // !! REQUÊTE ULTRA-SIMPLIFIÉE !! (Juste le filtre, pas de tri)
             let q;
             try {
                 if (currentFilter === 'new') {
-                    // Nouvelles demandes : juste non confirmées
-                     q = query(bookingsCollection, where("confirmed", "==", false)); // Suppression de orderBy("timestamp", "desc")
+                     q = query(bookingsCollection, where("confirmed", "==", false));
                 } else { // confirmed
-                     // Demandes confirmées : juste confirmées
-                     q = query(bookingsCollection, where("confirmed", "==", true)); // Suppression de orderBy("timestamp", "desc")
+                     q = query(bookingsCollection, where("confirmed", "==", true));
                 }
-                 console.log(`Requête Firestore pour filtre '${currentFilter}' effectuée.`);
+                 console.log(`Requête Firestore simplifiée pour filtre '${currentFilter}' effectuée.`);
             } catch (queryError) {
                  console.error("Erreur lors de la construction de la requête Firestore:", queryError);
                  displayError("Erreur interne lors de la préparation de la requête.");
@@ -346,8 +350,8 @@
                     if (change.type === "added" && currentFilter === 'new') {
                         const booking = change.doc.data();
                         const bookingId = change.doc.id;
-                        // Notifier si confirmed est false (et pas une écriture locale)
-                        if (!booking.confirmed && !booking.deleted && !notifiedBookingIds.has(bookingId) && !change.doc.metadata.hasPendingWrites) {
+                        // Notifier seulement si nouvelle, non confirmée et non marquée comme supprimée logiquement
+                        if (!booking.confirmed && booking.deleted !== true && !notifiedBookingIds.has(bookingId) && !change.doc.metadata.hasPendingWrites) {
                              notifiedBookingIds.add(bookingId);
                              showNotification(
                                  'Nouvelle Réservation Palace Cars!',
@@ -359,7 +363,7 @@
 
                  snapshot.forEach((doc) => {
                     const bookingData = doc.data();
-                    // Ajout d'une condition pour ne pas afficher les 'deleted' côté client
+                    // Filtrer côté client pour ne pas afficher les 'deleted'
                     if (bookingData.deleted !== true) {
                         bookingsData.push({ id: doc.id, data: bookingData });
                     }
@@ -435,20 +439,20 @@
              const infoDiv = document.createElement('div');
              infoDiv.className = 'space-y-2 text-sm';
              const sanitize = (str) => {
-                if (str === null || str === undefined) return 'Non spécifié';
+                if (str === null || str === undefined || str === '') return '<span class="text-gray-400">Non spécifié</span>'; // Style pour vide
                 const temp = document.createElement('div');
                 temp.textContent = str;
                 return temp.innerHTML;
              };
 
              infoDiv.innerHTML = `
-                 <p><strong class="font-semibold text-gray-700">Reçu le :</strong> ${sanitize(timestampStr)}</p>
-                 <p><strong class="font-semibold text-gray-700">Nom:</strong> ${sanitize(booking.nomPrenom)}</p>
-                 <p><strong class="font-semibold text-gray-700">Téléphone:</strong> <a href="https://wa.me/${formatPhoneNumber(booking.telephone)}" target="_blank" class="text-blue-600 hover:underline">${sanitize(booking.telephone)}</a></p>
-                 <p><strong class="font-semibold text-gray-700">Email:</strong> <a href="mailto:${sanitize(booking.email)}" class="text-blue-600 hover:underline">${sanitize(booking.email)}</a></p>
-                 <p><strong class="font-semibold text-gray-700">Voiture:</strong> ${sanitize(booking.voiture)}</p>
-                 <p><strong class="font-semibold text-gray-700">Prise en charge:</strong> ${sanitize(booking.lieuPriseEnCharge)} - ${sanitize(booking.datePriseEnCharge)} à ${sanitize(booking.heurePriseEnCharge)}</p>
-                 <p><strong class="font-semibold text-gray-700">Retour:</strong> ${sanitize(booking.lieuRetour)} - ${sanitize(booking.dateRetour)} à ${sanitize(booking.heureRetour)}</p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Reçu le :</strong> ${sanitize(timestampStr)}</p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Nom:</strong> ${sanitize(booking.nomPrenom)}</p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Téléphone:</strong> <a href="https://wa.me/${formatPhoneNumber(booking.telephone)}" target="_blank" class="text-blue-600 hover:underline">${sanitize(booking.telephone)}</a></p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Email:</strong> <a href="mailto:${sanitize(booking.email)}" class="text-blue-600 hover:underline">${sanitize(booking.email)}</a></p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Voiture:</strong> ${sanitize(booking.voiture)}</p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Prise en charge:</strong> ${sanitize(booking.lieuPriseEnCharge)} - ${sanitize(booking.datePriseEnCharge)} à ${sanitize(booking.heurePriseEnCharge)}</p>
+                 <p><strong class="font-semibold text-gray-700 w-28 inline-block">Retour:</strong> ${sanitize(booking.lieuRetour)} - ${sanitize(booking.dateRetour)} à ${sanitize(booking.heureRetour)}</p>
                  ${statusBadge}
              `;
 
@@ -466,7 +470,6 @@
              const deleteButton = document.createElement('button');
              deleteButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Supprimer';
              deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
-             // Utilise maintenant markAsDeleted au lieu de deleteDoc
              deleteButton.onclick = (e) => { e.stopPropagation(); markAsDeleted(id); };
 
              actionsDiv.appendChild(deleteButton);
@@ -495,7 +498,7 @@
             try {
                 await updateDoc(bookingRef, {
                     confirmed: true,
-                    deleted: false,
+                    // Ne pas toucher à 'deleted' ici, pour pouvoir confirmer même si marquée supprimée par erreur
                     confirmedTimestamp: serverTimestamp()
                  });
                 console.log(`Réservation ${bookingId} marquée comme confirmée.`);
