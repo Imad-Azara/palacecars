@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#3b82f6"/>
-    <!-- Lien vers le Manifest -->
-    <link rel="manifest" href="manifest.json">
-    <!-- Icône pour iOS -->
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <!-- Lien vers le Manifest (Assurez-vous que manifest.json est à la racine) -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- Icône pour iOS (Assurez-vous que icons/icon-192x192.png existe) -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
     <title>Palace Cars - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -99,7 +99,7 @@
         import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Votre configuration Firebase
+        // Votre configuration Firebase (déjà insérée)
         const firebaseConfig = {
             apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
             authDomain: "palace-cars.firebaseapp.com",
@@ -152,18 +152,20 @@
         }
 
         // --- Enregistrement du Service Worker ---
-        // On réactive cette section pour la fonctionnalité PWA
+        // Ce code est maintenant réactivé
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // S'assurer que le chemin est correct par rapport à l'emplacement de admin.html
-                // Si admin.html est à la racine, '/sw.js' est correct.
-                // S'il est dans un dossier (ex: /admin/admin.html), ajuster le chemin si nécessaire.
+                // S'assurer que le chemin commence par / pour être relatif à la racine du site
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
                         console.log('ServiceWorker enregistré avec succès:', registration.scope);
                     })
                     .catch(error => {
                         console.log('Échec de l\'enregistrement ServiceWorker:', error);
+                        // Afficher une erreur si le fichier sw.js n'est pas trouvé (erreur 404 fréquente)
+                        if (error.message.includes('404')) {
+                             console.error("Erreur: Le fichier sw.js n'a pas été trouvé. Assurez-vous qu'il est à la racine de votre projet sur GitHub/Vercel.");
+                        }
                     });
             });
         }
@@ -233,14 +235,15 @@
                 // Essayer d'utiliser le service worker pour la notification si possible
                 if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
                      navigator.serviceWorker.ready.then(function(registration) {
-                        registration.showNotification(title, { body: body });
+                        // Utiliser showNotification du service worker
+                        registration.showNotification(title, { body: body, icon: '/icons/icon-192x192.png' }); // Ajout d'une icône
                      });
                 } else {
                     // Fallback si le service worker n'est pas prêt ou non supporté
-                    const notification = new Notification(title, { body: body });
+                    const notification = new Notification(title, { body: body, icon: '/icons/icon-192x192.png' });
                     notification.onclick = function(event) {
                         event.preventDefault();
-                        window.open(window.location.href, '_blank'); // Ouvre l'URL de la page admin dans un nouvel onglet
+                        window.open(window.location.href, '_blank');
                     }
                 }
             } else if (Notification.permission !== "denied") {
@@ -322,7 +325,7 @@
             bookingsContainer.innerHTML = '';
             errorDisplay.classList.add('hidden');
 
-            // !! REQUÊTE ULTRA-SIMPLIFIÉE !! (Juste le filtre, pas de tri)
+            // Requête Firestore simple basée sur le filtre actuel
             let q;
             try {
                 if (currentFilter === 'new') {
@@ -414,22 +417,18 @@
              card.dataset.id = id;
 
              let timestampStr = "Date inconnue";
-             // --- Logique de formatage de date inchangée ---
+             // --- Logique de formatage de date ---
               if (booking.timestamp && booking.timestamp.toDate) {
                  try {
-                     timestampStr = booking.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-                 } catch (e) { console.warn("Timestamp invalide:", booking.timestamp); }
-             } else if (typeof booking.timestamp === 'string') {
-                  try {
-                      timestampStr = new Date(booking.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-                      if (timestampStr === "Invalid Date") timestampStr = "Date invalide";
-                  } catch(e) { console.warn("Timestamp string invalide:", booking.timestamp); timestampStr = "Date invalide"; }
-             } else if (booking.timestamp?.seconds) {
-                 try {
-                      timestampStr = new Date(booking.timestamp.seconds * 1000).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-                 } catch(e) { console.warn("Timestamp objet invalide:", booking.timestamp); timestampStr = "Date invalide"; }
+                     // Utiliser toLocaleString pour un format plus lisible
+                     timestampStr = booking.timestamp.toDate().toLocaleString('fr-FR', {
+                         day: '2-digit', month: '2-digit', year: 'numeric',
+                         hour: '2-digit', minute: '2-digit'
+                     });
+                 } catch (e) { console.warn("Timestamp invalide:", booking.timestamp); timestampStr = "Date invalide"; }
              }
              // --- Fin logique de formatage ---
+
 
              const statusBadge = filterType === 'new'
                 ? `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full status-new mt-2"><i class="fas fa-hourglass-start mr-1"></i> Nouvelle Demande</span>`
@@ -437,14 +436,15 @@
 
 
              const infoDiv = document.createElement('div');
-             infoDiv.className = 'space-y-2 text-sm';
+             infoDiv.className = 'space-y-2 text-sm flex-grow mr-4'; // Ajouté flex-grow et marge
              const sanitize = (str) => {
-                if (str === null || str === undefined || str === '') return '<span class="text-gray-400">Non spécifié</span>'; // Style pour vide
+                if (str === null || str === undefined || String(str).trim() === '') return '<span class="text-gray-400 italic">Non spécifié</span>';
                 const temp = document.createElement('div');
                 temp.textContent = str;
-                return temp.innerHTML;
+                return temp.innerHTML; // Pour échapper le HTML potentiel
              };
 
+             // Formatage amélioré pour lisibilité
              infoDiv.innerHTML = `
                  <p><strong class="font-semibold text-gray-700 w-28 inline-block">Reçu le :</strong> ${sanitize(timestampStr)}</p>
                  <p><strong class="font-semibold text-gray-700 w-28 inline-block">Nom:</strong> ${sanitize(booking.nomPrenom)}</p>
@@ -457,36 +457,43 @@
              `;
 
              const actionsDiv = document.createElement('div');
-             actionsDiv.className = 'flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto mt-4 md:mt-0';
+             // Ajustement des classes pour un meilleur alignement sur mobile et desktop
+             actionsDiv.className = 'flex flex-row space-x-2 md:flex-col md:space-x-0 md:space-y-2 items-center';
 
              if (filterType === 'new') {
                 const confirmButton = document.createElement('button');
-                confirmButton.innerHTML = '<i class="fas fa-check mr-1"></i> Confirmer';
-                confirmButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
+                confirmButton.innerHTML = '<i class="fas fa-check"></i>'; // Icône seule
+                confirmButton.title = "Confirmer la réservation"; // Tooltip
+                confirmButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded-md text-sm action-button flex items-center justify-center';
                 confirmButton.onclick = (e) => { e.stopPropagation(); confirmBooking(id); };
                 actionsDiv.appendChild(confirmButton);
              }
 
              const deleteButton = document.createElement('button');
-             deleteButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Supprimer';
-             deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
+             deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>'; // Icône seule
+             deleteButton.title = "Supprimer la demande"; // Tooltip
+             deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-md text-sm action-button flex items-center justify-center';
              deleteButton.onclick = (e) => { e.stopPropagation(); markAsDeleted(id); };
 
              actionsDiv.appendChild(deleteButton);
 
              card.appendChild(infoDiv);
-             card.appendChild(actionsDiv);
+             card.appendChild(actionsDiv); // Ajouter les actions à la carte
 
              return card;
         }
+
 
         // --- Actions sur les Réservations ---
         function formatPhoneNumber(phone) {
             if (!phone) return '';
             let cleaned = String(phone).replace(/\D/g, '');
-            if (cleaned.startsWith('0')) {
+            // Simple format international pour WhatsApp, présume Maroc si commence par 0
+            if (cleaned.startsWith('0') && cleaned.length > 1) {
                 cleaned = '212' + cleaned.substring(1);
             } else if (cleaned.length > 5 && !cleaned.startsWith('212')) {
+                 // S'il n'y a pas de 0 au début mais ressemble à un numéro marocain, ajouter 212
+                 // (Ceci est une supposition, pourrait nécessiter une validation plus robuste)
                  cleaned = '212' + cleaned;
             }
             return cleaned;
@@ -498,8 +505,8 @@
             try {
                 await updateDoc(bookingRef, {
                     confirmed: true,
-                    // Ne pas toucher à 'deleted' ici, pour pouvoir confirmer même si marquée supprimée par erreur
-                    confirmedTimestamp: serverTimestamp()
+                    // deleted: false, // On ne remet pas à false, une réservation confirmée peut rester supprimée logiquement si besoin
+                    confirmedTimestamp: serverTimestamp() // Marquer quand elle a été confirmée
                  });
                 console.log(`Réservation ${bookingId} marquée comme confirmée.`);
             } catch (error) {
@@ -508,23 +515,26 @@
             }
         }
 
-        // Marque comme supprimé (soft delete)
         async function markAsDeleted(bookingId) {
              if (!db) return;
-             if (!confirm("Êtes-vous sûr de vouloir marquer cette demande comme supprimée ? Elle n'apparaîtra plus dans les listes.")) return;
+             // Demander confirmation avant suppression logique
+             if (!confirm("Êtes-vous sûr de vouloir archiver (supprimer logiquement) cette demande ? Elle n'apparaîtra plus dans les listes actives.")) return;
 
              const bookingRef = doc(db, "palace_cars_bookings", bookingId);
              try {
                 await updateDoc(bookingRef, { deleted: true }); // Mettre à jour le champ deleted
-                console.log(`Réservation ${bookingId} marquée comme supprimée.`);
+                console.log(`Réservation ${bookingId} marquée comme supprimée (archivée).`);
              } catch (error) {
                  console.error("Erreur marquage suppression: ", error);
-                  displayError(`Erreur lors du marquage comme supprimé de la réservation ${bookingId}. Code: ${error.code}`);
+                  displayError(`Erreur lors de l'archivage de la réservation ${bookingId}. Code: ${error.code}`);
              }
         }
 
-        // Initialiser au chargement global
-        updateNotificationButton();
+        // --- Initialisation au chargement global ---
+        document.addEventListener('DOMContentLoaded', () => {
+             updateNotificationButton();
+        });
+
 
     </script>
 
