@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#3b82f6"/> <!-- Couleur thème pour la barre d'adresse (bleu) -->
-    <link rel="manifest" href="manifest.json"> <!-- Lien vers le manifest -->
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png"> <!-- Icône pour iOS -->
+    <meta name="theme-color" content="#3b82f6"/>
+    <link rel="manifest" href="manifest.json"> <!-- Gardé pour l'instant -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png"> <!-- Gardé pour l'instant -->
 
     <title>Palace Cars - Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome -->
+    <!-- Icônes Font Awesome (avec integrity corrigé) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3fSLbcaL8S/V5fR07H/aLSWcaOXYjM4QdMW7Xb43p2Cwv0A5/5V9iwQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -67,7 +67,7 @@
 
             <div id="error-display" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 hidden" role="alert">
                 <strong class="font-bold">Erreur :</strong>
-                <span id="error-content" class="block sm:inline">Un problème est survenu.</span>
+                <span id="error-content" class="block sm:inline">Impossible de charger les réservations. Vérifiez la console (F12) pour plus de détails (index manquant ?).</span>
             </div>
 
             <div id="loading-spinner" class="text-center py-10 hidden">
@@ -149,7 +149,8 @@
             }
         }
 
-         // --- Enregistrement du Service Worker pour PWA ---
+         // --- Enregistrement du Service Worker pour PWA (TEMPORAIREMENT DÉSACTIVÉ) ---
+        /*
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js') // Assurez-vous que sw.js est à la racine
@@ -161,10 +162,10 @@
                     });
             });
         }
+        */
 
 
         // --- Gestion des Notifications ---
-        // (Le code pour updateNotificationButton, notificationButton listener, et showNotification reste le même qu'avant)
          function updateNotificationButton() {
             if (!("Notification" in window)) {
                 notificationButton.textContent = "Notifications non supportées";
@@ -200,7 +201,6 @@
         }
 
         notificationButton.addEventListener('click', async () => {
-            // ... (code inchangé pour demander la permission) ...
              if (!("Notification" in window)) return;
 
             if (Notification.permission === 'default') {
@@ -220,7 +220,6 @@
         });
 
         function showNotification(title, body) {
-            // ... (code inchangé pour afficher la notification) ...
              if (!("Notification" in window)) {
                 console.log("Ce navigateur ne supporte pas les notifications.");
                 return;
@@ -293,7 +292,8 @@
         // --- Affichage des Erreurs ---
         function displayError(message) {
             if (errorDisplay) {
-                errorContent.textContent = message;
+                // Modifié pour donner plus d'infos
+                errorContent.textContent = `${message} Vérifiez la console (F12) pour plus de détails (index manquant ?).`;
                 errorDisplay.classList.remove('hidden');
             }
             if (loadingSpinner) loadingSpinner.classList.add('hidden');
@@ -309,15 +309,22 @@
             loadingSpinner.classList.remove('hidden');
             noBookingsMessage.classList.add('hidden');
             bookingsContainer.innerHTML = ''; // Toujours vider avant de recharger
+            errorDisplay.classList.add('hidden'); // Cacher l'erreur avant de réessayer
 
             // Construire la requête en fonction du filtre
             let q;
-            if (currentFilter === 'new') {
-                // Nouvelles demandes : non confirmées ET non supprimées
-                 q = query(bookingsCollection, where("confirmed", "==", false), where("deleted", "==", false), orderBy("timestamp", "desc"));
-            } else { // confirmed
-                 // Demandes confirmées : confirmées ET non supprimées
-                 q = query(bookingsCollection, where("confirmed", "==", true), where("deleted", "==", false), orderBy("timestamp", "desc"));
+            try {
+                if (currentFilter === 'new') {
+                    // Nouvelles demandes : non confirmées ET non supprimées
+                     q = query(bookingsCollection, where("confirmed", "==", false), where("deleted", "==", false), orderBy("timestamp", "desc"));
+                } else { // confirmed
+                     // Demandes confirmées : confirmées ET non supprimées
+                     q = query(bookingsCollection, where("confirmed", "==", true), where("deleted", "==", false), orderBy("timestamp", "desc"));
+                }
+            } catch (queryError) {
+                 console.error("Erreur lors de la construction de la requête Firestore:", queryError);
+                 displayError("Erreur interne lors de la préparation de la requête.");
+                 return; // Arrêter si la requête elle-même est invalide
             }
 
 
@@ -332,7 +339,8 @@
                     if (change.type === "added" && currentFilter === 'new') { // Notifier seulement pour les nouvelles ajoutées
                         const booking = change.doc.data();
                         const bookingId = change.doc.id;
-                        if (!booking.confirmed && !booking.deleted && !notifiedBookingIds.has(bookingId)) {
+                        // On vérifie que ce n'est pas juste un rechargement local
+                        if (!booking.confirmed && !booking.deleted && !notifiedBookingIds.has(bookingId) && !change.doc.metadata.hasPendingWrites) {
                              notifiedBookingIds.add(bookingId);
                              showNotification(
                                  'Nouvelle Réservation Palace Cars!',
@@ -359,31 +367,42 @@
                 }
 
             }, (error) => {
-                console.error("Erreur lors de la récupération des réservations: ", error);
-                displayError("Impossible de charger les réservations.");
+                console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
+                // Afficher une erreur plus spécifique si possible
+                let friendlyMessage = "Impossible de charger les réservations.";
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    friendlyMessage = "Index Firestore manquant. Veuillez suivre le lien dans la console (F12) pour le créer.";
+                } else if (error.code === 'permission-denied') {
+                    friendlyMessage = "Permission refusée. Vérifiez les règles de sécurité Firestore.";
+                }
+                displayError(friendlyMessage);
                 loadingSpinner.classList.add('hidden');
             });
         }
 
 
         // --- Création d'une Carte de Réservation ---
-        // Ajout du paramètre 'filterType' pour ajuster l'affichage et les actions
         function createBookingCard(booking, id, filterType) {
              const card = document.createElement('div');
              card.className = 'bg-white p-5 rounded-lg shadow-md border border-gray-200 booking-card flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0';
              card.dataset.id = id;
 
              let timestampStr = "Date inconnue";
-             // ... (logique de formatage de date inchangée) ...
               if (booking.timestamp && booking.timestamp.toDate) {
                  try {
                      timestampStr = booking.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
                  } catch (e) { console.warn("Timestamp invalide:", booking.timestamp); }
-             } else if (booking.timestamp) {
+             } else if (typeof booking.timestamp === 'string') { // Fallback si timestamp est une string ISO
                   try {
                       timestampStr = new Date(booking.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
-                  } catch(e) { console.warn("Timestamp non standard:", booking.timestamp); }
+                      if (timestampStr === "Invalid Date") timestampStr = "Date invalide";
+                  } catch(e) { console.warn("Timestamp string invalide:", booking.timestamp); timestampStr = "Date invalide"; }
+             } else if (booking.timestamp?.seconds) { // Fallback pour objet timestamp Firestore sans toDate()
+                 try {
+                      timestampStr = new Date(booking.timestamp.seconds * 1000).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+                 } catch(e) { console.warn("Timestamp objet invalide:", booking.timestamp); timestampStr = "Date invalide"; }
              }
+
 
              const statusBadge = filterType === 'new'
                 ? `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full status-new mt-2"><i class="fas fa-hourglass-start mr-1"></i> Nouvelle Demande</span>`
@@ -392,33 +411,41 @@
 
              const infoDiv = document.createElement('div');
              infoDiv.className = 'space-y-2 text-sm';
+             // Utilisation de textContent pour éviter les problèmes d'injection si les données contiennent du HTML/JS
+             // Fonction pour sécuriser l'affichage
+             const sanitize = (str) => {
+                if (str === null || str === undefined) return 'Non spécifié';
+                const temp = document.createElement('div');
+                temp.textContent = str;
+                return temp.innerHTML;
+             };
+
              infoDiv.innerHTML = `
-                 <p><strong class="font-semibold text-gray-700">Reçu le :</strong> ${timestampStr}</p>
-                 <p><strong class="font-semibold text-gray-700">Nom:</strong> ${booking.nomPrenom || 'Non spécifié'}</p>
-                 <p><strong class="font-semibold text-gray-700">Téléphone:</strong> <a href="https://wa.me/${formatPhoneNumber(booking.telephone)}" target="_blank" class="text-blue-600 hover:underline">${booking.telephone || 'Non spécifié'}</a></p>
-                 <p><strong class="font-semibold text-gray-700">Email:</strong> <a href="mailto:${booking.email}" class="text-blue-600 hover:underline">${booking.email || 'Non spécifié'}</a></p>
-                 <p><strong class="font-semibold text-gray-700">Voiture:</strong> ${booking.voiture || 'Non spécifiée'}</p>
-                 <p><strong class="font-semibold text-gray-700">Prise en charge:</strong> ${booking.lieuPriseEnCharge || '?'} - ${booking.datePriseEnCharge || '?'} à ${booking.heurePriseEnCharge || '?'}</p>
-                 <p><strong class="font-semibold text-gray-700">Retour:</strong> ${booking.lieuRetour || '?'} - ${booking.dateRetour || '?'} à ${booking.heureRetour || '?'}</p>
+                 <p><strong class="font-semibold text-gray-700">Reçu le :</strong> ${sanitize(timestampStr)}</p>
+                 <p><strong class="font-semibold text-gray-700">Nom:</strong> ${sanitize(booking.nomPrenom)}</p>
+                 <p><strong class="font-semibold text-gray-700">Téléphone:</strong> <a href="https://wa.me/${formatPhoneNumber(booking.telephone)}" target="_blank" class="text-blue-600 hover:underline">${sanitize(booking.telephone)}</a></p>
+                 <p><strong class="font-semibold text-gray-700">Email:</strong> <a href="mailto:${sanitize(booking.email)}" class="text-blue-600 hover:underline">${sanitize(booking.email)}</a></p>
+                 <p><strong class="font-semibold text-gray-700">Voiture:</strong> ${sanitize(booking.voiture)}</p>
+                 <p><strong class="font-semibold text-gray-700">Prise en charge:</strong> ${sanitize(booking.lieuPriseEnCharge)} - ${sanitize(booking.datePriseEnCharge)} à ${sanitize(booking.heurePriseEnCharge)}</p>
+                 <p><strong class="font-semibold text-gray-700">Retour:</strong> ${sanitize(booking.lieuRetour)} - ${sanitize(booking.dateRetour)} à ${sanitize(booking.heureRetour)}</p>
                  ${statusBadge}
              `;
 
              const actionsDiv = document.createElement('div');
              actionsDiv.className = 'flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto mt-4 md:mt-0';
 
-             // Afficher le bouton Confirmer seulement pour les nouvelles demandes
              if (filterType === 'new') {
                 const confirmButton = document.createElement('button');
                 confirmButton.innerHTML = '<i class="fas fa-check mr-1"></i> Confirmer';
                 confirmButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
-                confirmButton.onclick = () => confirmBooking(id);
+                confirmButton.onclick = (e) => { e.stopPropagation(); confirmBooking(id); }; // Empêche la propagation du clic
                 actionsDiv.appendChild(confirmButton);
              }
 
              const deleteButton = document.createElement('button');
              deleteButton.innerHTML = '<i class="fas fa-trash-alt mr-1"></i> Supprimer';
              deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md text-xs action-button flex items-center justify-center';
-             deleteButton.onclick = () => deleteBooking(id);
+             deleteButton.onclick = (e) => { e.stopPropagation(); deleteBooking(id); }; // Empêche la propagation du clic
 
              actionsDiv.appendChild(deleteButton);
 
@@ -430,12 +457,11 @@
 
         // --- Actions sur les Réservations ---
         function formatPhoneNumber(phone) {
-            // ... (code inchangé) ...
             if (!phone) return '';
-            let cleaned = phone.replace(/\D/g, '');
+            let cleaned = String(phone).replace(/\D/g, ''); // Assurer que c'est une chaîne
             if (cleaned.startsWith('0')) {
                 cleaned = '212' + cleaned.substring(1);
-            } else if (!cleaned.startsWith('212')) {
+            } else if (cleaned.length > 5 && !cleaned.startsWith('212')) { // Vérifier la longueur pour éviter les cas étranges
                  cleaned = '212' + cleaned;
             }
             return cleaned;
@@ -445,52 +471,33 @@
             if (!db) return;
             const bookingRef = doc(db, "palace_cars_bookings", bookingId);
             try {
-                await updateDoc(bookingRef, { confirmed: true });
+                await updateDoc(bookingRef, { confirmed: true, confirmedTimestamp: serverTimestamp() }); // Ajout d'un timestamp de confirmation
                 console.log(`Réservation ${bookingId} marquée comme confirmée.`);
-                 // Optionnel: feedback visuel temporaire
-                const card = bookingsContainer.querySelector(`[data-id="${bookingId}"]`);
-                if (card) {
-                    card.style.opacity = '0.5';
-                    setTimeout(() => card.remove(), 500); // Disparition douce
-                }
+                // L'UI se met à jour via onSnapshot
             } catch (error) {
                 console.error("Erreur confirmation: ", error);
-                 displayError(`Erreur lors de la confirmation de la réservation ${bookingId}.`);
+                 displayError(`Erreur lors de la confirmation de la réservation ${bookingId}. Code: ${error.code}`);
             }
         }
 
         async function deleteBooking(bookingId) {
              if (!db) return;
-             // Utilisation d'un modal simple pour la confirmation serait mieux qu'alert/confirm
-             if (!confirm("Êtes-vous sûr de vouloir supprimer cette demande ?\nCette action est irréversible si elle est supprimée définitivement.")) return;
+             // Remplacer confirm par un modal plus tard
+             if (!confirm("Êtes-vous sûr de vouloir supprimer cette demande ?\nCette action est irréversible.")) return;
 
              const bookingRef = doc(db, "palace_cars_bookings", bookingId);
              try {
-                // Pour une suppression définitive:
                 await deleteDoc(bookingRef);
                 console.log(`Réservation ${bookingId} supprimée définitivement.`);
-                 // Optionnel: feedback visuel temporaire
-                const card = bookingsContainer.querySelector(`[data-id="${bookingId}"]`);
-                if (card) {
-                    card.style.opacity = '0.5';
-                    setTimeout(() => card.remove(), 500); // Disparition douce
-                }
-
-                /* // Pour un "soft delete" (marquer comme supprimé):
-                await updateDoc(bookingRef, { deleted: true });
-                console.log(`Réservation ${bookingId} marquée comme supprimée.`);
-                // La mise à jour de l'UI se fera automatiquement par onSnapshot si le filtre n'exclut pas 'deleted:true'
-                */
+                 // L'UI se met à jour via onSnapshot
              } catch (error) {
                  console.error("Erreur suppression: ", error);
-                  displayError(`Erreur lors de la suppression de la réservation ${bookingId}.`);
+                  displayError(`Erreur lors de la suppression de la réservation ${bookingId}. Code: ${error.code}`);
              }
         }
 
         // Initialiser au chargement global
-        // Le login déclenchera le chargement initial des données
-        updateNotificationButton(); // Met à jour l'état du bouton de notif même avant connexion admin
-
+        updateNotificationButton();
 
     </script>
 
