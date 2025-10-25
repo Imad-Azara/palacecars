@@ -3,500 +3,626 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palace Cars - Location de Voitures à Agadir</title>
+    <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase -->
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .hero-bg { background-image: url('https://placehold.co/1920x800/003366/FFFFFF?text=Bienvenue+chez+Palace+Cars'); background-size: cover; background-position: center; }
-        select:disabled { background-color: #e5e7eb; cursor: not-allowed; opacity: 0.7; }
-        option:disabled { color: #9ca3af; background-color: #f3f4f6; font-style: italic; }
-        select {
-            appearance: none; -webkit-appearance: none; -moz-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%236b7280' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E%0A");
-            background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.5em 1.5em; padding-right: 2.5rem;
-        }
+        .hero-bg { background-image: url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center; } /* Example background */
         .loader {
-            border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%;
-            width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-left: 8px;
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block; /* To show it next to text */
+            margin-left: 8px; /* Space from text */
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .hidden { display: none; }
+        /* Style for selected car card */
+        .car-card.selected {
+            border-color: #3b82f6; /* Blue border */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            transform: scale(1.02);
+            transition: all 0.2s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <!-- Header (inchangé) -->
+    <!-- Header -->
     <header class="bg-white shadow-md sticky top-0 z-50">
-        <nav class="container mx-auto px-4 lg:px-6 py-4 flex justify-between items-center">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <a href="#" class="text-2xl font-bold text-blue-600">PalaceCars</a>
-            <div class="hidden md:flex space-x-6 items-center">
+            <div class="space-x-4 hidden md:flex">
                 <a href="#accueil" class="text-gray-600 hover:text-blue-600">Accueil</a>
-                <a href="#flotte" class="text-gray-600 hover:text-blue-600">Notre Flotte</a>
+                <a href="#flotte" class="text-gray-600 hover:text-blue-600">Flotte</a>
                 <a href="#services" class="text-gray-600 hover:text-blue-600">Services</a>
                 <a href="#faq" class="text-gray-600 hover:text-blue-600">FAQ</a>
                 <a href="#contact" class="text-gray-600 hover:text-blue-600">Contact</a>
-                <a href="#reservation-rapide" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-300">Réserver Maintenant</a>
             </div>
-            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
+            <a href="#reservation" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300">Réserver Maintenant</a>
+            <!-- Mobile Menu Button (optional) -->
         </nav>
-        <div id="mobile-menu" class="md:hidden hidden bg-white shadow-md">
-             <a href="#accueil" class="block py-2 px-4 text-sm text-gray-700 hover:bg-blue-50">Accueil</a>
-            <a href="#flotte" class="block py-2 px-4 text-sm text-gray-700 hover:bg-blue-50">Notre Flotte</a>
-            <a href="#services" class="block py-2 px-4 text-sm text-gray-700 hover:bg-blue-50">Services</a>
-            <a href="#faq" class="block py-2 px-4 text-sm text-gray-700 hover:bg-blue-50">FAQ</a>
-            <a href="#contact" class="block py-2 px-4 text-sm text-gray-700 hover:bg-blue-50">Contact</a>
-            <a href="#reservation-rapide" class="block py-2 px-4 text-sm bg-blue-600 text-white text-center rounded-b-md hover:bg-blue-700">Réserver Maintenant</a>
-        </div>
     </header>
 
-    <!-- Hero Section (inchangé) -->
-    <section id="accueil" class="hero-bg text-white py-24 md:py-40">
-        <div class="container mx-auto px-4 text-center bg-black bg-opacity-50 p-8 rounded-lg max-w-4xl">
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">Location de Voitures à Agadir</h1>
-            <p class="text-lg md:text-xl mb-8">Votre partenaire de confiance pour explorer le Maroc en toute liberté.</p>
-            <a href="#reservation-rapide" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-md text-lg transition duration-300">Réservez Votre Voiture</a>
+    <!-- Hero Section -->
+    <section id="accueil" class="hero-bg text-white py-20 md:py-32">
+        <div class="container mx-auto px-6 text-center bg-black bg-opacity-50 rounded-lg py-10">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Location de Voiture Facile à Agadir</h1>
+            <p class="text-lg md:text-xl mb-8">Découvrez notre flotte diversifiée, offrant luxe, économie et 4x4 pour chaque aventure.</p>
+            <a href="#reservation" class="bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700 transition duration-300">Voir les Voitures & Réserver</a>
         </div>
     </section>
 
-    <!-- Reservation Form Section (Select voiture modifié) -->
-    <section id="reservation-rapide" class="py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-            <div class="bg-white p-6 md:p-10 rounded-lg shadow-xl max-w-3xl mx-auto">
-                <h2 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-8">Réservation Rapide</h2>
+    <!-- Reservation Form Section -->
+    <section id="reservation" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-6 max-w-4xl">
+            <div class="bg-white p-8 rounded-lg shadow-xl">
+                <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Réservation Rapide</h2>
+
+                <!-- Message Box -->
+                <div id="message-box" class="hidden p-4 rounded-md text-center mb-6"></div>
+
+                <!-- Formulaire -->
                 <form id="booking-form" class="space-y-6">
-                    <!-- Personal Info -->
+                     <!-- Web3Forms Hidden Inputs -->
+                     <input type="hidden" name="subject" value="Nouvelle demande de réservation - Palace Cars">
+                     <input type="hidden" name="from_name" value="Palace Cars Réservation">
+                     <!-- Remplacer par votre clé -->
+                     <input type="hidden" name="access_key" value="9a2470af-9163-405c-abc9-3aafd98b14fd">
+                     <input type="hidden" name="redirect" value="https://web3forms.com/success"> <!-- Optionnel: page de succès -->
+
+                    <!-- Champs Client -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="nomPrenom" class="block text-sm font-medium text-gray-700 mb-1">Nom et Prénom <span class="text-red-500">*</span></label>
-                            <input type="text" id="nomPrenom" name="nomPrenom" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Votre nom complet">
+                            <label for="nomPrenom" class="block text-sm font-medium text-gray-700">Nom et Prénom <span class="text-red-500">*</span></label>
+                            <input type="text" id="nomPrenom" name="nomPrenom" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div>
-                            <label for="telephone" class="block text-sm font-medium text-gray-700 mb-1">Numéro de Téléphone <span class="text-red-500">*</span></label>
-                            <input type="tel" id="telephone" name="telephone" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="+212 6 XX XX XX XX">
+                            <label for="telephone" class="block text-sm font-medium text-gray-700">Numéro de Téléphone <span class="text-red-500">*</span></label>
+                            <input type="tel" id="telephone" name="telephone" required placeholder="+212 6 XX XX XX XX" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         </div>
-                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Adresse E-mail <span class="text-red-500">*</span></label>
-                            <input type="email" id="email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="votre.email@exemple.com">
-                        </div>
-                         <div>
-                             <label for="voiture" class="block text-sm font-medium text-gray-700 mb-1">Choisissez une voiture <span class="text-red-500">*</span></label>
-                             <select id="voiture" name="voiture" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white" disabled>
-                                 <option value="" disabled selected>-- Sélectionnez d'abord les dates --</option>
-                                 <!-- Options gérées dynamiquement par JavaScript -->
-                             </select>
-                             <p id="availability-loading" class="text-xs text-blue-600 mt-1 hidden">Vérification de la disponibilité...</p>
-                         </div>
+                    </div>
+                     <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Adresse E-mail <span class="text-red-500">*</span></label>
+                        <input type="email" id="email" name="email" required placeholder="votre.email@exemple.com" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
-                    <!-- Pickup & Return Details (inputs pour date/heure) -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="lieuPriseEnCharge" class="block text-sm font-medium text-gray-700 mb-1">Lieu de Prise en Charge <span class="text-red-500">*</span></label>
-                            <input type="text" id="lieuPriseEnCharge" name="lieuPriseEnCharge" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="ex: Aéroport Agadir, Votre hôtel...">
-                        </div>
-                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="datePriseEnCharge" class="block text-sm font-medium text-gray-700 mb-1">Date Début <span class="text-red-500">*</span></label>
-                                <input type="date" id="datePriseEnCharge" name="datePriseEnCharge" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label for="heurePriseEnCharge" class="block text-sm font-medium text-gray-700 mb-1">Heure Début <span class="text-red-500">*</span></label>
-                                <input type="time" id="heurePriseEnCharge" name="heurePriseEnCharge" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Champs Lieu -->
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div>
-                            <label for="lieuRetour" class="block text-sm font-medium text-gray-700 mb-1">Lieu de Retour <span class="text-red-500">*</span></label>
-                            <input type="text" id="lieuRetour" name="lieuRetour" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="ex: Aéroport Agadir, Votre hôtel...">
+                        <div>
+                            <label for="lieuPriseEnCharge" class="block text-sm font-medium text-gray-700">Lieu de Prise en Charge <span class="text-red-500">*</span></label>
+                            <input type="text" id="lieuPriseEnCharge" name="lieuPriseEnCharge" required placeholder="ex: Aéroport Agadir, Votre hôtel..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                         </div>
-                         <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="lieuRetour" class="block text-sm font-medium text-gray-700">Lieu de Retour <span class="text-red-500">*</span></label>
+                            <input type="text" id="lieuRetour" name="lieuRetour" required placeholder="ex: Aéroport Agadir, Votre hôtel..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <!-- Champs Date et Heure -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label for="dateRetour" class="block text-sm font-medium text-gray-700 mb-1">Date Fin <span class="text-red-500">*</span></label>
-                                <input type="date" id="dateRetour" name="dateRetour" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <label for="datePriseEnCharge" class="block text-sm font-medium text-gray-700">Date Début <span class="text-red-500">*</span></label>
+                                <input type="date" id="datePriseEnCharge" name="datePriseEnCharge" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div>
-                                <label for="heureRetour" class="block text-sm font-medium text-gray-700 mb-1">Heure Fin <span class="text-red-500">*</span></label>
-                                <input type="time" id="heureRetour" name="heureRetour" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <label for="heurePriseEnCharge" class="block text-sm font-medium text-gray-700">Heure Début <span class="text-red-500">*</span></label>
+                                <input type="time" id="heurePriseEnCharge" name="heurePriseEnCharge" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label for="dateRetour" class="block text-sm font-medium text-gray-700">Date Fin <span class="text-red-500">*</span></label>
+                                <input type="date" id="dateRetour" name="dateRetour" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label for="heureRetour" class="block text-sm font-medium text-gray-700">Heure Fin <span class="text-red-500">*</span></label>
+                                <input type="time" id="heureRetour" name="heureRetour" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Message Section -->
-                    <div id="message-box" class="hidden p-4 rounded-md text-center"></div>
-
-                    <!-- Submit Button -->
-                    <div class="text-center">
-                        <button type="submit" id="submit-button" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 flex items-center justify-center mx-auto disabled:opacity-50">
-                            <span>Soumettre la Demande</span>
-                            <span id="submit-spinner" class="loader hidden"></span>
+                    <!-- Bouton Vérifier Disponibilité -->
+                    <div class="text-center pt-2">
+                        <button type="button" id="check-availability-button" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-300 flex items-center justify-center mx-auto disabled:opacity-50">
+                            <span>Vérifier la Disponibilité</span>
+                            <span id="availability-spinner" class="loader !border-t-white !border-l-white hidden ml-2"></span>
                         </button>
                     </div>
-                </form>
+
+                    <!-- Champ caché pour stocker la voiture sélectionnée -->
+                     <input type="hidden" id="selectedCar" name="voiture">
+
+                </form> <!-- Fin du formulaire initial -->
+
+                 <!-- Section pour afficher les voitures disponibles (initiallement cachée) -->
+                 <div id="available-cars-section" class="mt-10 hidden">
+                    <h3 class="text-2xl font-semibold text-center text-gray-800 mb-6">Voitures Disponibles pour cette période</h3>
+                    <div id="available-cars-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Les cartes de voitures seront injectées ici par JS -->
+                    </div>
+                    <p id="no-cars-message" class="text-center text-gray-600 mt-4 hidden">Aucune voiture disponible pour les dates sélectionnées.</p>
+
+                    <!-- Bouton Soumettre Final (initiallement caché) -->
+                    <div class="text-center mt-8">
+                        <button type="button" id="submit-booking-button" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 hidden flex items-center justify-center mx-auto disabled:opacity-50">
+                            <span>Soumettre la Demande de Réservation</span>
+                            <span id="submit-spinner" class="loader !border-t-white !border-l-white hidden ml-2"></span>
+                        </button>
+                    </div>
+                 </div>
+
             </div>
         </div>
     </section>
 
-     <!-- Flotte Section (inchangée) -->
-     <section id="flotte" class="py-16 bg-white"> /* ... (contenu inchangé) ... */ </section>
+    <!-- Featured Cars Section -->
+    <section id="flotte" class="py-16">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Notre Flotte Populaire</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Car Card 1 -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://placehold.co/400x250/cccccc/333333?text=Logan+Diesel+24" alt="Dacia Logan Diesel 2024" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Logan Diesel 2024</h3>
+                        <p class="text-gray-600 mb-4">Économique et fiable, idéale pour la ville et les trajets courts.</p>
+                        <p class="text-lg font-bold text-blue-600">250 Dhs / jour</p>
+                    </div>
+                </div>
+                <!-- Car Card 2 -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://placehold.co/400x250/cccccc/333333?text=Logan+Diesel+25" alt="Dacia Logan Diesel 2025" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Logan Diesel 2025</h3>
+                        <p class="text-gray-600 mb-4">Le dernier modèle, confort et économie améliorés.</p>
+                        <p class="text-lg font-bold text-blue-600">250 Dhs / jour</p>
+                    </div>
+                </div>
+                <!-- Car Card 3 -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://placehold.co/400x250/cccccc/333333?text=Sandero+Essence" alt="Dacia Sandero Essence" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Sandero Essence</h3>
+                        <p class="text-gray-600 mb-4">Compacte et agile, parfaite pour explorer la ville.</p>
+                        <p class="text-lg font-bold text-blue-600">300 Dhs / jour</p>
+                    </div>
+                </div>
+                 <!-- Car Card 4 -->
+                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img src="https://placehold.co/400x250/cccccc/333333?text=Sandero+Diesel" alt="Dacia Sandero Diesel" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Sandero Diesel</h3>
+                        <p class="text-gray-600 mb-4">Version diesel économique pour plus de kilomètres.</p>
+                        <p class="text-lg font-bold text-blue-600">250 Dhs / jour</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <!-- Services Section (inchangée) -->
-     <section id="services" class="py-16 bg-gray-50"> /* ... (contenu inchangé) ... */ </section>
+    <!-- Services Section -->
+    <section id="services" class="py-16 bg-gray-200">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-10">Nos Services</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-3">Livraison Aéroport</h3>
+                    <p class="text-gray-600">Récupérez votre voiture dès votre arrivée à l'aéroport d'Agadir.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-3">Assistance 24/7</h3>
+                    <p class="text-gray-600">Nous sommes disponibles à tout moment en cas de besoin.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-3">Kilométrage Illimité</h3>
+                    <p class="text-gray-600">Explorez sans limites avec nos offres de kilométrage illimité.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <!-- Footer (inchangé) -->
-    <footer id="contact" class="bg-gray-800 text-gray-300 py-10"> /* ... (contenu inchangé) ... */ </footer>
+    <!-- FAQ Section (Placeholder) -->
+    <section id="faq" class="py-16">
+         <div class="container mx-auto px-6 max-w-3xl">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Questions Fréquentes (FAQ)</h2>
+            <div class="space-y-4">
+                <details class="bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <summary class="font-semibold">Quels documents sont nécessaires pour louer ?</summary>
+                    <p class="mt-2 text-gray-600">Vous aurez besoin de votre permis de conduire valide, d'une pièce d'identité (passeport ou CIN) et d'une carte de crédit pour la caution.</p>
+                </details>
+                 <details class="bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <summary class="font-semibold">Quel est l'âge minimum pour louer ?</summary>
+                    <p class="mt-2 text-gray-600">L'âge minimum est généralement de 21 ans avec un permis de conduire valide depuis au moins un an. Des conditions spécifiques peuvent s'appliquer pour certaines catégories de véhicules.</p>
+                </details>
+                 <details class="bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <summary class="font-semibold">L'assurance est-elle incluse ?</summary>
+                    <p class="mt-2 text-gray-600">Oui, nos tarifs incluent une assurance responsabilité civile et une assurance de base contre les dommages avec franchise. Des options d'assurance complémentaire sont disponibles.</p>
+                </details>
+            </div>
+        </div>
+    </section>
 
-    <!-- Script Firebase, Web3Forms et Disponibilité -->
+    <!-- Contact Section -->
+    <section id="contact" class="py-16 bg-blue-700 text-white">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold mb-6">Contactez-Nous</h2>
+            <p class="mb-8">Pour toute question ou demande spécifique, n'hésitez pas à nous appeler ou nous envoyer un message.</p>
+            <p class="text-xl font-semibold mb-2"><i class="fas fa-phone mr-2"></i> +212 659 198 122</p>
+            <p class="text-lg"><i class="fas fa-envelope mr-2"></i> contact@palacecars.ma</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; 2025 PalaceCars - Tous droits réservés.</p>
+             <!-- Lien Admin supprimé du footer public -->
+        </div>
+    </footer>
+
+
+    <!-- Script Firebase & Logique -->
     <script type="module">
-        // Imports Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, where, Timestamp, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDocs, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // setLogLevel('debug'); // Pour debug
 
-        // Configuration Firebase
+        // --- Configuration Firebase (UTILISEZ VOTRE VRAIE CONFIG) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
-            authDomain: "palace-cars.firebaseapp.com",
-            projectId: "palace-cars",
-            storageBucket: "palace-cars.firebasestorage.app",
-            messagingSenderId: "469852272715",
-            appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
-            measurementId: "G-KCEF4WBW0G"
+             apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+             authDomain: "palace-cars.firebaseapp.com",
+             projectId: "palace-cars",
+             storageBucket: "palace-cars.firebasestorage.app",
+             messagingSenderId: "469852272715",
+             appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+             measurementId: "G-KCEF4WBW0G"
         };
 
-        // --- Initialisation Firebase ---
+        // --- Initialize Firebase ---
         let db;
         let bookingsCollectionRef;
-        let unavailabilityPeriodsCollectionRef; // Périodes spécifiques
-        let carManualStatusCollectionRef;     // Statut manuel (maintenance)
+        let unavailabilityPeriodsCollectionRef;
+        let carManualStatusCollectionRef;
+        let dbReady = false;
         try {
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             bookingsCollectionRef = collection(db, "palace_cars_bookings");
             unavailabilityPeriodsCollectionRef = collection(db, "car_unavailability_periods");
             carManualStatusCollectionRef = collection(db, "car_manual_status");
-            console.log("Firebase initialisé.");
-            // setLogLevel('debug');
+            dbReady = true;
+            console.log("Firebase initialisé avec succès.");
         } catch (error) {
-            console.error("Erreur Firebase:", error);
-            showMessage("Erreur critique: Service de réservation indisponible.", 'error');
+            console.error("Erreur critique d'initialisation Firebase:", error);
+            showMessage("Erreur de connexion à la base de données. Veuillez réessayer plus tard.", 'error');
         }
+
+        // --- Liste des Voitures et Prix ---
+        const carFleet = {
+            "Dacia Logan Diesel 2024": { price: 250, image: "https://placehold.co/300x200/cccccc/333333?text=Logan+Diesel+24" },
+            "Dacia Logan Diesel 2025": { price: 250, image: "https://placehold.co/300x200/cccccc/333333?text=Logan+Diesel+25" },
+            "Dacia Sandero Essence": { price: 300, image: "https://placehold.co/300x200/cccccc/333333?text=Sandero+Essence" },
+            "Dacia Sandero Diesel": { price: 250, image: "https://placehold.co/300x200/cccccc/333333?text=Sandero+Diesel" },
+            // Ajoutez d'autres voitures ici si nécessaire
+        };
+        const carNames = Object.keys(carFleet); // ["Dacia Logan...", "Dacia Sandero...", ...]
 
         // --- DOM Elements ---
         const form = document.getElementById('booking-form');
         const messageBox = document.getElementById('message-box');
-        const submitButton = document.getElementById('submit-button');
+        const checkAvailabilityButton = document.getElementById('check-availability-button');
+        const availabilitySpinner = document.getElementById('availability-spinner');
+        const availableCarsSection = document.getElementById('available-cars-section');
+        const availableCarsListDiv = document.getElementById('available-cars-list');
+        const noCarsMessage = document.getElementById('no-cars-message');
+        const submitBookingButton = document.getElementById('submit-booking-button');
         const submitSpinner = document.getElementById('submit-spinner');
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const carSelect = document.getElementById('voiture');
-        const pickupDateInput = document.getElementById('datePriseEnCharge');
-        const pickupTimeInput = document.getElementById('heurePriseEnCharge');
-        const returnDateInput = document.getElementById('dateRetour');
-        const returnTimeInput = document.getElementById('heureRetour');
-        const availabilityLoading = document.getElementById('availability-loading');
+        const selectedCarInput = document.getElementById('selectedCar'); // Champ caché
 
-        // --- Liste des Voitures ---
-        const allCarOptions = [ // Doit correspondre à admin.html
-            { value: "Dacia Logan Diesel 2024", text: "Dacia Logan Diesel 2024 (250 Dhs/j)" },
-            { value: "Dacia Logan Diesel 2025", text: "Dacia Logan Diesel 2025 (250 Dhs/j)" },
-            { value: "Dacia Sandero Essence", text: "Dacia Sandero Essence (300 Dhs/j)" },
-            { value: "Dacia Sandero Diesel", text: "Dacia Sandero Diesel (250 Dhs/j)" },
-            { value: "Autre / Pas de préférence", text: "Autre / Pas de préférence" }
-        ];
+        // Champs du formulaire
+        const nomPrenomInput = document.getElementById('nomPrenom');
+        const telephoneInput = document.getElementById('telephone');
+        const emailInput = document.getElementById('email');
+        const lieuPriseEnChargeInput = document.getElementById('lieuPriseEnCharge');
+        const lieuRetourInput = document.getElementById('lieuRetour');
+        const datePriseEnChargeInput = document.getElementById('datePriseEnCharge');
+        const heurePriseEnChargeInput = document.getElementById('heurePriseEnCharge');
+        const dateRetourInput = document.getElementById('dateRetour');
+        const heureRetourInput = document.getElementById('heureRetour');
 
-        let unavailabilityPeriods = []; // Cache pour les périodes d'indisponibilité
-        let carManualStatuses = new Map(); // Cache pour les statuts manuels { carName -> 'unavailable' | 'available' }
+        let selectedCarName = null; // Pour stocker la voiture sélectionnée
 
-        // --- Mobile Menu Toggle ---
-        if (mobileMenuButton && mobileMenu) { /* ... */
-            mobileMenuButton.addEventListener('click', () => { mobileMenu.classList.toggle('hidden'); });
-            mobileMenu.querySelectorAll('a').forEach(link => { link.addEventListener('click', () => mobileMenu.classList.add('hidden')); });
+        // --- Fonctions Utilitaires ---
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-yellow-100', 'text-yellow-700');
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-700');
+            } else if (type === 'warning') {
+                 messageBox.classList.add('bg-yellow-100', 'text-yellow-700');
+            } else { // info default
+                messageBox.classList.add('bg-blue-100', 'text-blue-700');
+            }
+             messageBox.classList.remove('hidden');
+            // Hide after 7 seconds
+            setTimeout(() => { messageBox.classList.add('hidden'); }, 7000);
         }
 
-        // --- Initialisation et Écouteurs ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const today = new Date().toISOString().split('T')[0];
-            pickupDateInput.min = today;
-            returnDateInput.min = today;
-
-            // Écouter les changements de disponibilité (périodes et statuts)
-            listenForAvailabilityChanges();
-
-            // Écouter les changements de date/heure
-            [pickupDateInput, pickupTimeInput, returnDateInput, returnTimeInput].forEach(input => {
-                input.addEventListener('change', updateCarSelectAvailability);
-            });
-
-            // Charger initialement les options désactivées
-            populateCarSelect();
-        });
-
-        // --- Écouter les Changements de Disponibilité (Périodes et Statuts Manuels) ---
-        function listenForAvailabilityChanges() {
-            if (!db) return;
-            console.log("Écoute des changements de disponibilité (périodes et statuts)...");
-
-            // 1. Écouter les périodes d'indisponibilité
-            const now = Timestamp.now();
-            const periodsQuery = query(unavailabilityPeriodsCollectionRef, where("endDate", ">=", now));
-            onSnapshot(periodsQuery, (snapshot) => {
-                unavailabilityPeriods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                console.log("Périodes d'indisponibilité mises à jour:", unavailabilityPeriods);
-                updateCarSelectAvailability(); // Mettre à jour le selecteur
-            }, (error) => {
-                console.error("Erreur écoute périodes:", error);
-                showMessage("Erreur mise à jour disponibilités (périodes).", "warning");
-            });
-
-            // 2. Écouter les statuts manuels
-            const statusQuery = query(carManualStatusCollectionRef);
-            onSnapshot(statusQuery, (snapshot) => {
-                 const newStatuses = new Map();
-                 snapshot.forEach((doc) => {
-                     newStatuses.set(doc.id, doc.data().status); // doc.id est le nom de la voiture
-                 });
-                 carManualStatuses = newStatuses;
-                 console.log("Statuts manuels mis à jour:", carManualStatuses);
-                 updateCarSelectAvailability(); // Mettre à jour le selecteur
-            }, (error) => {
-                console.error("Erreur écoute statuts manuels:", error);
-                showMessage("Erreur mise à jour disponibilités (statuts).", "warning");
-            });
-        }
-
-        // --- Mise à jour du Selecteur de Voiture (Vérifie périodes ET statut manuel) ---
-        function updateCarSelectAvailability() {
-            const pickupDateStr = pickupDateInput.value;
-            const pickupTimeStr = pickupTimeInput.value;
-            const returnDateStr = returnDateInput.value;
-            const returnTimeStr = returnTimeInput.value;
-
-            // Vérifier si toutes les dates/heures sont remplies
-            if (!pickupDateStr || !pickupTimeStr || !returnDateStr || !returnTimeStr) {
-                populateCarSelect(); // Afficher "-- Sélectionnez dates --"
-                return;
-            }
-
-            availabilityLoading.classList.remove('hidden');
-
-            const userPickupDateTime = new Date(`${pickupDateStr}T${pickupTimeStr}:00`);
-            const userReturnDateTime = new Date(`${returnDateStr}T${returnTimeStr}:00`);
-
-            // Valider les dates
-            if (isNaN(userPickupDateTime.getTime()) || isNaN(userReturnDateTime.getTime()) || userPickupDateTime >= userReturnDateTime) {
-                 populateCarSelect(); // Garder désactivé
-                 availabilityLoading.classList.add('hidden');
-                 if (userPickupDateTime >= userReturnDateTime) {
-                    showMessage("La date/heure de retour doit être après la prise en charge.", "warning");
-                 }
-                return;
-            }
-
-            // Convertir en Timestamps Firestore pour la comparaison
-            const userStartTimestamp = Timestamp.fromDate(userPickupDateTime);
-            const userEndTimestamp = Timestamp.fromDate(userReturnDateTime);
-
-            const unavailableCarsInfo = new Map(); // Stocke pourquoi une voiture est indispo { carName -> "manual" | "period" }
-
-            // 1. Vérifier le statut manuel
-            carManualStatuses.forEach((status, carName) => {
-                if (status === 'unavailable') {
-                    unavailableCarsInfo.set(carName, "manual"); // Marquer comme indispo manuellement
-                }
-            });
-
-            // 2. Vérifier les périodes d'indisponibilité (si pas déjà marqué comme indispo manuellement)
-            unavailabilityPeriods.forEach(period => {
-                const carName = period.car;
-                // Si la voiture n'est pas déjà marquée indispo manuellement
-                if (!unavailableCarsInfo.has(carName)) {
-                    // Vérifier le chevauchement : (DébutClient < FinPériode) ET (FinClient > DébutPériode)
-                    if (userStartTimestamp.seconds < period.endDate.seconds && userEndTimestamp.seconds > period.startDate.seconds) {
-                        unavailableCarsInfo.set(carName, "period"); // Marquer comme indispo à cause d'une période
-                    }
-                }
-            });
-
-            console.log("Voitures indisponibles pour la période:", unavailableCarsInfo);
-            populateCarSelect(unavailableCarsInfo); // Mettre à jour le selecteur
-            availabilityLoading.classList.add('hidden');
-        }
-
-        // --- Remplir le Selecteur de Voiture ---
-        function populateCarSelect(unavailableCarsInfo = null) {
-            carSelect.innerHTML = ''; // Vider
-
-            // Si aucune date n'est sélectionnée ou si la map est null
-            if (!unavailableCarsInfo) {
-                const defaultOption = document.createElement('option');
-                defaultOption.value = ""; defaultOption.textContent = "-- Sélectionnez d'abord les dates --";
-                defaultOption.disabled = true; defaultOption.selected = true;
-                carSelect.appendChild(defaultOption);
-                carSelect.disabled = true; return;
-            }
-
-            const placeholderOption = document.createElement('option');
-             placeholderOption.value = ""; placeholderOption.textContent = "Sélectionnez un modèle";
-             placeholderOption.disabled = true; placeholderOption.selected = true;
-             carSelect.appendChild(placeholderOption);
-
-            let availableCount = 0;
-            allCarOptions.forEach(carInfo => {
-                const option = document.createElement('option');
-                option.value = carInfo.value;
-                const isUnavailable = unavailableCarsInfo.has(carInfo.value);
-
-                option.textContent = carInfo.text + (isUnavailable ? " (Indisponible)" : " (Disponible)");
-                option.disabled = isUnavailable;
-                if (isUnavailable) {
-                    option.style.color = '#9ca3af';
-                } else if (carInfo.value !== "Autre / Pas de préférence") { // Ne pas compter "Autre" comme disponible
-                    availableCount++;
-                }
-
-                carSelect.appendChild(option);
-            });
-
-            // Si aucune voiture n'est disponible (sauf "Autre")
-            if (availableCount === 0 && carSelect.querySelector('option[value="Autre / Pas de préférence"]')) {
-                 // On peut laisser "Autre" sélectionnable, ou ajouter un message
-                 console.log("Aucune voiture spécifique disponible pour ces dates.");
-            }
-
-            carSelect.disabled = false; // Activer le selecteur
-        }
-
-        // --- Logique de Soumission du Formulaire (Firestore + Web3Forms - ajustée validation) ---
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!db) { showMessage("Service indisponible.", 'error'); return; }
-
-            // Récupérer les dates/heures sélectionnées par l'utilisateur
-            const pickupDateStr = pickupDateInput.value;
-            const pickupTimeStr = pickupTimeInput.value;
-            const returnDateStr = returnDateInput.value;
-            const returnTimeStr = returnTimeInput.value;
-            const selectedCarValue = carSelect.value;
-
-             // Vérification finale si une voiture est sélectionnée et si elle est disponible
-            if (!selectedCarValue || selectedCarValue === "") {
-                showMessage("Veuillez choisir une voiture.", 'error'); return;
-            }
-             const selectedCarOption = carSelect.options[carSelect.selectedIndex];
-             if (selectedCarOption && selectedCarOption.disabled) {
-                showMessage("La voiture sélectionnée est indisponible pour ces dates.", 'error');
-                return; // Empêche la soumission
-             }
-             if (!pickupDateStr || !pickupTimeStr || !returnDateStr || !returnTimeStr) {
-                  showMessage("Veuillez sélectionner les dates et heures.", 'error'); return;
-             }
-
-
-            submitButton.disabled = true; submitSpinner.classList.remove('hidden');
-            submitButton.querySelector('span').textContent = "Envoi...";
-            showMessage('Envoi de votre demande...', 'loading');
-
-            const formData = new FormData(form);
-            const bookingDataFirestore = {
-                nomPrenom: formData.get('nomPrenom')?.trim() || null,
-                telephone: formData.get('telephone')?.trim() || null,
-                email: formData.get('email')?.trim() || null,
-                voiture: selectedCarValue, // Utiliser la valeur validée
-                lieuPriseEnCharge: formData.get('lieuPriseEnCharge')?.trim() || null,
-                datePriseEnCharge: pickupDateStr,
-                heurePriseEnCharge: pickupTimeStr,
-                lieuRetour: formData.get('lieuRetour')?.trim() || null,
-                dateRetour: returnDateStr,
-                heureRetour: returnTimeStr,
-                timestamp: serverTimestamp(),
-                confirmed: false,
-                deleted: false
-            };
-             const objectForWeb3Forms = { ...Object.fromEntries(formData), voiture: selectedCarValue }; // S'assurer que la bonne voiture est envoyée
-             objectForWeb3Forms.subject = `Nouvelle Réservation: ${bookingDataFirestore.voiture || 'N/A'} - ${bookingDataFirestore.nomPrenom || 'N/A'}`;
-             objectForWeb3Forms.from_name = "Site Web Palace Cars";
-             objectForWeb3Forms.access_key = "9a2470af-9163-405c-abc9-3aafd98b14fd";
-
-            let firestoreSuccess = false;
+        // Convertit date (YYYY-MM-DD) et heure (HH:MM) en objet Date JS
+        function getDateTimeObject(dateStr, timeStr) {
+            if (!dateStr || !timeStr) return null;
             try {
-                // Enregistrer la réservation
-                const docRef = await addDoc(bookingsCollectionRef, bookingDataFirestore);
-                console.log("Firestore Réservation OK:", docRef.id);
-                firestoreSuccess = true;
+                return new Date(`${dateStr}T${timeStr}:00`); // Ajout des secondes pour éviter problèmes fuseau horaire
+            } catch (e) {
+                console.error("Erreur conversion date/heure:", dateStr, timeStr, e);
+                return null;
+            }
+        }
 
-                // Ajouter automatiquement une période d'indisponibilité pour cette réservation
-                // Convertir les dates/heures en Timestamps pour la période
-                 const startDateTime = new Date(`${pickupDateStr}T${pickupTimeStr}:00`);
-                 const endDateTime = new Date(`${returnDateStr}T${returnTimeStr}:00`);
-                 if (!isNaN(startDateTime.getTime()) && !isNaN(endDateTime.getTime())) {
-                     try {
-                        await addDoc(unavailabilityPeriodsCollectionRef, {
-                            car: selectedCarValue,
-                            startDate: Timestamp.fromDate(startDateTime),
-                            endDate: Timestamp.fromDate(endDateTime),
-                            type: 'booking', // Marquer comme venant d'une réservation
-                            bookingId: docRef.id // Lier à la réservation
-                        });
-                        console.log("Période d'indisponibilité ajoutée pour la réservation:", docRef.id);
-                     } catch (periodError) {
-                         console.error("Erreur ajout période d'indisponibilité:", periodError);
-                         // Continuer même si l'ajout de période échoue, mais logguer l'erreur
+        // --- Logique de Vérification de Disponibilité ---
+        checkAvailabilityButton.addEventListener('click', async () => {
+            if (!dbReady) {
+                showMessage("La connexion à la base de données n'est pas prête. Réessayez.", "error");
+                return;
+            }
+
+            // Récupérer et valider les dates
+            const startDateStr = datePriseEnChargeInput.value;
+            const startTimeStr = heurePriseEnChargeInput.value;
+            const endDateStr = dateRetourInput.value;
+            const endTimeStr = heureRetourInput.value;
+
+            if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
+                showMessage("Veuillez sélectionner les dates et heures de début et de fin.", "warning");
+                return;
+            }
+
+            const pickupDateTime = getDateTimeObject(startDateStr, startTimeStr);
+            const returnDateTime = getDateTimeObject(endDateStr, endTimeStr);
+
+            if (!pickupDateTime || !returnDateTime) {
+                showMessage("Format de date ou d'heure invalide.", "error");
+                return;
+            }
+
+            if (pickupDateTime >= returnDateTime) {
+                showMessage("La date/heure de retour doit être après la date/heure de prise en charge.", "warning");
+                return;
+            }
+
+            // Afficher le spinner et désactiver le bouton
+            availabilitySpinner.classList.remove('hidden');
+            checkAvailabilityButton.disabled = true;
+            availableCarsSection.classList.add('hidden'); // Cacher ancienne liste
+            availableCarsListDiv.innerHTML = '';
+            noCarsMessage.classList.add('hidden');
+            submitBookingButton.classList.add('hidden'); // Cacher bouton soumettre final
+            selectedCarName = null; // Réinitialiser voiture sélectionnée
+            selectedCarInput.value = '';
+
+            try {
+                // 1. Récupérer les statuts manuels
+                const manualStatusSnapshot = await getDocs(carManualStatusCollectionRef);
+                const manuallyUnavailableCars = new Set();
+                manualStatusSnapshot.forEach(doc => {
+                    if (doc.data().status === 'unavailable') {
+                        manuallyUnavailableCars.add(doc.id); // doc.id est le nom de la voiture
+                    }
+                });
+
+                // 2. Récupérer les périodes d'indisponibilité qui chevauchent
+                const pickupTimestamp = Timestamp.fromDate(pickupDateTime);
+                const returnTimestamp = Timestamp.fromDate(returnDateTime);
+
+                 // Requête pour trouver les périodes qui se chevauchent
+                 // Une période P chevauche une demande D si :
+                 // P.start < D.end ET P.end > D.start
+                const qPeriods = query(unavailabilityPeriodsCollectionRef,
+                   where("startDate", "<", returnTimestamp) // Période commence avant la fin de la demande
+                   // Nous devons filtrer la fin après récupération car Firestore ne permet pas deux inégalités sur des champs différents
+                 );
+                 const periodsSnapshot = await getDocs(qPeriods);
+                 const unavailableCarsInPeriod = new Set();
+
+                periodsSnapshot.forEach(doc => {
+                    const period = doc.data();
+                     // Vérification finale du chevauchement (P.end > D.start)
+                     if (period.endDate.toDate() > pickupDateTime) {
+                        unavailableCarsInPeriod.add(period.car);
                      }
-                 }
+                 });
+
+
+                // 3. Filtrer la flotte
+                const availableCars = carNames.filter(carName =>
+                    !manuallyUnavailableCars.has(carName) && !unavailableCarsInPeriod.has(carName)
+                );
+
+                // 4. Afficher les résultats
+                availableCarsSection.classList.remove('hidden');
+                if (availableCars.length === 0) {
+                    noCarsMessage.classList.remove('hidden');
+                } else {
+                    availableCars.forEach(carName => {
+                        const carData = carFleet[carName];
+                        if (carData) {
+                            availableCarsListDiv.appendChild(createCarCard(carName, carData));
+                        }
+                    });
+                }
 
             } catch (error) {
-                console.error("Erreur Firestore:", error);
-                showMessage("Erreur lors de l'enregistrement. Réessayez.", 'error');
-                resetSubmitButton(); return;
-            }
-
-            // Envoyer l'email Web3Forms seulement après succès Firestore
-            if (firestoreSuccess) {
-                console.log("Envoi Web3Forms...");
-                 try {
-                     const response = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(objectForWeb3Forms) });
-                     const result = await response.json();
-                     if (result.success) {
-                         console.log('Web3Forms OK:', result);
-                         showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
-                     } else {
-                         console.error('Web3Forms Erreur:', result);
-                         showMessage(`Demande enregistrée, mais l'envoi de l'email a échoué. Vous serez contacté.`, 'warning');
-                     }
-                 } catch (error) {
-                     console.error('Web3Forms Fetch Erreur:', error);
-                     showMessage("Demande enregistrée, mais erreur réseau email. Vous serez contacté.", 'warning');
-                 } finally {
-                     form.reset(); populateCarSelect(); // Reset form et selecteur
-                     resetSubmitButton();
-                 }
+                console.error("Erreur lors de la vérification de disponibilité:", error);
+                showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error");
+            } finally {
+                availabilitySpinner.classList.add('hidden');
+                checkAvailabilityButton.disabled = false;
             }
         });
 
-        // --- Helper Functions (inchangées) ---
-        function showMessage(msg, type) { /* ... */
-              messageBox.textContent = msg;
-            messageBox.className = 'p-4 rounded-md text-center text-sm ';
-            if (type === 'success') messageBox.classList.add('bg-green-100', 'text-green-700');
-            else if (type === 'error') messageBox.classList.add('bg-red-100', 'text-red-700');
-            else if (type === 'warning') messageBox.classList.add('bg-yellow-100', 'text-yellow-700');
-            else messageBox.classList.add('bg-blue-100', 'text-blue-700');
-            messageBox.classList.remove('hidden');
-            if (type !== 'error' && type !== 'loading') { setTimeout(() => { messageBox.classList.add('hidden'); }, 7000); }
+        // --- Création Carte Voiture Disponible ---
+        function createCarCard(carName, carData) {
+            const card = document.createElement('div');
+            card.className = 'car-card bg-white rounded-lg shadow-md overflow-hidden border-2 border-transparent transition duration-200 cursor-pointer'; // Ajout border-transparent
+            card.dataset.carName = carName;
+
+            card.innerHTML = `
+                <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-40 object-cover">
+                <div class="p-4">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-1">${carName}</h4>
+                    <p class="text-md font-bold text-blue-600 mb-3">${carData.price} Dhs / jour</p>
+                    <button type="button" class="select-car-button w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md text-sm transition duration-300">
+                        Sélectionner
+                    </button>
+                </div>
+            `;
+
+             // Event listener pour la sélection
+             card.addEventListener('click', () => {
+                 // Désélectionner toutes les autres cartes
+                 document.querySelectorAll('.car-card.selected').forEach(selectedCard => {
+                     selectedCard.classList.remove('selected');
+                     const btn = selectedCard.querySelector('.select-car-button');
+                     if (btn) {
+                        btn.textContent = 'Sélectionner';
+                        btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                     }
+                 });
+
+                 // Sélectionner cette carte
+                 card.classList.add('selected');
+                 const selectButton = card.querySelector('.select-car-button');
+                 if (selectButton) {
+                    selectButton.textContent = 'Sélectionnée ✔';
+                    selectButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    selectButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                 }
+
+                 // Mettre à jour la voiture sélectionnée et afficher le bouton de soumission final
+                 selectedCarName = carName;
+                 selectedCarInput.value = carName; // Mettre à jour le champ caché
+                 submitBookingButton.classList.remove('hidden');
+                 submitBookingButton.disabled = false; // S'assurer qu'il est activé
+                 submitSpinner.classList.add('hidden');
+             });
+
+            return card;
         }
-        function resetSubmitButton() { /* ... */
-              submitButton.disabled = false;
-            submitSpinner.classList.add('hidden');
-            submitButton.querySelector('span').textContent = "Soumettre la Demande";
-         }
+
+
+        // --- Logique de Soumission Finale ---
+        submitBookingButton.addEventListener('click', async () => {
+             if (!dbReady) {
+                 showMessage("La connexion à la base de données n'est pas prête.", "error"); return;
+             }
+             if (!selectedCarName) {
+                 showMessage("Veuillez d'abord sélectionner une voiture.", "warning"); return;
+             }
+            // Vérifier à nouveau si tous les champs sont remplis (sécurité)
+             const formData = new FormData(form);
+             const bookingData = Object.fromEntries(formData.entries());
+
+             // Valider les champs essentiels avant d'envoyer
+             const requiredFields = ['nomPrenom', 'telephone', 'email', 'lieuPriseEnCharge', 'lieuRetour', 'datePriseEnCharge', 'heurePriseEnCharge', 'dateRetour', 'heureRetour'];
+             for (const field of requiredFields) {
+                 if (!bookingData[field]) {
+                     showMessage(`Le champ "${document.querySelector(`label[for='${field}']`)?.textContent || field}" est requis.`, 'warning');
+                     return;
+                 }
+             }
+
+             submitBookingButton.disabled = true;
+             submitSpinner.classList.remove('hidden');
+             messageBox.classList.add('hidden'); // Cacher ancien message
+
+             const bookingDetails = {
+                 nomPrenom: bookingData.nomPrenom,
+                 telephone: bookingData.telephone,
+                 email: bookingData.email,
+                 lieuPriseEnCharge: bookingData.lieuPriseEnCharge,
+                 lieuRetour: bookingData.lieuRetour,
+                 datePriseEnCharge: bookingData.datePriseEnCharge,
+                 heurePriseEnCharge: bookingData.heurePriseEnCharge,
+                 dateRetour: bookingData.dateRetour,
+                 heureRetour: bookingData.heureRetour,
+                 voiture: selectedCarName, // Utiliser la variable JS
+                 timestamp: serverTimestamp(),
+                 confirmed: false, // Nouvelle demande par défaut
+                 deleted: false // Non supprimé par défaut
+             };
+
+             // 1. Enregistrer dans Firestore
+             let firestoreSuccess = false;
+             try {
+                 const docRef = await addDoc(bookingsCollectionRef, bookingDetails);
+                 console.log("Réservation enregistrée avec ID: ", docRef.id);
+                 firestoreSuccess = true;
+             } catch (error) {
+                 console.error("Erreur lors de l'enregistrement Firestore: ", error);
+                 showMessage("Erreur technique lors de l'enregistrement de votre demande. Veuillez réessayer.", 'error');
+                 submitBookingButton.disabled = false;
+                 submitSpinner.classList.add('hidden');
+                 return; // Arrêter si Firestore échoue
+             }
+
+             // 2. Envoyer via Web3Forms (si Firestore a réussi)
+             try {
+                // Préparer les données pour Web3Forms (l'objet doit être plat)
+                const objectForWeb3Forms = {
+                    ...bookingDetails, // Inclut tous les champs de bookingDetails
+                    access_key: bookingData.access_key, // Récupérer la clé depuis le champ caché
+                    subject: bookingData.subject,
+                    from_name: bookingData.from_name,
+                    redirect: bookingData.redirect,
+                    // Convertir le timestamp serveur potentiel en chaîne lisible pour l'email
+                    timestamp: new Date().toLocaleString('fr-FR')
+                };
+                 // Retirer les objets non sérialisables comme serverTimestamp()
+                delete objectForWeb3Forms.confirmed;
+                delete objectForWeb3Forms.deleted;
+
+
+                 const jsonPayload = JSON.stringify(objectForWeb3Forms);
+                 const web3Response = await fetch("https://api.web3forms.com/submit", {
+                     method: "POST",
+                     headers: {
+                         "Content-Type": "application/json",
+                         "Accept": "application/json"
+                     },
+                     body: jsonPayload
+                 });
+                 const result = await web3Response.json();
+                 if (result.success) {
+                     console.log('Web3Forms Success:', result);
+                     showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
+                     form.reset(); // Vider le formulaire
+                     availableCarsSection.classList.add('hidden'); // Cacher la section des voitures
+                     submitBookingButton.classList.add('hidden'); // Cacher le bouton soumettre
+                 } else {
+                     console.error('Web3Forms Error:', result);
+                     // Afficher une erreur mais la réservation est quand même dans Firestore
+                     showMessage("Votre demande a été enregistrée, mais l'envoi de l'e-mail de notification a échoué. Nous vous contacterons.", 'warning');
+                 }
+             } catch (web3Error) {
+                 console.error('Erreur fetch Web3Forms:', web3Error);
+                  showMessage("Votre demande a été enregistrée, mais l'envoi de l'e-mail de notification a échoué. Nous vous contacterons.", 'warning');
+             } finally {
+                 submitBookingButton.disabled = false;
+                 submitSpinner.classList.add('hidden');
+             }
+        });
 
     </script>
-
 </body>
 </html>
 
