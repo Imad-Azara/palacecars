@@ -6,6 +6,8 @@
     <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Ajout de Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Inter', sans-serif; }
         .hero-bg { background-image: url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center; } /* Example background */
@@ -28,6 +30,19 @@
             transform: scale(1.02);
             transition: all 0.2s ease-in-out;
         }
+        /* Ajustement pour les selects heure/minute */
+        .time-select-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        select {
+             -webkit-appearance: none;
+             -moz-appearance: none;
+             appearance: none;
+             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+             background-position: right 0.5rem center;
+             background-repeat: no-repeat;
+             background-size: 1.5em 1.5em;
+             padding-right: 2.5rem; /* Make space for arrow */
+        }
+
     </style>
 </head>
 <body class="bg-gray-100">
@@ -105,24 +120,34 @@
 
                     <!-- Champs Date et Heure -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label for="datePriseEnCharge" class="block text-sm font-medium text-gray-700">Date Début <span class="text-red-500">*</span></label>
-                                <input type="date" id="datePriseEnCharge" name="datePriseEnCharge" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label for="heurePriseEnCharge" class="block text-sm font-medium text-gray-700">Heure Début <span class="text-red-500">*</span></label>
-                                <input type="time" id="heurePriseEnCharge" name="heurePriseEnCharge" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <!-- Date et Heure de Début -->
+                        <div>
+                            <label for="datePriseEnCharge" class="block text-sm font-medium text-gray-700">Date & Heure Début <span class="text-red-500">*</span></label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="date" id="datePriseEnCharge" name="datePriseEnCharge" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <select id="heurePriseEnChargeHeure" name="heurePriseEnChargeHeure" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                    <option value="">Heure</option> <!-- MODIFICATION -->
+                                    <!-- Options ajoutées par JS -->
+                                </select>
+                                <select id="heurePriseEnChargeMinute" name="heurePriseEnChargeMinute" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                    <option value="">Minute</option> <!-- MODIFICATION -->
+                                    <!-- Options ajoutées par JS -->
+                                </select>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label for="dateRetour" class="block text-sm font-medium text-gray-700">Date Fin <span class="text-red-500">*</span></label>
-                                <input type="date" id="dateRetour" name="dateRetour" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label for="heureRetour" class="block text-sm font-medium text-gray-700">Heure Fin <span class="text-red-500">*</span></label>
-                                <input type="time" id="heureRetour" name="heureRetour" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                         <!-- Date et Heure de Fin -->
+                         <div>
+                            <label for="dateRetour" class="block text-sm font-medium text-gray-700">Date & Heure Fin <span class="text-red-500">*</span></label>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="date" id="dateRetour" name="dateRetour" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <select id="heureRetourHeure" name="heureRetourHeure" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                    <option value="">Heure</option> <!-- MODIFICATION -->
+                                    <!-- Options ajoutées par JS -->
+                                </select>
+                                <select id="heureRetourMinute" name="heureRetourMinute" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                    <option value="">Minute</option> <!-- MODIFICATION -->
+                                     <!-- Options ajoutées par JS -->
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -168,7 +193,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- Car Card 1 -->
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <img src="https://placehold.co/400x250/cccccc/333333?text=Logan+Diesel+24" alt="Dacia Logan Diesel 2024" class="w-full h-48 object-cover">
+                    <img src="https://placehold.co/300x200/cccccc/333333?text=Logan+Diesel+24" alt="Dacia Logan Diesel 2024" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+indispo';" >
                     <div class="p-6">
                         <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Logan Diesel 2024</h3>
                         <p class="text-gray-600 mb-4">Économique et fiable, idéale pour la ville et les trajets courts.</p>
@@ -177,7 +202,7 @@
                 </div>
                 <!-- Car Card 2 -->
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <img src="https://placehold.co/400x250/cccccc/333333?text=Logan+Diesel+25" alt="Dacia Logan Diesel 2025" class="w-full h-48 object-cover">
+                    <img src="https://placehold.co/300x200/cccccc/333333?text=Logan+Diesel+25" alt="Dacia Logan Diesel 2025" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+indispo';">
                     <div class="p-6">
                         <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Logan Diesel 2025</h3>
                         <p class="text-gray-600 mb-4">Le dernier modèle, confort et économie améliorés.</p>
@@ -186,7 +211,7 @@
                 </div>
                 <!-- Car Card 3 -->
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <img src="https://placehold.co/400x250/cccccc/333333?text=Sandero+Essence" alt="Dacia Sandero Essence" class="w-full h-48 object-cover">
+                    <img src="https://placehold.co/300x200/cccccc/333333?text=Sandero+Essence" alt="Dacia Sandero Essence" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+indispo';">
                     <div class="p-6">
                         <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Sandero Essence</h3>
                         <p class="text-gray-600 mb-4">Compacte et agile, parfaite pour explorer la ville.</p>
@@ -195,7 +220,7 @@
                 </div>
                  <!-- Car Card 4 -->
                  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                    <img src="https://placehold.co/400x250/cccccc/333333?text=Sandero+Diesel" alt="Dacia Sandero Diesel" class="w-full h-48 object-cover">
+                    <img src="https://placehold.co/300x200/cccccc/333333?text=Sandero+Diesel" alt="Dacia Sandero Diesel" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+indispo';">
                     <div class="p-6">
                         <h3 class="text-xl font-semibold mb-2 text-gray-800">Dacia Sandero Diesel</h3>
                         <p class="text-gray-600 mb-4">Version diesel économique pour plus de kilomètres.</p>
@@ -270,7 +295,7 @@
     <!-- Script Firebase & Logique -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDocs, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDoc, getDocs, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // setLogLevel('debug'); // Pour debug
 
@@ -333,16 +358,20 @@
         const lieuPriseEnChargeInput = document.getElementById('lieuPriseEnCharge');
         const lieuRetourInput = document.getElementById('lieuRetour');
         const datePriseEnChargeInput = document.getElementById('datePriseEnCharge');
-        const heurePriseEnChargeInput = document.getElementById('heurePriseEnCharge');
+        const heurePriseEnChargeHeureSelect = document.getElementById('heurePriseEnChargeHeure'); // NEW Select
+        const heurePriseEnChargeMinuteSelect = document.getElementById('heurePriseEnChargeMinute'); // NEW Select
         const dateRetourInput = document.getElementById('dateRetour');
-        const heureRetourInput = document.getElementById('heureRetour');
+        const heureRetourHeureSelect = document.getElementById('heureRetourHeure'); // NEW Select
+        const heureRetourMinuteSelect = document.getElementById('heureRetourMinute'); // NEW Select
 
         let selectedCarName = null; // Pour stocker la voiture sélectionnée
+        let currentPickupDateTime = null; // Stocker les dates pour la vérification finale
+        let currentReturnDateTime = null;
 
         // --- Fonctions Utilitaires ---
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
-            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-yellow-100', 'text-yellow-700');
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700', 'bg-yellow-100', 'text-yellow-700', 'bg-blue-100', 'text-blue-700'); // Clean all potential classes
             if (type === 'success') {
                 messageBox.classList.add('bg-green-100', 'text-green-700');
             } else if (type === 'error') {
@@ -357,97 +386,195 @@
             setTimeout(() => { messageBox.classList.add('hidden'); }, 7000);
         }
 
-        // Convertit date (YYYY-MM-DD) et heure (HH:MM) en objet Date JS
-        function getDateTimeObject(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return null;
+        // Convertit date (YYYY-MM-DD), heure (HH) et minute (MM) en objet Date JS
+        function getDateTimeObject(dateStr, hourStr, minuteStr) {
+            if (!dateStr || hourStr === "" || minuteStr === "") return null; // Check for empty selects
             try {
-                return new Date(`${dateStr}T${timeStr}:00`); // Ajout des secondes pour éviter problèmes fuseau horaire
+                // S'assurer que heure et minute sont formatées sur deux chiffres
+                const hour = hourStr.padStart(2, '0');
+                const minute = minuteStr.padStart(2, '0');
+                const dateTimeString = `${dateStr}T${hour}:${minute}:00`;
+                 // Vérifier si la date est valide
+                 const d = new Date(dateTimeString);
+                 if (isNaN(d.getTime())) {
+                     throw new Error("Invalid date/time string generated");
+                 }
+                return d;
             } catch (e) {
-                console.error("Erreur conversion date/heure:", dateStr, timeStr, e);
+                console.error("Erreur conversion date/heure:", dateStr, hourStr, minuteStr, e);
                 return null;
             }
         }
 
-        // --- Logique de Vérification de Disponibilité ---
+        // --- Remplissage des Selects Heure/Minute ---
+        function populateTimeSelects() {
+            const hourSelects = [heurePriseEnChargeHeureSelect, heureRetourHeureSelect];
+            const minuteSelects = [heurePriseEnChargeMinuteSelect, heureRetourMinuteSelect];
+
+            // Heures (00-23)
+            hourSelects.forEach(select => {
+                // Ne pas supprimer l'option placeholder existante
+                for (let i = 0; i < 24; i++) {
+                    const value = i.toString().padStart(2, '0');
+                    select.options.add(new Option(value, value));
+                }
+            });
+
+            // Minutes (00-59)
+            minuteSelects.forEach(select => {
+                 // Ne pas supprimer l'option placeholder existante
+                 for (let i = 0; i < 60; i++) { // Minutes de 0 à 59
+                    const value = i.toString().padStart(2, '0');
+                    select.options.add(new Option(value, value));
+                }
+            });
+        }
+        // Appeler au chargement de la page
+        document.addEventListener('DOMContentLoaded', populateTimeSelects);
+
+        // --- Vérification de Disponibilité Spécifique pour une Voiture et Période ---
+        async function isCarAvailable(carName, pickupDateTime, returnDateTime) {
+             if (!dbReady || !carName || !pickupDateTime || !returnDateTime) return false;
+
+             try {
+                 // 1. Vérifier le statut manuel
+                 const manualStatusDocRef = doc(db, "car_manual_status", carName);
+                 const manualStatusSnap = await getDoc(manualStatusDocRef);
+                 if (manualStatusSnap.exists() && manualStatusSnap.data().status === 'unavailable') {
+                     console.log(`${carName} est marqué indisponible manuellement.`);
+                     return false; // Indisponible manuellement
+                 }
+
+                 // 2. Vérifier les périodes d'indisponibilité
+                 const pickupTimestamp = Timestamp.fromDate(pickupDateTime);
+                 const returnTimestamp = Timestamp.fromDate(returnDateTime);
+
+                 // Requête pour trouver les périodes qui chevauchent la demande
+                 // Une période P chevauche une demande D si :
+                 // (P.start < D.end) ET (P.end > D.start)
+                 const qPeriods = query(
+                     unavailabilityPeriodsCollectionRef,
+                     where("car", "==", carName),
+                     where("startDate", "<", returnTimestamp) // Période commence avant la fin de la demande
+                     // La condition P.end > D.start est vérifiée en JS ci-dessous car Firestore ne supporte pas deux 'range filter' (<, >) sur des champs différents
+                 );
+                 const periodsSnapshot = await getDocs(qPeriods);
+                 let overlaps = false;
+                 periodsSnapshot.forEach(docSnap => {
+                     const period = docSnap.data();
+                     // Vérification finale du chevauchement (P.end > D.start)
+                     if (period.endDate.toDate() > pickupDateTime) {
+                         console.log(`${carName} indisponible car période ${docSnap.id} chevauche.`);
+                         overlaps = true;
+                     }
+                 });
+
+                 return !overlaps; // Disponible seulement s'il n'y a pas de chevauchement
+
+             } catch (error) {
+                 console.error(`Erreur vérification disponibilité pour ${carName}:`, error);
+                 // En cas d'erreur Firestore (ex: index manquant), afficher un message plus clair
+                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     showMessage("Erreur de base de données : Index manquant. Veuillez contacter l'administrateur.", "error");
+                 }
+                 return false; // En cas d'erreur, considérer comme indisponible par sécurité
+             }
+         }
+
+
+        // --- Logique de Vérification de Disponibilité (Bouton Vert) ---
         checkAvailabilityButton.addEventListener('click', async () => {
             if (!dbReady) {
                 showMessage("La connexion à la base de données n'est pas prête. Réessayez.", "error");
                 return;
             }
 
-            // Récupérer et valider les dates
+            // Récupérer et valider les dates et heures depuis les selects
             const startDateStr = datePriseEnChargeInput.value;
-            const startTimeStr = heurePriseEnChargeInput.value;
+            const startHourStr = heurePriseEnChargeHeureSelect.value;
+            const startMinuteStr = heurePriseEnChargeMinuteSelect.value;
             const endDateStr = dateRetourInput.value;
-            const endTimeStr = heureRetourInput.value;
+            const endHourStr = heureRetourHeureSelect.value;
+            const endMinuteStr = heureRetourMinuteSelect.value;
 
-            if (!startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
-                showMessage("Veuillez sélectionner les dates et heures de début et de fin.", "warning");
+            if (!startDateStr || startHourStr === "" || startMinuteStr === "" || !endDateStr || endHourStr === "" || endMinuteStr === "") {
+                showMessage("Veuillez sélectionner les dates, heures et minutes de début et de fin.", "warning");
                 return;
             }
 
-            const pickupDateTime = getDateTimeObject(startDateStr, startTimeStr);
-            const returnDateTime = getDateTimeObject(endDateStr, endTimeStr);
+            currentPickupDateTime = getDateTimeObject(startDateStr, startHourStr, startMinuteStr); // Stocker pour la soumission
+            currentReturnDateTime = getDateTimeObject(endDateStr, endHourStr, endMinuteStr);     // Stocker pour la soumission
 
-            if (!pickupDateTime || !returnDateTime) {
+            if (!currentPickupDateTime || !currentReturnDateTime) {
                 showMessage("Format de date ou d'heure invalide.", "error");
+                currentPickupDateTime = null; currentReturnDateTime = null; // Reset stored dates
                 return;
             }
 
-            if (pickupDateTime >= returnDateTime) {
+            // Ajouter une validation simple pour s'assurer que la date de prise en charge n'est pas dans le passé
+            const now = new Date();
+             // Permettre la réservation pour aujourd'hui mais pas dans le passé
+            if (currentPickupDateTime < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+                 showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning");
+                 return;
+            }
+
+
+            if (currentPickupDateTime >= currentReturnDateTime) {
                 showMessage("La date/heure de retour doit être après la date/heure de prise en charge.", "warning");
+                currentPickupDateTime = null; currentReturnDateTime = null; // Reset stored dates
                 return;
             }
 
-            // Afficher le spinner et désactiver le bouton
+            // --- Reste de la logique de vérification (identique à avant) ---
             availabilitySpinner.classList.remove('hidden');
             checkAvailabilityButton.disabled = true;
-            availableCarsSection.classList.add('hidden'); // Cacher ancienne liste
+            availableCarsSection.classList.add('hidden');
             availableCarsListDiv.innerHTML = '';
             noCarsMessage.classList.add('hidden');
-            submitBookingButton.classList.add('hidden'); // Cacher bouton soumettre final
-            selectedCarName = null; // Réinitialiser voiture sélectionnée
+            submitBookingButton.classList.add('hidden');
+            selectedCarName = null;
             selectedCarInput.value = '';
 
             try {
-                // 1. Récupérer les statuts manuels
+                // Récupérer les statuts manuels
                 const manualStatusSnapshot = await getDocs(carManualStatusCollectionRef);
                 const manuallyUnavailableCars = new Set();
                 manualStatusSnapshot.forEach(doc => {
                     if (doc.data().status === 'unavailable') {
-                        manuallyUnavailableCars.add(doc.id); // doc.id est le nom de la voiture
+                        manuallyUnavailableCars.add(doc.id);
                     }
                 });
 
-                // 2. Récupérer les périodes d'indisponibilité qui chevauchent
-                const pickupTimestamp = Timestamp.fromDate(pickupDateTime);
-                const returnTimestamp = Timestamp.fromDate(returnDateTime);
+                // Récupérer les périodes d'indisponibilité
+                const pickupTimestamp = Timestamp.fromDate(currentPickupDateTime);
+                const returnTimestamp = Timestamp.fromDate(currentReturnDateTime);
 
-                 // Requête pour trouver les périodes qui se chevauchent
-                 // Une période P chevauche une demande D si :
-                 // P.start < D.end ET P.end > D.start
-                const qPeriods = query(unavailabilityPeriodsCollectionRef,
-                   where("startDate", "<", returnTimestamp) // Période commence avant la fin de la demande
-                   // Nous devons filtrer la fin après récupération car Firestore ne permet pas deux inégalités sur des champs différents
-                 );
-                 const periodsSnapshot = await getDocs(qPeriods);
-                 const unavailableCarsInPeriod = new Set();
+                // Requête pour récupérer TOUTES les périodes potentiellement pertinentes
+                // On filtre ensuite en JS car deux 'range filters' ne sont pas possibles sur des champs différents
+                const qPeriods = query(unavailabilityPeriodsCollectionRef); // Prend toutes les périodes
 
-                periodsSnapshot.forEach(doc => {
-                    const period = doc.data();
-                     // Vérification finale du chevauchement (P.end > D.start)
-                     if (period.endDate.toDate() > pickupDateTime) {
-                        unavailableCarsInPeriod.add(period.car);
+                const periodsSnapshot = await getDocs(qPeriods);
+                const unavailableCarsInPeriod = new Set(); // Voitures avec chevauchement
+
+                periodsSnapshot.forEach(docSnap => {
+                     const period = docSnap.data();
+                     const periodStart = period.startDate.toDate();
+                     const periodEnd = period.endDate.toDate();
+
+                     // Vérifier le chevauchement : (period.start < requested.end) AND (period.end > requested.start)
+                     if (periodStart < currentReturnDateTime && periodEnd > currentPickupDateTime) {
+                         unavailableCarsInPeriod.add(period.car);
                      }
                  });
 
 
-                // 3. Filtrer la flotte
+                // Filtrer la flotte finale
                 const availableCars = carNames.filter(carName =>
                     !manuallyUnavailableCars.has(carName) && !unavailableCarsInPeriod.has(carName)
                 );
 
-                // 4. Afficher les résultats
+                // Afficher les résultats
                 availableCarsSection.classList.remove('hidden');
                 if (availableCars.length === 0) {
                     noCarsMessage.classList.remove('hidden');
@@ -462,7 +589,11 @@
 
             } catch (error) {
                 console.error("Erreur lors de la vérification de disponibilité:", error);
-                showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error");
+                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     showMessage("Configuration de la base de données requise. Le lien pour créer l'index est dans la console F12.", "error");
+                 } else {
+                    showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error");
+                 }
             } finally {
                 availabilitySpinner.classList.add('hidden');
                 checkAvailabilityButton.disabled = false;
@@ -476,7 +607,7 @@
             card.dataset.carName = carName;
 
             card.innerHTML = `
-                <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-40 object-cover">
+                <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-40 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
                 <div class="p-4">
                     <h4 class="text-lg font-semibold text-gray-800 mb-1">${carName}</h4>
                     <p class="text-md font-bold text-blue-600 mb-3">${carData.price} Dhs / jour</p>
@@ -494,8 +625,9 @@
                      const btn = selectedCard.querySelector('.select-car-button');
                      if (btn) {
                         btn.textContent = 'Sélectionner';
-                        btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        btn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50'); // Rétablir l'état normal
                         btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                        btn.disabled = false;
                      }
                  });
 
@@ -504,8 +636,9 @@
                  const selectButton = card.querySelector('.select-car-button');
                  if (selectButton) {
                     selectButton.textContent = 'Sélectionnée ✔';
-                    selectButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    selectButton.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50'); // Griser et désactiver
                     selectButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    selectButton.disabled = true;
                  }
 
                  // Mettre à jour la voiture sélectionnée et afficher le bouton de soumission final
@@ -528,22 +661,54 @@
              if (!selectedCarName) {
                  showMessage("Veuillez d'abord sélectionner une voiture.", "warning"); return;
              }
-            // Vérifier à nouveau si tous les champs sont remplis (sécurité)
+             if (!currentPickupDateTime || !currentReturnDateTime) {
+                 showMessage("Les dates de réservation semblent invalides. Veuillez revérifier la disponibilité.", "warning");
+                 return;
+             }
+
+             // Validation simple des champs client
              const formData = new FormData(form);
              const bookingData = Object.fromEntries(formData.entries());
-
-             // Valider les champs essentiels avant d'envoyer
-             const requiredFields = ['nomPrenom', 'telephone', 'email', 'lieuPriseEnCharge', 'lieuRetour', 'datePriseEnCharge', 'heurePriseEnCharge', 'dateRetour', 'heureRetour'];
+             const requiredFields = ['nomPrenom', 'telephone', 'email', 'lieuPriseEnCharge', 'lieuRetour', 'datePriseEnCharge', 'heurePriseEnChargeHeure', 'heurePriseEnChargeMinute', 'dateRetour', 'heureRetourHeure', 'heureRetourMinute']; // Updated time fields
              for (const field of requiredFields) {
-                 if (!bookingData[field]) {
-                     showMessage(`Le champ "${document.querySelector(`label[for='${field}']`)?.textContent || field}" est requis.`, 'warning');
+                 if (!bookingData[field] || bookingData[field] === "") { // Also check for empty select value
+                     // Tentative de trouver le label associé
+                     let label = document.querySelector(`label[for='${field}']`)?.textContent?.replace('*','').trim();
+                     // Fallback si le label n'est pas directement associé via 'for'
+                     if (!label) {
+                         const selectElement = document.getElementById(field);
+                         label = selectElement?.closest('div')?.querySelector('label')?.textContent?.replace('*','').trim() || field;
+                     }
+                     showMessage(`Le champ "${label || field}" est requis.`, 'warning');
                      return;
                  }
              }
 
              submitBookingButton.disabled = true;
              submitSpinner.classList.remove('hidden');
-             messageBox.classList.add('hidden'); // Cacher ancien message
+             messageBox.classList.add('hidden');
+
+             // *** VÉRIFICATION FINALE DE DISPONIBILITÉ ***
+             const isStillAvailable = await isCarAvailable(selectedCarName, currentPickupDateTime, currentReturnDateTime);
+
+             if (!isStillAvailable) {
+                 // MODIFICATION: Changement du message d'erreur
+                 showMessage(`Désolé, la voiture "${selectedCarName}" vient d'être indisponible. Veuillez choisir une autre voiture.`, 'error');
+                 availableCarsSection.classList.add('hidden');
+                 submitBookingButton.classList.add('hidden');
+                 selectedCarName = null;
+                 selectedCarInput.value = '';
+                 submitBookingButton.disabled = false;
+                 submitSpinner.classList.add('hidden');
+                 return; // Arrêter la soumission
+             }
+             // *** FIN VÉRIFICATION FINALE ***
+
+
+             // Si la voiture est toujours dispo, continuer...
+              // Formatage heure/minute pour l'enregistrement et l'email
+             const heurePriseStr = `${bookingData.heurePriseEnChargeHeure.padStart(2, '0')}:${bookingData.heurePriseEnChargeMinute.padStart(2, '0')}`;
+             const heureRetourStr = `${bookingData.heureRetourHeure.padStart(2, '0')}:${bookingData.heureRetourMinute.padStart(2, '0')}`;
 
              const bookingDetails = {
                  nomPrenom: bookingData.nomPrenom,
@@ -552,20 +717,22 @@
                  lieuPriseEnCharge: bookingData.lieuPriseEnCharge,
                  lieuRetour: bookingData.lieuRetour,
                  datePriseEnCharge: bookingData.datePriseEnCharge,
-                 heurePriseEnCharge: bookingData.heurePriseEnCharge,
+                 heurePriseEnCharge: heurePriseStr, // Utiliser la chaîne formatée
                  dateRetour: bookingData.dateRetour,
-                 heureRetour: bookingData.heureRetour,
-                 voiture: selectedCarName, // Utiliser la variable JS
+                 heureRetour: heureRetourStr,       // Utiliser la chaîne formatée
+                 voiture: selectedCarName,
                  timestamp: serverTimestamp(),
-                 confirmed: false, // Nouvelle demande par défaut
-                 deleted: false // Non supprimé par défaut
+                 confirmed: false,
+                 deleted: false
              };
 
              // 1. Enregistrer dans Firestore
              let firestoreSuccess = false;
+             let newBookingId = null;
              try {
                  const docRef = await addDoc(bookingsCollectionRef, bookingDetails);
-                 console.log("Réservation enregistrée avec ID: ", docRef.id);
+                 newBookingId = docRef.id;
+                 console.log("Réservation enregistrée avec ID: ", newBookingId);
                  firestoreSuccess = true;
              } catch (error) {
                  console.error("Erreur lors de l'enregistrement Firestore: ", error);
@@ -577,28 +744,24 @@
 
              // 2. Envoyer via Web3Forms (si Firestore a réussi)
              try {
-                // Préparer les données pour Web3Forms (l'objet doit être plat)
-                const objectForWeb3Forms = {
-                    ...bookingDetails, // Inclut tous les champs de bookingDetails
-                    access_key: bookingData.access_key, // Récupérer la clé depuis le champ caché
-                    subject: bookingData.subject,
-                    from_name: bookingData.from_name,
-                    redirect: bookingData.redirect,
-                    // Convertir le timestamp serveur potentiel en chaîne lisible pour l'email
-                    timestamp: new Date().toLocaleString('fr-FR')
-                };
-                 // Retirer les objets non sérialisables comme serverTimestamp()
-                delete objectForWeb3Forms.confirmed;
-                delete objectForWeb3Forms.deleted;
+                 const objectForWeb3Forms = { ...bookingDetails };
+                 objectForWeb3Forms.access_key = bookingData.access_key;
+                 objectForWeb3Forms.subject = bookingData.subject;
+                 objectForWeb3Forms.from_name = bookingData.from_name;
+                 objectForWeb3Forms.redirect = bookingData.redirect;
+                 // Formatage de la date/heure pour l'email
+                 objectForWeb3Forms.timestamp = new Date().toLocaleString('fr-FR', {
+                     year: 'numeric', month: '2-digit', day: '2-digit',
+                     hour: '2-digit', minute: '2-digit', hour12: false });
+                 // Supprimer les champs non nécessaires pour l'email
+                 delete objectForWeb3Forms.confirmed;
+                 delete objectForWeb3Forms.deleted;
 
 
                  const jsonPayload = JSON.stringify(objectForWeb3Forms);
                  const web3Response = await fetch("https://api.web3forms.com/submit", {
                      method: "POST",
-                     headers: {
-                         "Content-Type": "application/json",
-                         "Accept": "application/json"
-                     },
+                     headers: { "Content-Type": "application/json", "Accept": "application/json" },
                      body: jsonPayload
                  });
                  const result = await web3Response.json();
@@ -606,16 +769,22 @@
                      console.log('Web3Forms Success:', result);
                      showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
                      form.reset(); // Vider le formulaire
-                     availableCarsSection.classList.add('hidden'); // Cacher la section des voitures
+                     // Réinitialiser les selects d'heure/minute à leur placeholder
+                     heurePriseEnChargeHeureSelect.value = "";
+                     heurePriseEnChargeMinuteSelect.value = "";
+                     heureRetourHeureSelect.value = "";
+                     heureRetourMinuteSelect.value = "";
+                     availableCarsSection.classList.add('hidden'); // Cacher la section voiture
                      submitBookingButton.classList.add('hidden'); // Cacher le bouton soumettre
+                     selectedCarName = null; // Réinitialiser
+                     selectedCarInput.value = ''; // Réinitialiser champ caché
                  } else {
                      console.error('Web3Forms Error:', result);
-                     // Afficher une erreur mais la réservation est quand même dans Firestore
                      showMessage("Votre demande a été enregistrée, mais l'envoi de l'e-mail de notification a échoué. Nous vous contacterons.", 'warning');
                  }
              } catch (web3Error) {
                  console.error('Erreur fetch Web3Forms:', web3Error);
-                  showMessage("Votre demande a été enregistrée, mais l'envoi de l'e-mail de notification a échoué. Nous vous contacterons.", 'warning');
+                 showMessage("Votre demande a été enregistrée, mais l'envoi de l'e-mail de notification a échoué. Nous vous contacterons.", 'warning');
              } finally {
                  submitBookingButton.disabled = false;
                  submitSpinner.classList.add('hidden');
