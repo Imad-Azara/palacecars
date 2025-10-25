@@ -6,7 +6,7 @@
     <title>Palace Cars - Panneau d'Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome -->
+    <!-- Icônes Font Awesome - Correction integrity -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -22,7 +22,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .hidden { display: none; }
-        .sticky-top { position: sticky; top: 1rem; }
+        .sticky-top { position: sticky; top: 1rem; align-self: flex-start; /* Important for sticky positioning in flex */ }
         /* Style pour la modale */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
@@ -85,8 +85,10 @@
                          <div class="space-y-3">
                              <div>
                                 <label for="period-car" class="block text-sm font-medium text-gray-700 mb-1">Voiture</label>
+                                <!-- Le menu déroulant des voitures -->
                                 <select id="period-car" name="period-car" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white text-sm">
                                     <option value="" disabled selected>Choisir...</option>
+                                    <!-- Options ajoutées par JavaScript -->
                                 </select>
                             </div>
                              <div class="grid grid-cols-2 gap-2">
@@ -194,9 +196,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc, deleteDoc, Timestamp, serverTimestamp, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // setLogLevel('debug'); // Pour debug Firestore
 
         // --- Configuration Firebase ---
-        const firebaseConfig = { /* Votre config ici */
+        const firebaseConfig = {
             apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
             authDomain: "palace-cars.firebaseapp.com",
             projectId: "palace-cars",
@@ -217,12 +220,13 @@
             bookingsCollectionRef = collection(db, "palace_cars_bookings");
             unavailabilityPeriodsCollectionRef = collection(db, "car_unavailability_periods");
             carManualStatusCollectionRef = collection(db, "car_manual_status");
-            console.log("Firebase initialisé.");
+            console.log("Firebase initialisé avec succès.");
         } catch (error) {
-            console.error("Erreur Firebase:", error); /* Gérer l'erreur */
-            document.getElementById('loading-message').textContent = "Erreur critique d'initialisation.";
-            document.getElementById('error-loading-message').textContent = "Erreur Firebase. Vérifiez la console F12.";
-            document.getElementById('error-loading-message').classList.remove('hidden');
+            console.error("Erreur critique d'initialisation Firebase:", error);
+            // Afficher un message d'erreur plus visible à l'utilisateur si nécessaire
+            const errorDiv = document.getElementById('error-loading-message') || document.body;
+            errorDiv.innerHTML = `<div class="p-4 rounded-md text-center bg-red-100 text-red-700 m-4">Erreur critique : Impossible d'initialiser la base de données. Vérifiez la console (F12) et la configuration Firebase.</div>`;
+            errorDiv.classList.remove('hidden');
         }
 
         // --- DOM Elements ---
@@ -272,7 +276,7 @@
         let notificationPermission = Notification.permission;
 
         // --- Liste des voitures ---
-        const carOptions = [ /* Même liste que index.html */
+        const carOptions = [
             "Dacia Logan Diesel 2024", "Dacia Logan Diesel 2025", "Dacia Sandero Essence", "Dacia Sandero Diesel"
         ];
 
@@ -286,7 +290,7 @@
                 adminPanel.style.display = 'block';
                 errorMessage.classList.add('hidden');
                 checkNotificationPermission();
-                populateCarSelects();
+                populateCarSelects(); // CORRECTION: Appel ajouté ici
                 loadBookings();
                 listenForManualStatusChanges();
                 listenForUnavailabilityPeriods();
@@ -303,7 +307,7 @@
                 currentFilterConfirmed = showConfirmed;
                 tabNew.classList.toggle('active', !showConfirmed);
                 tabConfirmed.classList.toggle('active', showConfirmed);
-                loadBookings();
+                loadBookings(); // Recharge les réservations avec le nouveau filtre
             }
         }
 
@@ -311,51 +315,76 @@
         let currentBookingsData = new Map(); // Stocker les données pour la modale
 
         function loadBookings() {
-            if (!db) return;
+            if (!db) {
+                console.error("Firestore DB non initialisé. Impossible de charger les réservations.");
+                errorLoadingMessage.textContent = "Erreur de connexion à la base de données. Vérifiez la console.";
+                errorLoadingMessage.classList.remove('hidden');
+                loadingMessage.classList.add('hidden');
+                return;
+            }
             loadingMessage.textContent = 'Chargement...';
             loadingMessage.classList.remove('hidden');
             errorLoadingMessage.classList.add('hidden');
             bookingsList.innerHTML = '';
-            if (unsubscribeBookings) unsubscribeBookings();
+            if (unsubscribeBookings) {
+                console.log("Arrêt de l'écouteur précédent des réservations.");
+                unsubscribeBookings(); // Arrêter l'écouteur précédent
+            }
             currentBookingsData.clear(); // Vider le cache des données
 
+            // Définir la query Firestore
             const q = query(
                 bookingsCollectionRef,
                 where("confirmed", "==", currentFilterConfirmed),
-                where("deleted", "==", false),
-                orderBy("timestamp", "desc")
+                where("deleted", "==", false)
+                // orderBy("timestamp", "desc") // Temporairement retiré pour simplifier si index pose problème
             );
+            console.log(`Chargement des réservations: confirmed=${currentFilterConfirmed}, deleted=false`);
 
+            // Écouter les changements en temps réel
             unsubscribeBookings = onSnapshot(q, (querySnapshot) => {
+                console.log(`Snapshot reçu: ${querySnapshot.docs.length} documents.`);
                 loadingMessage.classList.add('hidden');
-                bookingsList.innerHTML = '';
+                bookingsList.innerHTML = ''; // Vider la liste avant de la remplir
                 if (querySnapshot.empty) {
-                     bookingsList.innerHTML = `<p class="text-center text-gray-500 italic">Aucune ${currentFilterConfirmed ? 'réservation confirmée' : 'nouvelle demande'}.</p>`;
+                     bookingsList.innerHTML = `<p class="text-center text-gray-500 italic">Aucune ${currentFilterConfirmed ? 'réservation confirmée' : 'nouvelle demande'} trouvée.</p>`;
                 } else {
                     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Trier côté client car orderBy Firestore peut nécessiter index complexe
+                    bookings.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+
                      bookings.forEach(booking => {
                          currentBookingsData.set(booking.id, booking); // Stocker les données
                          bookingsList.appendChild(createBookingCard(booking));
-                         if (!booking.confirmed && !booking.deleted && !currentFilterConfirmed && booking.timestamp && !querySnapshot.metadata.hasPendingWrites) { // Eviter notif sur propre modif
-                           // showNotification('Nouvelle Réservation!', `Client: ${booking.nomPrenom || 'Inconnu'}\nVoiture: ${booking.voiture || 'N/A'}`);
-                         }
+
+                         // Déclencher notification seulement si c'est une nouvelle demande non confirmée et pas une modification locale
+                        if (!booking.confirmed && !booking.deleted && !currentFilterConfirmed && booking.timestamp && !querySnapshot.metadata.hasPendingWrites) {
+                            showNotification('Nouvelle Réservation!', `Client: ${booking.nomPrenom || 'Inconnu'}\nVoiture: ${booking.voiture || 'N/A'}`);
+                        }
                      });
                 }
             }, (error) => {
-                console.error("Erreur chargement réservations:", error);
+                console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
                 loadingMessage.classList.add('hidden');
                 errorLoadingMessage.classList.remove('hidden');
                 let specificError = error.message;
-                if (error.code === 'failed-precondition') specificError = "Index Firestore manquant. Vérifiez la console (F12).";
-                else if (error.code === 'permission-denied') specificError = "Permission refusée. Vérifiez vos règles Firestore.";
-                errorLoadingMessage.textContent = `Erreur chargement réservations: ${specificError}`;
+                // Analyse plus fine de l'erreur pour aider l'utilisateur
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    specificError = `Index Firestore manquant. Veuillez suivre le lien dans la console (F12) pour le créer. Vérifiez la console (F12) pour plus de détails (index manquant ?).`;
+                } else if (error.code === 'permission-denied') {
+                    specificError = "Permission refusée par les règles Firestore. Vérifiez vos règles de sécurité.";
+                } else {
+                    specificError = `Erreur de connexion à la base de données. Détails dans la console (F12). Code: ${error.code}`;
+                }
+                errorLoadingMessage.textContent = `Erreur: ${specificError}`;
             });
         }
+
 
         // --- Création Carte Réservation & Actions (Confirm ouvre modale) ---
          function createBookingCard(booking) {
              const card = document.createElement('div');
-            card.className = `booking-card border-l-4 ${booking.confirmed ? 'border-green-500' : 'border-blue-500'} ${booking.confirmed ? 'confirmed-booking' : ''}`;
+            card.className = `booking-card border-l-4 ${booking.confirmed ? 'border-green-500' : 'border-blue-500'} ${booking.confirmed ? 'opacity-70' : ''}`; // Opacité si confirmé
             card.dataset.id = booking.id;
              const receivedDate = booking.timestamp?.toDate ? booking.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short'}) : 'Date inconnue';
             const statusText = booking.confirmed ? 'Confirmée' : 'Nouvelle Demande';
@@ -365,6 +394,11 @@
             const formatDate = (dateStr, timeStr) => {
                 if (!dateStr || !timeStr) return 'N/A';
                 try {
+                    // Vérifier si la date est déjà un objet Timestamp Firestore
+                    if (dateStr.toDate) { // C'est un Timestamp
+                        return dateStr.toDate().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+                    }
+                    // Sinon, traiter comme des chaînes
                     const d = new Date(`${dateStr}T${timeStr}`);
                     return !isNaN(d) ? d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}) : 'Date invalide';
                 } catch { return 'Date invalide'; }
@@ -403,19 +437,38 @@
             button.disabled = true;
             button.innerHTML = '<span class="loader !border-t-white !border-l-white !w-4 !h-4 !inline-block mr-1"></span> Suppr.';
             try {
+                // Marquer comme supprimé au lieu de supprimer pour historique potentiel
                 await updateDoc(doc(db, "palace_cars_bookings", bookingId), { deleted: true });
-                // Note: On pourrait aussi supprimer la période d'indisponibilité associée si elle existe
-            } catch (error) { console.error("Erreur suppression:", error); showModalMessage("Erreur suppression."); button.disabled = false; button.innerHTML = '<i class="fas fa-trash-alt mr-1"></i>Supprimer'; }
+                console.log("Réservation marquée comme supprimée:", bookingId);
+                 // OPTIONNEL: Supprimer la période d'indisponibilité associée si elle existe
+                 // const q = query(unavailabilityPeriodsCollectionRef, where("bookingId", "==", bookingId));
+                 // const querySnapshot = await getDocs(q);
+                 // querySnapshot.forEach(async (docSnap) => {
+                 //     await deleteDoc(doc(db, "car_unavailability_periods", docSnap.id));
+                 //     console.log("Période d'indisponibilité associée supprimée:", docSnap.id);
+                 // });
+            } catch (error) {
+                console.error("Erreur suppression:", error);
+                showModalMessage("Erreur lors de la suppression.");
+                // Réactiver le bouton seulement si l'opération a échoué
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-trash-alt mr-1"></i>Supprimer';
+             }
          }
 
          function formatPhoneNumberForWhatsApp(phone) {
              if (!phone) return '';
             let cleaned = phone.replace(/\D/g, '');
-            if (cleaned.startsWith('2120')) cleaned = '212' + cleaned.substring(4);
-            else if (cleaned.startsWith('0') && cleaned.length === 10) cleaned = '212' + cleaned.substring(1);
-            if (!cleaned.startsWith('212') && cleaned.length === 9 && (cleaned.startsWith('6') || cleaned.startsWith('7'))) cleaned = '212' + cleaned;
-            if (!cleaned.startsWith('212') && cleaned.length > 10) return cleaned;
-            return cleaned.startsWith('212') ? cleaned : '';
+            // Gérer les formats marocains courants
+            if (cleaned.startsWith('2120')) { // ex: 21206... -> 2126...
+                cleaned = '212' + cleaned.substring(4);
+            } else if (cleaned.startsWith('0') && cleaned.length === 10) { // ex: 06... -> 2126...
+                cleaned = '212' + cleaned.substring(1);
+            } else if (!cleaned.startsWith('212') && cleaned.length === 9 && (cleaned.startsWith('6') || cleaned.startsWith('7'))) { // ex: 6... -> 2126...
+                cleaned = '212' + cleaned;
+            }
+             // Ne retourner que si le format semble correct pour WhatsApp (+ suivi de chiffres)
+            return cleaned.startsWith('212') && cleaned.length >= 11 ? cleaned : ''; // Simple validation
          }
 
         // --- Logique de la Modale de Confirmation ---
@@ -429,10 +482,12 @@
 
             modalBookingIdInput.value = booking.id;
             modalCarNameInput.value = booking.voiture || ''; // Stocker le nom de la voiture
+            // Pré-remplir avec les dates/heures actuelles de la réservation
             modalStartDateInput.value = booking.datePriseEnCharge || '';
             modalStartTimeInput.value = booking.heurePriseEnCharge || '';
             modalEndDateInput.value = booking.dateRetour || '';
             modalEndTimeInput.value = booking.heureRetour || '';
+
             modalErrorMessage.classList.add('hidden');
             modalConfirmButton.disabled = false;
             modalConfirmSpinner.classList.add('hidden');
@@ -450,9 +505,9 @@
             const bookingId = modalBookingIdInput.value;
             const carName = modalCarNameInput.value;
             const startDate = modalStartDateInput.value;
-            const startTime = modalStartTimeInput.value || "00:00";
+            const startTime = modalStartTimeInput.value || "00:00"; // Default time if empty
             const endDate = modalEndDateInput.value;
-            const endTime = modalEndTimeInput.value || "23:59";
+            const endTime = modalEndTimeInput.value || "23:59"; // Default time if empty
 
             modalErrorMessage.classList.add('hidden'); // Cacher ancien message
 
@@ -462,8 +517,9 @@
                 return;
             }
 
-            const startDateTime = new Date(`${startDate}T${startTime}:00`);
-            const endDateTime = new Date(`${endDate}T${endTime}:00`);
+            // Conversion en objets Date pour validation et conversion en Timestamp
+            const startDateTime = new Date(`${startDate}T${startTime}`);
+            const endDateTime = new Date(`${endDate}T${endTime}`);
 
             if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
                 modalErrorMessage.textContent = "Dates ou heures invalides.";
@@ -483,18 +539,20 @@
                 // 1. Mettre à jour la réservation
                 await updateDoc(doc(db, "palace_cars_bookings", bookingId), {
                     confirmed: true,
-                    datePriseEnCharge: startDate, // Sauvegarder les dates modifiées
+                    datePriseEnCharge: startDate, // Sauvegarder les dates/heures (potentiellement modifiées)
                     heurePriseEnCharge: startTime,
                     dateRetour: endDate,
-                    heureRetour: endTime
+                    heureRetour: endTime,
+                    // Potentiellement ajouter un champ 'confirmedAt'
+                    // confirmedAt: serverTimestamp()
                 });
                 console.log("Réservation confirmée:", bookingId);
 
                 // 2. Ajouter la période d'indisponibilité correspondante
                 await addDoc(unavailabilityPeriodsCollectionRef, {
                     car: carName,
-                    startDate: Timestamp.fromDate(startDateTime),
-                    endDate: Timestamp.fromDate(endDateTime),
+                    startDate: Timestamp.fromDate(startDateTime), // Convertir en Timestamp Firestore
+                    endDate: Timestamp.fromDate(endDateTime),     // Convertir en Timestamp Firestore
                     type: 'booking', // Marquer comme venant d'une réservation confirmée
                     bookingId: bookingId, // Lier à la réservation
                     addedAt: serverTimestamp()
@@ -506,16 +564,15 @@
 
             } catch (error) {
                 console.error("Erreur lors de la confirmation finale:", error);
-                modalErrorMessage.textContent = "Erreur lors de la confirmation. Réessayez.";
+                modalErrorMessage.textContent = `Erreur lors de la confirmation: ${error.message}. Réessayez.`;
                 modalErrorMessage.classList.remove('hidden');
                 modalConfirmButton.disabled = false;
                 modalConfirmSpinner.classList.add('hidden');
             }
         }
 
-         // Fonction helper pour afficher messages hors modale (utilisée pour statut et confirmation finale)
+         // Fonction helper pour afficher messages hors modale
          function showAvailabilityMessage(message, isError = false) {
-             // Utilise le même élément que pour les périodes manuelles
              periodMessage.textContent = message;
              periodMessage.className = `p-3 rounded-md text-center mt-3 text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
              periodMessage.classList.remove('hidden');
@@ -523,28 +580,323 @@
          }
 
 
-        // --- Logique de Disponibilité (inchangée) ---
-        // (Ajout période, écoute périodes, écoute statut manuel, création items liste)
-        // ... (tout le code de gestion de disponibilité précédent reste ici) ...
-        function populateCarSelects() { /* ... */ }
-        function showPeriodMessage(message, isError = false) { /* ... */ }
-        addPeriodButton.addEventListener('click', async () => { /* ... */ });
-        function listenForUnavailabilityPeriods() { /* ... */ }
-        function createPeriodListItem(period) { /* ... */ }
-        function listenForManualStatusChanges() { /* ... */ }
-        function createManualStatusItem(carName, currentStatus) { /* ... */ }
+        // --- Logique de Disponibilité (Manuelle et Périodes) ---
 
-        // --- Notification Logic (inchangée) ---
-        function checkNotificationPermission() { /* ... */ }
-        function updateNotificationButtonState(permission) { /* ... */ }
-        enableNotificationsButton.addEventListener('click', () => { /* ... */ });
-        function showNotification(title, body) { /* ... */ }
+        // Peuple les menus déroulants de voiture
+        function populateCarSelects() {
+            if (!periodCarSelect) return; // S'assurer que l'élément existe
+            periodCarSelect.innerHTML = '<option value="" disabled selected>Choisir...</option>';
+            carOptions.forEach(car => {
+                const option = document.createElement('option');
+                option.value = car;
+                option.textContent = car;
+                periodCarSelect.appendChild(option);
+            });
+             console.log("Select voiture peuplé.");
+        }
 
-        // --- PWA Service Worker Registration (inchangée) ---
-        if ('serviceWorker' in navigator) { /* ... */ }
+        // Affiche un message dans la section disponibilité manuelle
+        function showPeriodMessage(message, isError = false) {
+             periodMessage.textContent = message;
+             periodMessage.className = `p-3 rounded-md text-center mt-3 text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+             periodMessage.classList.remove('hidden');
+             setTimeout(() => periodMessage.classList.add('hidden'), 5000);
+         }
+
+        // Ajouter une période d'indisponibilité MANUELLE
+        addPeriodButton.addEventListener('click', async () => {
+             const car = periodCarSelect.value;
+             const startDateStr = periodStartDateInput.value;
+             const startTimeStr = periodStartTimeInput.value || "00:00";
+             const endDateStr = periodEndDateInput.value;
+             const endTimeStr = periodEndTimeInput.value || "23:59";
+
+             if (!car || !startDateStr || !endDateStr) {
+                 showPeriodMessage("Veuillez sélectionner voiture, date début et date fin.", true); return;
+             }
+
+             const startDateTime = new Date(`${startDateStr}T${startTimeStr}:00`);
+             const endDateTime = new Date(`${endDateStr}T${endTimeStr}:00`);
+
+             if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+                 showPeriodMessage("Dates ou heures invalides.", true); return;
+             }
+             if (startDateTime >= endDateTime) {
+                 showPeriodMessage("Le début doit être avant la fin.", true); return;
+             }
+
+             const startTimestamp = Timestamp.fromDate(startDateTime);
+             const endTimestamp = Timestamp.fromDate(endDateTime);
+
+             addPeriodButton.disabled = true; periodSpinner.classList.remove('hidden');
+
+             try {
+                 await addDoc(unavailabilityPeriodsCollectionRef, {
+                    car: car,
+                    startDate: startTimestamp,
+                    endDate: endTimestamp,
+                    type: 'manual', // Indiquer que c'est une période manuelle
+                    addedAt: serverTimestamp()
+                 });
+                 showPeriodMessage(`Période ajoutée pour ${car}.`, false);
+                 // Réinitialiser le formulaire
+                 periodCarSelect.value = ""; periodStartDateInput.value = ""; periodStartTimeInput.value = "";
+                 periodEndDateInput.value = ""; periodEndTimeInput.value = "";
+             } catch (error) {
+                 console.error("Erreur ajout période manuelle:", error);
+                 showPeriodMessage("Erreur lors de l'ajout de la période.", true);
+             } finally {
+                 addPeriodButton.disabled = false; periodSpinner.classList.add('hidden');
+             }
+        });
+
+        // Écouter et afficher les périodes d'indisponibilité programmées
+        function listenForUnavailabilityPeriods() {
+            if (!db) return;
+            periodsLoading.classList.remove('hidden');
+            periodsListDiv.innerHTML = ''; // Clear previous entries
+
+            if (unsubscribePeriods) unsubscribePeriods();
+
+            const now = Timestamp.now();
+            // Récupérer les périodes qui se terminent après maintenant, triées par date de fin
+            const q = query(unavailabilityPeriodsCollectionRef, where("endDate", ">=", now), orderBy("endDate", "asc"));
+
+            unsubscribePeriods = onSnapshot(q, (snapshot) => {
+                periodsLoading.classList.add('hidden');
+                periodsListDiv.innerHTML = ''; // Vider la liste avant de la remplir
+                if (snapshot.empty) {
+                     periodsListDiv.innerHTML = `<p class="text-gray-500 italic text-sm">Aucune période d'indisponibilité future ou en cours.</p>`;
+                } else {
+                    snapshot.forEach((doc) => {
+                        const period = { id: doc.id, ...doc.data() };
+                        periodsListDiv.appendChild(createPeriodListItem(period));
+                    });
+                }
+            }, (error) => {
+                console.error("Erreur chargement périodes d'indisponibilité:", error);
+                periodsListDiv.innerHTML = `<p class="text-red-500 text-sm">Erreur chargement des périodes.</p>`;
+                 periodsLoading.classList.add('hidden');
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     periodsListDiv.innerHTML = `<p class="text-red-500 text-sm">Index Firestore manquant pour les périodes. Cliquez sur le lien dans la console (F12) pour le créer.</p>`;
+                }
+            });
+        }
+
+        // Crée un élément de liste pour une période d'indisponibilité
+        function createPeriodListItem(period) {
+            const item = document.createElement('div');
+            item.className = 'flex justify-between items-center p-2 border-b border-gray-200 text-xs';
+            const formatDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+            const typeLabel = period.type === 'manual' ? 'Manuel' : (period.type === 'booking' ? 'Réservé' : 'Autre');
+            const typeColor = period.type === 'manual' ? 'text-orange-600' : (period.type === 'booking' ? 'text-blue-600' : 'text-gray-500');
+
+            item.innerHTML = `
+                <span class="text-gray-700 flex-1 mr-2">
+                    <strong class="font-semibold">${period.car}</strong><br>
+                    ${formatDate(period.startDate)} - ${formatDate(period.endDate)}
+                     <span class="${typeColor} ml-1">(${typeLabel})</span>
+                </span>
+                <!-- Permettre suppression uniquement pour les périodes manuelles -->
+                ${period.type === 'manual' ? `
+                <button data-id="${period.id}" class="delete-period-button bg-gray-200 hover:bg-red-500 hover:text-white text-gray-600 px-2 py-1 rounded text-xs transition duration-300">
+                    <i class="fas fa-times"></i>
+                </button>` : ''}
+            `;
+            // Ajouter le listener seulement si le bouton existe (période manuelle)
+            const deleteButton = item.querySelector('.delete-period-button');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', async (e) => {
+                    const button = e.currentTarget;
+                    const id = button.dataset.id;
+                    if (!id || !db) return;
+                     if (confirm(`Supprimer cette période d'indisponibilité manuelle ?`)) {
+                        button.disabled = true;
+                         try {
+                             await deleteDoc(doc(db, "car_unavailability_periods", id));
+                             console.log("Période manuelle supprimée:", id);
+                             showAvailabilityMessage("Période supprimée.", false);
+                         } catch (error) {
+                             console.error("Erreur suppression période:", error);
+                             showModalMessage("Erreur suppression période.");
+                             button.disabled = false; // Réactiver seulement si erreur
+                         }
+                     }
+                });
+            }
+            return item;
+        }
+
+        // --- Statut Actuel & Maintenance (Marquer Indisponible/Disponible) ---
+        function listenForManualStatusChanges() {
+             if (!db) return;
+             manualStatusLoading.classList.remove('hidden');
+             manualStatusListDiv.innerHTML = ''; // Vider avant d'écouter
+
+             if (unsubscribeManualStatus) unsubscribeManualStatus();
+
+             // Écouter les changements dans la collection des statuts manuels
+             unsubscribeManualStatus = onSnapshot(collection(db, "car_manual_status"), (snapshot) => {
+                 const manualStatuses = new Map();
+                 snapshot.forEach(doc => {
+                     manualStatuses.set(doc.id, doc.data().status); // doc.id = carName
+                 });
+
+                 manualStatusListDiv.innerHTML = ''; // Vider la liste
+                 manualStatusLoading.classList.add('hidden');
+
+                 if (carOptions.length === 0) {
+                     manualStatusListDiv.innerHTML = `<p class="text-gray-500 italic text-sm">Aucune voiture configurée.</p>`; return;
+                 }
+
+                 // Afficher le statut manuel pour chaque voiture de la liste carOptions
+                 carOptions.forEach(carName => {
+                     const status = manualStatuses.get(carName) || 'available'; // Default to available
+                     manualStatusListDiv.appendChild(createManualStatusItem(carName, status));
+                 });
+
+             }, (error) => {
+                 console.error("Erreur chargement statuts manuels:", error);
+                 manualStatusListDiv.innerHTML = `<p class="text-red-500 text-sm">Erreur chargement des statuts.</p>`;
+                 manualStatusLoading.classList.add('hidden');
+                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     manualStatusListDiv.innerHTML = `<p class="text-red-500 text-sm">Index Firestore manquant pour les statuts. Vérifiez la console F12.</p>`;
+                 }
+             });
+        }
+
+        // Crée un élément pour le statut manuel d'une voiture
+        function createManualStatusItem(carName, currentStatus) {
+            const item = document.createElement('div');
+            item.className = 'flex justify-between items-center p-2 border-b border-gray-200 text-xs';
+
+            const isUnavailable = currentStatus === 'unavailable';
+
+            item.innerHTML = `
+                <div class="flex-1 mr-2">
+                    <strong class="font-semibold text-gray-800">${carName}</strong><br>
+                    Statut: ${isUnavailable
+                        ? '<span class="text-red-600 font-semibold">Indisponible</span>'
+                        : '<span class="text-green-600 font-semibold">Disponible</span>'}
+                </div>
+                <button data-carname="${carName}" data-currentstatus="${currentStatus}" class="toggle-manual-status-button ${isUnavailable ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-500 hover:bg-orange-600'} text-white px-2 py-1 rounded text-xs transition duration-300">
+                    ${isUnavailable ? 'Rendre Disponible' : 'Marquer Indisponible'}
+                </button>
+            `;
+
+            item.querySelector('.toggle-manual-status-button').addEventListener('click', async (e) => {
+                const button = e.currentTarget;
+                const carToToggle = button.dataset.carname;
+                const current = button.dataset.currentstatus;
+                const newStatus = (current === 'unavailable') ? 'available' : 'unavailable';
+                if (!carToToggle || !db) return;
+
+                const confirmationMessage = newStatus === 'unavailable'
+                    ? `Marquer '${carToToggle}' comme INDISPONIBLE manuellement ?`
+                    : `Marquer '${carToToggle}' comme DISPONIBLE ?`;
+
+                if (confirm(confirmationMessage)) {
+                    button.disabled = true;
+                    const originalText = button.textContent;
+                    button.innerHTML = '<span class="loader !border-t-white !border-l-white !w-3 !h-3 !inline-block"></span>';
+                    try {
+                        const docRef = doc(db, "car_manual_status", carToToggle);
+                        if (newStatus === 'available') {
+                            await deleteDoc(docRef); // Supprimer le document pour indiquer disponible
+                        } else {
+                            // Créer ou mettre à jour le document pour indiquer indisponible
+                            await setDoc(docRef, { status: 'unavailable', updatedAt: serverTimestamp() });
+                        }
+                        console.log(`${carToToggle} mis à jour à ${newStatus}.`);
+                        // Le listener onSnapshot mettra à jour l'UI automatiquement
+                    } catch (error) {
+                        console.error("Erreur toggle statut manuel:", error);
+                        showAvailabilityMessage("Erreur mise à jour statut manuel.", true);
+                        button.disabled = false;
+                        button.innerHTML = originalText; // Restaurer texte en cas d'erreur
+                    }
+                     // Pas besoin de réactiver le bouton ici, car l'UI se met à jour via onSnapshot
+                }
+            });
+
+            return item;
+        }
+
+
+        // --- Notification Logic ---
+        function checkNotificationPermission() {
+            if (!("Notification" in window)) {
+                notificationStatus.textContent = "Notifications non supportées.";
+                enableNotificationsButton.disabled = true;
+                enableNotificationsButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+                enableNotificationsButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            } else { updateNotificationButtonState(Notification.permission); }
+        }
+        function updateNotificationButtonState(permission) {
+             notificationPermission = permission;
+             if (permission === "granted") {
+                notificationStatus.textContent = "Alertes activées.";
+                enableNotificationsButton.disabled = true;
+                enableNotificationsButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+                enableNotificationsButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            } else if (permission === "denied") {
+                 notificationStatus.textContent = "Alertes bloquées.";
+                 enableNotificationsButton.disabled = true;
+                 enableNotificationsButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+                 enableNotificationsButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            } else {
+                 notificationStatus.textContent = "";
+                 enableNotificationsButton.disabled = false;
+                 enableNotificationsButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                 enableNotificationsButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            }
+         }
+        enableNotificationsButton.addEventListener('click', () => {
+             if (Notification.permission === "default") {
+                Notification.requestPermission().then(permission => {
+                    updateNotificationButtonState(permission);
+                    if (permission === "granted") { showNotification('Notifications Activées', 'Vous recevrez maintenant les alertes.'); }
+                });
+            }
+         });
+         // Modifié pour utiliser le Service Worker si disponible
+        function showNotification(title, body) {
+             if (notificationPermission !== "granted") { console.log("Permission notif non accordée."); return; }
+             const options = { body: body, icon: '/icons/icon-192x192.png', tag: 'new-booking' }; // Added tag to prevent multiple notifs for same event sometimes
+
+             if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                 navigator.serviceWorker.ready.then(registration => {
+                     // Vérifier si showNotification est supporté
+                     if ('showNotification' in registration) {
+                         registration.showNotification(title, options);
+                     } else {
+                         // Fallback pour navigateurs plus anciens ou contextes non sécurisés
+                         console.warn("Service Worker ne supporte pas showNotification, tentative via Notification API directe.");
+                         try { new Notification(title, options); } catch (err) { console.error("Erreur notif directe:", err); }
+                     }
+                 }).catch(err => {
+                     console.error("Erreur Service Worker Ready:", err);
+                     // Fallback si SW non prêt
+                      try { new Notification(title, options); } catch (e) { console.error("Erreur notif directe (fallback SW):", e); }
+                 });
+             } else {
+                 console.warn("Service Worker non disponible, tentative via Notification API directe.");
+                 try { new Notification(title, options); } catch (err) { console.error("Erreur notif directe:", err); }
+             }
+         }
+
+
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+             window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                  .then(reg => console.log('SW enregistré:', reg.scope))
+                  .catch(err => console.log('Échec enregistrement SW:', err));
+              });
+        }
 
         // --- Simple Modal (remplacé par alert) ---
-        function showModalMessage(message) { alert(message); } // Utiliser alert pour les erreurs modales simples
+        function showModalMessage(message) { alert(message); } // Utiliser alert pour les erreurs simples hors modale principale
 
     </script>
 </body>
