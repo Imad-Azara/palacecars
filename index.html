@@ -6,7 +6,7 @@
     <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome (integrity corrigé) -->
+    <!-- Font Awesome (integrity corrigé DÉFINITIVEMENT) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; /* Slate-100 */ color: #334155; /* Slate-700 */ scroll-behavior: smooth; overflow-x: hidden; /* Prevent horizontal scroll */ }
@@ -784,6 +784,167 @@
              }
          }
 
+        // --- Logique de Vérification de Disponibilité (Bouton Principal) ---
+        checkAvailabilityButton.addEventListener('click', async () => {
+             // Validation des champs
+             if (!dbReady) { showMessage("La base de données n'est pas prête. Réessayez.", "error"); return; }
+             const startDateStr = datePriseEnChargeInput.value; const startHourStr = heurePriseEnChargeHeureSelect.value;
+             const startMinuteStr = heurePriseEnChargeMinuteSelect.value; const endDateStr = dateRetourInput.value;
+             const endHourStr = heureRetourHeureSelect.value; const endMinuteStr = heureRetourMinuteSelect.value;
+             if (!startDateStr || startHourStr === "" || startMinuteStr === "" || !endDateStr || endHourStr === "" || endMinuteStr === "") { showMessage("Veuillez sélectionner les dates et heures complètes.", "warning"); return; }
+             currentPickupDateTime = getDateTimeObject(startDateStr, startHourStr, startMinuteStr);
+             currentReturnDateTime = getDateTimeObject(endDateStr, endHourStr, endMinuteStr);
+             if (!currentPickupDateTime || !currentReturnDateTime) { return; } // Error shown in getDateTimeObject
+             const now = new Date();
+             const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+              if (currentPickupDateTime < todayStart) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
+              if (currentPickupDateTime >= currentReturnDateTime) { showMessage("La date/heure de fin doit être après la date/heure de début.", "warning"); return; }
+
+             availabilitySpinner.classList.remove('hidden'); checkAvailabilityButton.disabled = true;
+             availableCarsSection.classList.add('hidden'); availableCarsListDiv.innerHTML = '';
+             noCarsMessage.classList.add('hidden'); submitBookingButton.classList.add('hidden');
+             selectedCarName = null; selectedCarInput.value = ''; messageBox.classList.add('hidden');
+
+             try {
+                 let availableCarsCount = 0;
+                 const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
+                 const manualStatusMap = new Map();
+                 manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
+
+                 const returnTimestamp = Timestamp.fromDate(currentReturnDateTime);
+                 const pickupTimestamp = Timestamp.fromDate(currentPickupDateTime);
+
+                 // Fetch all potential unavailability periods that might overlap
+                 // Fetch periods ending after our pickup starts
+                 const qPeriodsEndAfterPickup = query(
+                     unavailabilityPeriodsCollectionRef,
+                     where("endDate", ">", pickupTimestamp)
+                 );
+
+                 const periodsSnapshot = await getDocs(qPeriodsEndAfterPickup);
+                 const unavailabilityMap = new Map(); // Map<carName, Array<period>>
+
+                 periodsSnapshot.forEach(doc => {
+                     const period = doc.data();
+                     // Check if this period also STARTS before our return ends (actual overlap check)
+                     if (period.startDate && period.startDate.seconds < returnTimestamp.seconds) {
+                         if (!unavailabilityMap.has(period.car)) {
+                             unavailabilityMap.set(period.car, []);
+                         }
+                         unavailabilityMap.get(period.car).push(period);
+                     }
+                 });
+
+
+                 availableCarsListDiv.innerHTML = '';
+
+                 carNames.forEach((carName) => {
+                     let isAvailable = true; let reason = "";
+                     // Check manual status first
+                     if (manualStatusMap.get(carName) === 'unavailable') {
+                         isAvailable = false; reason = '(Indisponible)';
+                     } else {
+                         // Check overlapping periods
+                         const carPeriods = unavailabilityMap.get(carName) || [];
+                         if (carPeriods.length > 0) {
+                             // Check if the specific car has an overlapping period
+                             let overlaps = false;
+                             for (const p of carPeriods) {
+                                 if (p.car === carName) {
+                                     overlaps = true;
+                                     break;
+                                 }
+                             }
+                             if (overlaps) {
+                                isAvailable = false;
+                                reason = '(Indisponible)';
+                             }
+                         }
+                     }
+                     const carData = carFleet[carName];
+                     availableCarsListDiv.appendChild(createCarCard(carName, carData, isAvailable, reason));
+                     if (isAvailable) { availableCarsCount++; }
+                 });
+
+                 availableCarsSection.classList.remove('hidden');
+                 noCarsMessage.classList.toggle('hidden', availableCarsCount === 0);
+                 // Only scroll if availability was checked successfully
+                 availableCarsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+             } catch (error) {
+                 console.error("Erreur globale lors de la vérification:", error);
+                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    showMessage("Index Firestore manquant détecté. Ouvrez la console (F12) et suivez le lien fourni par Firebase pour créer l'index requis. Cela peut prendre quelques minutes.", "error");
+                 } else { showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error"); }
+             } finally {
+                 availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
+             }
+        });
+
+        // --- Création Carte Voiture ---
+         function createCarCard(carName, carData, isAvailable, unavailableReason = "(Indisponible)") {
+            const card = document.createElement('div');
+            const availabilityClasses = isAvailable ? 'cursor-pointer group' : 'opacity-60 cursor-not-allowed';
+            card.className = `car-card ${availabilityClasses} shadow-lg hover:shadow-primary/20`;
+            card.dataset.carName = carName;
+
+            card.innerHTML = `
+                <div class="relative overflow-hidden rounded-t-lg">
+                    <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-52 object-cover ${isAvailable ? 'group-hover:scale-110' : ''} transition-transform duration-500 ease-in-out" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
+                    ${!isAvailable ? `<div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-t-lg"><span class="text-white font-semibold text-sm px-3 py-1 rounded bg-red-600 shadow">${unavailableReason}</span></div>` : ''}
+                    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+                </div>
+                <div class="p-6">
+                    <h4 class="text-xl font-bold text-text-dark mb-2 truncate">${carName}</h4>
+                    <div class="flex justify-between items-center mb-5">
+                         <p class="text-2xl font-extrabold text-primary price">${carData.price}<span class="text-sm font-medium text-text-medium"> Dhs/jour</span></p>
+                    </div>
+                    <button type="button" class="select-car-button btn w-full ${isAvailable ? 'btn-primary' : 'bg-gray-400 text-gray-700 cursor-not-allowed'} text-sm py-3" ${!isAvailable ? 'disabled' : ''}>
+                        <span class="button-text">${isAvailable ? 'Sélectionner' : 'Indisponible'}</span>
+                        ${isAvailable ? '<i class="fas fa-check ml-1 icon-check hidden"></i>' : ''}
+                    </button>
+                </div>
+            `;
+
+             if (isAvailable) {
+                 const selectButton = card.querySelector('.select-car-button');
+                 const buttonText = selectButton.querySelector('.button-text');
+                 const checkIcon = selectButton.querySelector('.icon-check');
+
+                 // Use click on the whole card for selection if available
+                 card.addEventListener('click', (e) => {
+                     // Prevent selection if clicking disabled button directly (though card handles it)
+                     if (e.target.closest('button') && e.target.closest('button').disabled) return;
+
+                     document.querySelectorAll('.car-card.selected').forEach(selectedCard => {
+                         selectedCard.classList.remove('selected', 'border-2');
+                         const btn = selectedCard.querySelector('.select-car-button');
+                         if (btn) {
+                            btn.querySelector('.button-text').textContent = 'Sélectionner';
+                            btn.querySelector('.icon-check')?.classList.add('hidden');
+                            btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
+                            btn.classList.add('btn-primary');
+                            btn.disabled = false;
+                         }
+                     });
+                     card.classList.add('selected', 'border-2');
+                     buttonText.textContent = 'Sélectionnée';
+                     checkIcon?.classList.remove('hidden');
+                     selectButton.classList.remove('btn-primary');
+                     selectButton.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
+                     selectButton.disabled = true; // Keep button disabled visually when selected
+                     selectedCarName = carName;
+                     selectedCarInput.value = carName;
+                     submitBookingButton.classList.remove('hidden');
+                     submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                     // Optionally scroll submit button into view
+                     // submitBookingButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 });
+             }
+            return card;
+         }
+
+
         // --- Logique de Soumission Finale ---
         submitBookingButton.addEventListener('click', async () => {
              console.log("Submit button clicked"); // Log 1: Button clicked
@@ -1065,4 +1226,5 @@
     </script>
 </body>
 </html>
+
 
