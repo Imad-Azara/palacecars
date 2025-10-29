@@ -62,14 +62,23 @@
         #mobile-menu a { color: var(--color-text-dark); }
         #mobile-menu a:hover { background-color: var(--color-primary-lighter); color: var(--color-primary); }
 
-        /* Logo swap styling */
-        .logo-container { position: relative; width: 6rem; height: 6rem; /* h-24 w-24 */ } /* Ensure container has size */
+        /* Logo swap and resize styling */
+        .logo-container {
+            position: relative;
+            width: 6rem; /* Initial width (w-24) */
+            height: 6rem; /* Initial height (h-24) */
+            transition: width 0.3s ease, height 0.3s ease; /* Smooth resize */
+        }
+        header.scrolled .logo-container {
+            width: 4rem; /* Scrolled width (w-16) */
+            height: 4rem; /* Scrolled height (h-16) */
+        }
         .logo-container img {
             position: absolute; top: 0; left: 0;
             height: 100%; width: 100%;
             object-fit: contain;
             border-radius: 9999px; /* rounded-full */
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease; /* Added transform transition */
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
             transform: scale(1); /* Base scale */
         }
@@ -204,7 +213,7 @@
 
             <!-- Logo - Center -->
             <div class="flex-1 flex justify-center md:absolute md:left-1/2 md:transform md:-translate-x-1/2">
-                 <a href="#" class="logo-container"> <!-- Added container for positioning -->
+                 <a href="#" class="logo-container"> <!-- Size changes via CSS based on header.scrolled -->
                    <!-- White Logo (Initially Visible) -->
                    <img id="logo-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
                    <!-- Color Logo (Initially Hidden) -->
@@ -738,7 +747,7 @@
             });
         }
 
-        // --- Vérification de Disponibilité Spécifique (Client-Side after fetching all periods) ---
+        // --- MODIFIED: Vérification de Disponibilité Spécifique (Client-Side, uses pre-fetched data) ---
          function checkAvailabilityClientSide(carName, pickupDateTime, returnDateTime, manualStatusMap, unavailabilityPeriods) {
             if (!carName || !pickupDateTime || !returnDateTime || isNaN(pickupDateTime) || isNaN(returnDateTime)) {
                 console.error("Données invalides pour checkAvailabilityClientSide", carName, pickupDateTime, returnDateTime);
@@ -747,33 +756,39 @@
 
             // 1. Check manual status
             if (manualStatusMap.get(carName) === 'unavailable') {
+                console.log(`${carName} est marqué indisponible manuellement.`);
                 return { available: false, reason: 'Indisponible' };
             }
 
-            // 2. Check overlapping periods
+            // 2. Check overlapping periods from the pre-fetched list
             const requestedStart = pickupDateTime.getTime();
             const requestedEnd = returnDateTime.getTime();
 
             for (const period of unavailabilityPeriods) {
-                if (period.car === carName) {
-                    const periodStart = period.startDate.toDate().getTime();
-                    const periodEnd = period.endDate.toDate().getTime();
+                 // Convert Firestore Timestamps to JS Date objects if they exist
+                 const periodStart = period.startDate?.toDate ? period.startDate.toDate().getTime() : null;
+                 const periodEnd = period.endDate?.toDate ? period.endDate.toDate().getTime() : null;
 
+                if (period.car === carName && periodStart !== null && periodEnd !== null) {
                     // Check for overlap: https://stackoverflow.com/a/325964
                     if (requestedStart < periodEnd && requestedEnd > periodStart) {
                          console.log(`Overlap found for ${carName}: Request [${formatReadableDateTime(pickupDateTime)} - ${formatReadableDateTime(returnDateTime)}] overlaps with Period [${formatReadableDateTime(period.startDate.toDate())} - ${formatReadableDateTime(period.endDate.toDate())}]`);
                          return { available: false, reason: `(Indisponible)` };
                     }
+                } else if (period.car === carName) {
+                    console.warn(`Période d'indisponibilité invalide trouvée pour ${carName}:`, period);
                 }
             }
             // If no manual block and no overlapping period found
+            console.log(`${carName} est disponible pour la période [${formatReadableDateTime(pickupDateTime)} - ${formatReadableDateTime(returnDateTime)}].`);
             return { available: true };
         }
 
 
-        // --- Logique de Vérification de Disponibilité (Bouton Principal - Fetch ALL periods) ---
+        // --- MODIFIED: Logique de Vérification de Disponibilité (Bouton Principal - Fetch ALL periods, avoid index) ---
         checkAvailabilityButton.addEventListener('click', async () => {
-             // Validation des champs
+             console.log("Vérification de disponibilité initiée..."); // Debug log
+             // Validation des champs (inchangée)
              if (!dbReady) { showMessage("La base de données n'est pas prête. Réessayez.", "error"); return; }
              const startDateStr = datePriseEnChargeInput.value; const startHourStr = heurePriseEnChargeHeureSelect.value;
              const startMinuteStr = heurePriseEnChargeMinuteSelect.value; const endDateStr = dateRetourInput.value;
@@ -781,10 +796,9 @@
              if (!startDateStr || startHourStr === "" || startMinuteStr === "" || !endDateStr || endHourStr === "" || endMinuteStr === "") { showMessage("Veuillez sélectionner les dates et heures complètes.", "warning"); return; }
              currentPickupDateTime = getDateTimeObject(startDateStr, startHourStr, startMinuteStr);
              currentReturnDateTime = getDateTimeObject(endDateStr, endHourStr, endMinuteStr);
-             if (!currentPickupDateTime || !currentReturnDateTime) { return; } // Error shown in getDateTimeObject
+             if (!currentPickupDateTime || !currentReturnDateTime) { return; }
              const now = new Date();
              const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-              // Convert currentPickupDateTime to UTC for comparison with todayStart (which is UTC based)
              const currentPickupUTC = Date.UTC(currentPickupDateTime.getFullYear(), currentPickupDateTime.getMonth(), currentPickupDateTime.getDate());
              if (currentPickupUTC < todayStart.getTime()) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
              if (currentPickupDateTime >= currentReturnDateTime) { showMessage("La date/heure de fin doit être après la date/heure de début.", "warning"); return; }
@@ -795,19 +809,23 @@
              selectedCarName = null; selectedCarInput.value = ''; messageBox.classList.add('hidden');
 
              try {
+                 console.log("Récupération des statuts manuels..."); // Debug log
                  // Fetch manual statuses
                  const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
                  const manualStatusMap = new Map();
                  manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
+                 console.log("Statuts manuels récupérés:", manualStatusMap); // Debug log
 
+                 console.log("Récupération de TOUTES les périodes d'indisponibilité..."); // Debug log
                  // Fetch ALL unavailability periods (NO INDEX NEEDED FOR THIS)
                  const periodsSnapshot = await getDocs(unavailabilityPeriodsCollectionRef);
                  allUnavailabilityPeriods = periodsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                 console.log("Périodes d'indisponibilité récupérées:", allUnavailabilityPeriods); // Log fetched periods
+                 console.log("Périodes d'indisponibilité récupérées:", allUnavailabilityPeriods.length); // Log count
 
                  // Now check availability for each car client-side
                  let availableCarsCount = 0;
                  availableCarsListDiv.innerHTML = ''; // Clear previous results
+                 console.log("Vérification de chaque voiture côté client..."); // Debug log
 
                  carNames.forEach((carName) => {
                      const { available, reason } = checkAvailabilityClientSide(carName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, allUnavailabilityPeriods);
@@ -816,6 +834,7 @@
                      if (available) { availableCarsCount++; }
                  });
 
+                 console.log("Nombre de voitures disponibles:", availableCarsCount); // Debug log
                  availableCarsSection.classList.remove('hidden');
                  noCarsMessage.classList.toggle('hidden', availableCarsCount === 0);
                  // Only scroll if availability was checked successfully
@@ -823,10 +842,10 @@
 
              } catch (error) {
                  console.error("Erreur globale lors de la vérification:", error);
-                 // This error should be less likely now, but handle just in case
                  showMessage("Une erreur s'est produite lors de la récupération des disponibilités. Veuillez réessayer.", "error");
              } finally {
                  availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
+                 console.log("Fin de la vérification de disponibilité."); // Debug log
              }
         });
 
@@ -840,8 +859,13 @@
 
             // Simplified unavailableReason display
              let displayReason = unavailableReason;
+             // Don't show specific availability dates to the client
              if (!isAvailable && unavailableReason.startsWith('(Disponible le')) {
-                 displayReason = "(Indisponible)"; // Only show "(Indisponible)" to the user
+                 displayReason = "(Indisponible)"; // Only show "(Indisponible)"
+             } else if (!isAvailable && unavailableReason === "Indisponible") {
+                displayReason = "(Indisponible)"; // Manual status
+             } else if (!isAvailable) {
+                 displayReason = "(Indisponible)"; // Default for booking overlap
              }
 
             card.innerHTML = `
@@ -954,7 +978,7 @@
 
                 if (!availabilityCheck.available) {
                     showMessage(`Désolé, la voiture "${selectedCarName}" vient d'être indisponible. Veuillez choisir une autre voiture.`, 'error');
-                    // Re-run availability check visually
+                    // Re-run availability check visually to update the list for the user
                     checkAvailabilityButton.click();
                     submitBookingButton.classList.add('hidden'); // Hide submit button again
                     submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
@@ -1101,12 +1125,12 @@
              }
 
              // Define Tailwind classes for hidden and visible states
-             const hiddenClasses = ['max-h-0', 'opacity-0', 'py-0', 'my-0', 'overflow-hidden'];
+             const hiddenClasses = ['max-h-0', 'opacity-0', 'py-0', 'my-0', 'overflow-hidden', 'p-0', 'm-0']; // Added p-0 m-0
              // Use a very large max-height to ensure content fits
-             const visibleClasses = ['max-h-[3000px]', 'opacity-100', 'py-20', 'md:py-32', 'my-16', 'md:my-24'];
+             const visibleClasses = ['max-h-[3000px]', 'opacity-100', 'py-20', 'md:py-32', 'my-16', 'md:my-24']; // Original padding/margin
 
              if (show) {
-                 // Immediately remove hidden classes and add visible classes
+                 // Remove hidden classes and add visible classes
                  hiddenClasses.forEach(c => reservationSectionEl.classList.remove(c));
                  visibleClasses.forEach(c => reservationSectionEl.classList.add(c));
 
@@ -1177,9 +1201,9 @@
             // Observe only sections with section-animate (excluding #reservation)
             document.querySelectorAll('.section-animate').forEach(section => {
                  observer.observe(section);
-                 console.log("Observing section:", section.id || section.tagName); // Debug log
+                 //console.log("Observing section:", section.id || section.tagName); // Debug log
             });
-             console.log("Scroll observer initialized."); // Debug log
+             //console.log("Scroll observer initialized."); // Debug log
 
         }); // End DOMContentLoaded
 
