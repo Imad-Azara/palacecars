@@ -6,7 +6,7 @@
     <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome (integrity corrigé DÉFINITIVEMENT) -->
+    <!-- Font Awesome (integrity CORRIGÉ) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; /* Slate-100 */ color: #334155; /* Slate-700 */ scroll-behavior: smooth; overflow-x: hidden; /* Prevent horizontal scroll */ }
@@ -561,7 +561,10 @@
     <!-- Script Firebase & Logique -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDoc, getDocs, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDoc, getDocs, Timestamp, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Enable Firestore logging
+        // setLogLevel('debug'); // Uncomment for detailed logs
 
         // --- Configuration Firebase ---
         const firebaseConfig = {
@@ -594,8 +597,8 @@
              const reservationSectionEl = document.getElementById('reservation');
              if(initialMessageBox && reservationSectionEl) {
                  // Make section visible to show the error
-                 reservationSectionEl.classList.remove('opacity-0', 'max-h-0', 'p-0', 'm-0', 'overflow-hidden');
-                 reservationSectionEl.classList.add('py-20', 'md:py-32', 'opacity-100', 'max-h-[3000px]'); // Use the 'visible' state classes
+                 reservationSectionEl.classList.remove('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
+                 reservationSectionEl.classList.add('max-h-[3000px]', 'py-20', 'md:py-32', 'my-16', 'md:my-24', 'opacity-100');
                  reservationSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                 initialMessageBox.textContent = "Erreur critique: Impossible de connecter à la base de données.";
@@ -650,12 +653,13 @@
         let selectedCarName = null;
         let currentPickupDateTime = null;
         let currentReturnDateTime = null;
+        let allUnavailabilityPeriods = []; // Cache for unavailability periods
 
         // --- Fonctions Utilitaires ---
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
             messageBox.className = 'p-4 rounded-lg text-center mb-6 font-medium border text-sm md:text-base'; // Keep base classes
-            messageBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800', 'bg-blue-100', 'border-blue-300', 'text-blue-800'); // Remove old colors
+            messageBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800', 'bg-blue-100', 'border-blue-300', 'text-blue-800', 'hidden'); // Remove old colors and hidden
             if (type === 'success') {
                 messageBox.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
             } else if (type === 'error') {
@@ -665,15 +669,17 @@
             } else { // info default
                 messageBox.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-800');
             }
-             messageBox.style.opacity = '1'; messageBox.style.transform = 'translateY(0)';
-             messageBox.classList.remove('hidden');
-            // Auto-hide after 7 seconds
-            setTimeout(() => {
-                if (!messageBox.classList.contains('hidden')) { // Check if still visible
-                    messageBox.style.opacity = '0'; messageBox.style.transform = 'translateY(-10px)';
-                    setTimeout(() => messageBox.classList.add('hidden'), 300);
-                 }
-            }, 7000);
+             messageBox.style.opacity = '1';
+             messageBox.style.transform = 'translateY(0)';
+            // Auto-hide after 7 seconds for non-errors
+            if (type !== 'error') {
+                setTimeout(() => {
+                    if (!messageBox.classList.contains('hidden')) { // Check if still visible
+                        messageBox.style.opacity = '0'; messageBox.style.transform = 'translateY(-10px)';
+                        setTimeout(() => messageBox.classList.add('hidden'), 300);
+                     }
+                }, 7000);
+            }
         }
 
         function getDateTimeObject(dateStr, hourStr, minuteStr) {
@@ -681,10 +687,11 @@
             try {
                 const hour = hourStr.padStart(2, '0');
                 const minute = minuteStr.padStart(2, '0');
-                const [year, month, day] = dateStr.split('-');
-                // Use UTC to avoid timezone issues when comparing dates
-                const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
-                if (isNaN(d.getTime())) { throw new Error("Invalid date created"); }
+                // Dates from input type="date" are already local timezone YYYY-MM-DD.
+                // Combine them with time for local Date object.
+                const localDateTimeStr = `${dateStr}T${hour}:${minute}:00`;
+                const d = new Date(localDateTimeStr);
+                if (isNaN(d.getTime())) { throw new Error("Invalid date created from string: " + localDateTimeStr); }
                 return d;
             } catch (e) {
                 console.error("Erreur conversion date/heure:", dateStr, hourStr, minuteStr, e);
@@ -695,20 +702,20 @@
 
         function formatReadableDateTime(dateObj) {
             if (!dateObj || isNaN(dateObj.getTime())) return "Date invalide";
-             const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' };
+             // Use local time for display since input was local
+             const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
              try {
                 let formatted = new Intl.DateTimeFormat('fr-FR', options).format(dateObj);
-                // Correctly remove potential multiple spaces after replace in different locales
-                formatted = formatted.replace(/[\s,]+/g, ' ').trim();
-                return formatted;
+                formatted = formatted.replace(',', ''); // Remove comma sometimes added by Intl
+                return formatted.replace(' ', ' à '); // Replace space between date and time
              } catch (e) {
                 console.error("Error formatting date:", e);
-                const day = String(dateObj.getUTCDate()).padStart(2, '0');
-                const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-                const year = dateObj.getUTCFullYear();
-                const hours = String(dateObj.getUTCHours()).padStart(2, '0');
-                const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ${hours}h${minutes}`;
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                const hours = String(dateObj.getHours()).padStart(2, '0');
+                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                return `${day}/${month}/${year} à ${hours}h${minutes}`;
              }
         }
 
@@ -731,60 +738,40 @@
             });
         }
 
-        // --- Vérification de Disponibilité Spécifique ---
-        async function isCarAvailable(carName, pickupDateTime, returnDateTime) {
-             if (!dbReady || !carName || !pickupDateTime || !returnDateTime || isNaN(pickupDateTime) || isNaN(returnDateTime)) {
-                 console.error("Données invalides pour isCarAvailable", carName, pickupDateTime, returnDateTime);
-                 return { available: false, reason: 'Erreur interne' };
-             }
-             try {
-                 // 1. Vérifier statut manuel
-                 const manualStatusDocRef = doc(db, "car_manual_status", carName);
-                 const manualStatusSnap = await getDoc(manualStatusDocRef);
-                 if (manualStatusSnap.exists() && manualStatusSnap.data().status === 'unavailable') {
-                     return { available: false, reason: 'Indisponible' };
-                 }
+        // --- Vérification de Disponibilité Spécifique (Client-Side after fetching all periods) ---
+         function checkAvailabilityClientSide(carName, pickupDateTime, returnDateTime, manualStatusMap, unavailabilityPeriods) {
+            if (!carName || !pickupDateTime || !returnDateTime || isNaN(pickupDateTime) || isNaN(returnDateTime)) {
+                console.error("Données invalides pour checkAvailabilityClientSide", carName, pickupDateTime, returnDateTime);
+                return { available: false, reason: 'Erreur interne' };
+            }
 
-                 // 2. Vérifier les périodes d'indisponibilité
-                 const pickupTimestamp = Timestamp.fromDate(pickupDateTime);
-                 const returnTimestamp = Timestamp.fromDate(returnDateTime);
+            // 1. Check manual status
+            if (manualStatusMap.get(carName) === 'unavailable') {
+                return { available: false, reason: 'Indisponible' };
+            }
 
-                 // Query for periods ending after the requested pickup time
-                 const qPeriodsEndAfterPickup = query(
-                     unavailabilityPeriodsCollectionRef,
-                     where("car", "==", carName),
-                     where("endDate", ">", pickupTimestamp) // Check if the period ENDS AFTER the requested START
-                 );
+            // 2. Check overlapping periods
+            const requestedStart = pickupDateTime.getTime();
+            const requestedEnd = returnDateTime.getTime();
 
-                 const periodsSnapshot = await getDocs(qPeriodsEndAfterPickup);
-                 let isUnavailable = false;
+            for (const period of unavailabilityPeriods) {
+                if (period.car === carName) {
+                    const periodStart = period.startDate.toDate().getTime();
+                    const periodEnd = period.endDate.toDate().getTime();
 
-                 for (const docSnap of periodsSnapshot.docs) {
-                     const period = docSnap.data();
-                     // Check if the period STARTS BEFORE the requested END time
-                     if (period.startDate && period.startDate.seconds < returnTimestamp.seconds) {
-                         // We have an overlap
-                         isUnavailable = true;
-                         break;
-                     }
-                 }
+                    // Check for overlap: https://stackoverflow.com/a/325964
+                    if (requestedStart < periodEnd && requestedEnd > periodStart) {
+                         console.log(`Overlap found for ${carName}: Request [${formatReadableDateTime(pickupDateTime)} - ${formatReadableDateTime(returnDateTime)}] overlaps with Period [${formatReadableDateTime(period.startDate.toDate())} - ${formatReadableDateTime(period.endDate.toDate())}]`);
+                         return { available: false, reason: `(Indisponible)` };
+                    }
+                }
+            }
+            // If no manual block and no overlapping period found
+            return { available: true };
+        }
 
-                 if (isUnavailable) {
-                     console.log(`${carName} a une période d'indisponibilité qui chevauche la demande.`);
-                     return { available: false, reason: `(Indisponible)` };
-                 }
-                 return { available: true };
 
-             } catch (error) {
-                 console.error(`Erreur vérification disponibilité pour ${carName}:`, error);
-                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     showMessage("Index Firestore manquant détecté. Ouvrez la console (F12) et suivez le lien fourni par Firebase pour créer l'index requis. Cela peut prendre quelques minutes.", "error");
-                 } else { showMessage("Erreur technique lors de la vérification de disponibilité.", "error"); }
-                 return { available: false, reason: 'Erreur' };
-             }
-         }
-
-        // --- Logique de Vérification de Disponibilité (Bouton Principal) ---
+        // --- Logique de Vérification de Disponibilité (Bouton Principal - Fetch ALL periods) ---
         checkAvailabilityButton.addEventListener('click', async () => {
              // Validation des champs
              if (!dbReady) { showMessage("La base de données n'est pas prête. Réessayez.", "error"); return; }
@@ -797,8 +784,10 @@
              if (!currentPickupDateTime || !currentReturnDateTime) { return; } // Error shown in getDateTimeObject
              const now = new Date();
              const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-              if (currentPickupDateTime < todayStart) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
-              if (currentPickupDateTime >= currentReturnDateTime) { showMessage("La date/heure de fin doit être après la date/heure de début.", "warning"); return; }
+              // Convert currentPickupDateTime to UTC for comparison with todayStart (which is UTC based)
+             const currentPickupUTC = Date.UTC(currentPickupDateTime.getFullYear(), currentPickupDateTime.getMonth(), currentPickupDateTime.getDate());
+             if (currentPickupUTC < todayStart.getTime()) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
+             if (currentPickupDateTime >= currentReturnDateTime) { showMessage("La date/heure de fin doit être après la date/heure de début.", "warning"); return; }
 
              availabilitySpinner.classList.remove('hidden'); checkAvailabilityButton.disabled = true;
              availableCarsSection.classList.add('hidden'); availableCarsListDiv.innerHTML = '';
@@ -806,64 +795,25 @@
              selectedCarName = null; selectedCarInput.value = ''; messageBox.classList.add('hidden');
 
              try {
-                 let availableCarsCount = 0;
+                 // Fetch manual statuses
                  const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
                  const manualStatusMap = new Map();
                  manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
 
-                 const returnTimestamp = Timestamp.fromDate(currentReturnDateTime);
-                 const pickupTimestamp = Timestamp.fromDate(currentPickupDateTime);
+                 // Fetch ALL unavailability periods (NO INDEX NEEDED FOR THIS)
+                 const periodsSnapshot = await getDocs(unavailabilityPeriodsCollectionRef);
+                 allUnavailabilityPeriods = periodsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 console.log("Périodes d'indisponibilité récupérées:", allUnavailabilityPeriods); // Log fetched periods
 
-                 // Fetch all potential unavailability periods that might overlap
-                 // Fetch periods ending after our pickup starts
-                 const qPeriodsEndAfterPickup = query(
-                     unavailabilityPeriodsCollectionRef,
-                     where("endDate", ">", pickupTimestamp)
-                 );
-
-                 const periodsSnapshot = await getDocs(qPeriodsEndAfterPickup);
-                 const unavailabilityMap = new Map(); // Map<carName, Array<period>>
-
-                 periodsSnapshot.forEach(doc => {
-                     const period = doc.data();
-                     // Check if this period also STARTS before our return ends (actual overlap check)
-                     if (period.startDate && period.startDate.seconds < returnTimestamp.seconds) {
-                         if (!unavailabilityMap.has(period.car)) {
-                             unavailabilityMap.set(period.car, []);
-                         }
-                         unavailabilityMap.get(period.car).push(period);
-                     }
-                 });
-
-
-                 availableCarsListDiv.innerHTML = '';
+                 // Now check availability for each car client-side
+                 let availableCarsCount = 0;
+                 availableCarsListDiv.innerHTML = ''; // Clear previous results
 
                  carNames.forEach((carName) => {
-                     let isAvailable = true; let reason = "";
-                     // Check manual status first
-                     if (manualStatusMap.get(carName) === 'unavailable') {
-                         isAvailable = false; reason = '(Indisponible)';
-                     } else {
-                         // Check overlapping periods
-                         const carPeriods = unavailabilityMap.get(carName) || [];
-                         if (carPeriods.length > 0) {
-                             // Check if the specific car has an overlapping period
-                             let overlaps = false;
-                             for (const p of carPeriods) {
-                                 if (p.car === carName) {
-                                     overlaps = true;
-                                     break;
-                                 }
-                             }
-                             if (overlaps) {
-                                isAvailable = false;
-                                reason = '(Indisponible)';
-                             }
-                         }
-                     }
+                     const { available, reason } = checkAvailabilityClientSide(carName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, allUnavailabilityPeriods);
                      const carData = carFleet[carName];
-                     availableCarsListDiv.appendChild(createCarCard(carName, carData, isAvailable, reason));
-                     if (isAvailable) { availableCarsCount++; }
+                     availableCarsListDiv.appendChild(createCarCard(carName, carData, available, reason));
+                     if (available) { availableCarsCount++; }
                  });
 
                  availableCarsSection.classList.remove('hidden');
@@ -873,25 +823,31 @@
 
              } catch (error) {
                  console.error("Erreur globale lors de la vérification:", error);
-                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    showMessage("Index Firestore manquant détecté. Ouvrez la console (F12) et suivez le lien fourni par Firebase pour créer l'index requis. Cela peut prendre quelques minutes.", "error");
-                 } else { showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error"); }
+                 // This error should be less likely now, but handle just in case
+                 showMessage("Une erreur s'est produite lors de la récupération des disponibilités. Veuillez réessayer.", "error");
              } finally {
                  availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
              }
         });
 
-        // --- Création Carte Voiture ---
-         function createCarCard(carName, carData, isAvailable, unavailableReason = "(Indisponible)") {
+
+        // --- Création Carte Voiture (No change needed here) ---
+        function createCarCard(carName, carData, isAvailable, unavailableReason = "(Indisponible)") {
             const card = document.createElement('div');
             const availabilityClasses = isAvailable ? 'cursor-pointer group' : 'opacity-60 cursor-not-allowed';
             card.className = `car-card ${availabilityClasses} shadow-lg hover:shadow-primary/20`;
             card.dataset.carName = carName;
 
+            // Simplified unavailableReason display
+             let displayReason = unavailableReason;
+             if (!isAvailable && unavailableReason.startsWith('(Disponible le')) {
+                 displayReason = "(Indisponible)"; // Only show "(Indisponible)" to the user
+             }
+
             card.innerHTML = `
                 <div class="relative overflow-hidden rounded-t-lg">
                     <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-52 object-cover ${isAvailable ? 'group-hover:scale-110' : ''} transition-transform duration-500 ease-in-out" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
-                    ${!isAvailable ? `<div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-t-lg"><span class="text-white font-semibold text-sm px-3 py-1 rounded bg-red-600 shadow">${unavailableReason}</span></div>` : ''}
+                    ${!isAvailable ? `<div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-t-lg"><span class="text-white font-semibold text-sm px-3 py-1 rounded bg-red-600 shadow">${displayReason}</span></div>` : ''}
                     <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
                 </div>
                 <div class="p-6">
@@ -947,7 +903,7 @@
 
         // --- Logique de Soumission Finale ---
         submitBookingButton.addEventListener('click', async () => {
-             console.log("Submit button clicked"); // Log 1: Button clicked
+             console.log("Submit button clicked");
              // Validation and data gathering
               if (!dbReady) {
                   console.error("DB not ready during submit");
@@ -957,7 +913,7 @@
              if (!selectedCarName) { showMessage("Veuillez d'abord sélectionner une voiture.", "warning"); return; }
              if (!currentPickupDateTime || !currentReturnDateTime) { showMessage("Dates invalides. Revérifiez la disponibilité.", "warning"); return; }
 
-             console.log("Validation passed, gathering data..."); // Log 2: Validation ok
+             console.log("Validation passed, gathering data...");
 
              const formData = new FormData(form);
              const bookingData = Object.fromEntries(formData.entries());
@@ -979,27 +935,41 @@
                  return;
              }
 
-             console.log("Form data valid, proceeding..."); // Log 3: Form data collected
+             console.log("Form data valid, proceeding...");
 
              submitBookingButton.disabled = true; submitSpinner.classList.remove('hidden'); messageBox.classList.add('hidden');
 
-             // *** FINAL AVAILABILITY CHECK ***
-             console.log(`Checking final availability for ${selectedCarName}...`); // Log 4: Checking availability
-             const availabilityCheck = await isCarAvailable(selectedCarName, currentPickupDateTime, currentReturnDateTime);
-             console.log("Availability check result:", availabilityCheck); // Log 5: Availability result
+             // *** FINAL AVAILABILITY CHECK (using the client-side check with potentially updated data) ***
+             console.log(`Checking final availability for ${selectedCarName}...`);
+             try {
+                // Re-fetch the latest unavailability data just before booking
+                const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
+                const manualStatusMap = new Map();
+                manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
+                const periodsSnapshot = await getDocs(unavailabilityPeriodsCollectionRef);
+                const latestUnavailabilityPeriods = periodsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-             if (!availabilityCheck.available) {
-                 showMessage(`Désolé, la voiture "${selectedCarName}" vient d'être indisponible. Veuillez choisir une autre voiture.`, 'error');
-                  // Re-run availability check visually
-                  checkAvailabilityButton.click();
-                 submitBookingButton.classList.add('hidden'); // Hide submit button again
-                 submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
-                 console.log("Car became unavailable, submission cancelled."); // Log 6a: Unavailable
-                 return;
+                const availabilityCheck = checkAvailabilityClientSide(selectedCarName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, latestUnavailabilityPeriods);
+                console.log("Final availability check result:", availabilityCheck);
+
+                if (!availabilityCheck.available) {
+                    showMessage(`Désolé, la voiture "${selectedCarName}" vient d'être indisponible. Veuillez choisir une autre voiture.`, 'error');
+                    // Re-run availability check visually
+                    checkAvailabilityButton.click();
+                    submitBookingButton.classList.add('hidden'); // Hide submit button again
+                    submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                    console.log("Car became unavailable, submission cancelled.");
+                    return;
+                }
+             } catch (checkError) {
+                  console.error("Erreur lors de la vérification finale de disponibilité:", checkError);
+                  showMessage("Erreur lors de la vérification finale de disponibilité. Veuillez réessayer.", "error");
+                  submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                  return;
              }
              // *** END FINAL CHECK ***
 
-             console.log("Car is still available, preparing details..."); // Log 6b: Available
+             console.log("Car is still available, preparing details...");
 
              const heurePriseStr = `${bookingData.heurePriseEnChargeHeure.padStart(2, '0')}:${bookingData.heurePriseEnChargeMinute.padStart(2, '0')}`;
              const heureRetourStr = `${bookingData.heureRetourHeure.padStart(2, '0')}:${bookingData.heureRetourMinute.padStart(2, '0')}`;
@@ -1007,30 +977,31 @@
                  nomPrenom: bookingData.nomPrenom, telephone: bookingData.telephone, email: bookingData.email, lieuPriseEnCharge: bookingData.lieuPriseEnCharge, lieuRetour: bookingData.lieuRetour, datePriseEnCharge: bookingData.datePriseEnCharge, heurePriseEnCharge: heurePriseStr, dateRetour: bookingData.dateRetour, heureRetour: heureRetourStr,
                  voiture: selectedCarName, timestamp: serverTimestamp(), confirmed: false, deleted: false
              };
-             console.log("Booking details object:", bookingDetails); // Log 7: Booking details ready
+             console.log("Booking details object:", bookingDetails);
 
              let newBookingId = null;
              // 1. Save to Firestore
              try {
-                 console.log("Attempting to save booking to Firestore..."); // Log 8: Saving booking
+                 console.log("Attempting to save booking to Firestore...");
                  const docRef = await addDoc(bookingsCollectionRef, bookingDetails);
                  newBookingId = docRef.id;
-                 console.log("Booking saved to Firestore, ID: ", newBookingId); // Log 9: Booking saved success
+                 console.log("Booking saved to Firestore, ID: ", newBookingId);
 
                  // Automatically add unavailability period for this booking
                  const unavailabilityData = {
                     car: selectedCarName,
+                    // Convert local JS Dates back to Firestore Timestamps for storage
                     startDate: Timestamp.fromDate(currentPickupDateTime),
                     endDate: Timestamp.fromDate(currentReturnDateTime),
                     type: 'booking', // Mark as automatically generated
                     bookingId: newBookingId // Link to the booking document
                  };
-                 console.log("Attempting to add unavailability period to Firestore..."); // Log 10: Saving unavailability
+                 console.log("Attempting to add unavailability period to Firestore...");
                  await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
-                 console.log("Unavailability period added automatically for", selectedCarName); // Log 11: Unavailability saved success
+                 console.log("Unavailability period added automatically for", selectedCarName);
 
              } catch (error) {
-                 console.error("Erreur Firestore lors de l'enregistrement: ", error); // Log 12a: Firestore error
+                 console.error("Erreur Firestore lors de l'enregistrement: ", error);
                  showMessage("Erreur technique lors de l'enregistrement de la réservation. Veuillez réessayer.", 'error');
                  submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
                  return;
@@ -1038,7 +1009,7 @@
 
              // 2. Send via Web3Forms
              try {
-                 console.log("Attempting to send email via Web3Forms..."); // Log 13: Sending Web3Forms
+                 console.log("Attempting to send email via Web3Forms...");
                  const objectForWeb3Forms = { ...bookingDetails };
                  // Add necessary Web3Forms fields from hidden inputs
                  objectForWeb3Forms.access_key = form.querySelector('input[name="access_key"]').value;
@@ -1053,11 +1024,11 @@
                  delete objectForWeb3Forms.confirmed; delete objectForWeb3Forms.deleted; delete objectForWeb3Forms.heurePriseEnCharge; delete objectForWeb3Forms.heureRetour; // Clean up redundant fields
 
                  const jsonPayload = JSON.stringify(objectForWeb3Forms);
-                 console.log("Web3Forms Payload:", jsonPayload); // Log 14: Web3Forms payload
+                 console.log("Web3Forms Payload:", jsonPayload);
                  const web3Response = await fetch("https://api.web3forms.com/submit", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: jsonPayload });
                  const result = await web3Response.json();
                  if (result.success) {
-                     console.log('Web3Forms Success:', result); // Log 15a: Web3Forms success
+                     console.log('Web3Forms Success:', result);
                      showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
                      form.reset();
                      // Reset time selects
@@ -1068,7 +1039,7 @@
                      // Scroll back to top after success
                      window.scrollTo({ top: 0, behavior: 'smooth' });
                  } else {
-                     console.error('Web3Forms Error:', result); // Log 15b: Web3Forms error
+                     console.error('Web3Forms Error:', result);
                      // Show warning: Firestore worked, but email failed
                      showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
                      // Reset form anyway, as the booking is in Firestore
@@ -1080,7 +1051,7 @@
                      window.scrollTo({ top: 0, behavior: 'smooth' });
                  }
              } catch (web3Error) {
-                 console.error('Erreur fetch Web3Forms:', web3Error); // Log 16: Web3Forms fetch error
+                 console.error('Erreur fetch Web3Forms:', web3Error);
                  showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
                  // Reset form anyway, as the booking is in Firestore
                  form.reset();
@@ -1122,49 +1093,34 @@
         }
 
         // --- Function to show/hide reservation form with animation ---
-        function toggleReservationForm(show) {
-            const reservationSectionEl = document.getElementById('reservation');
-            if (!reservationSectionEl) {
-                console.error("Reservation section not found!");
-                return;
-            }
+         function toggleReservationForm(show) {
+             const reservationSectionEl = document.getElementById('reservation');
+             if (!reservationSectionEl) {
+                 console.error("Reservation section (#reservation) not found!");
+                 return;
+             }
 
-            // Define classes for hidden and visible states
-            const hiddenClasses = ['max-h-0', 'opacity-0', 'py-0', 'my-0', 'overflow-hidden'];
-            // Adjusted max-h for potential large content, adjust if needed
-            const visibleClasses = ['max-h-[3000px]', 'opacity-100', 'py-20', 'md:py-32', 'my-16', 'md:my-24']; // py-20 md:py-32 my-16 md:my-24
+             // Define Tailwind classes for hidden and visible states
+             const hiddenClasses = ['max-h-0', 'opacity-0', 'py-0', 'my-0', 'overflow-hidden'];
+             // Use a very large max-height to ensure content fits
+             const visibleClasses = ['max-h-[3000px]', 'opacity-100', 'py-20', 'md:py-32', 'my-16', 'md:my-24'];
 
-            if (show) {
-                // Ensure it's not display: none before animating
-                reservationSectionEl.style.display = 'block';
+             if (show) {
+                 // Immediately remove hidden classes and add visible classes
+                 hiddenClasses.forEach(c => reservationSectionEl.classList.remove(c));
+                 visibleClasses.forEach(c => reservationSectionEl.classList.add(c));
 
-                // Use requestAnimationFrame to ensure styles are applied before adding visible classes
-                requestAnimationFrame(() => {
-                    hiddenClasses.forEach(c => reservationSectionEl.classList.remove(c));
-                    visibleClasses.forEach(c => reservationSectionEl.classList.add(c));
+                 // Scroll into view after a short delay to let the layout adjust
+                 setTimeout(() => {
+                     reservationSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                 }, 50); // Small delay might help ensure smooth scroll
 
-                    // Scroll after a short delay to allow animation to start
-                    setTimeout(() => {
-                        reservationSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 50); // Adjust delay if needed
-                });
-
-            } else {
+             } else {
                  // To hide, remove visible classes and add hidden classes
                  visibleClasses.forEach(c => reservationSectionEl.classList.remove(c));
                  hiddenClasses.forEach(c => reservationSectionEl.classList.add(c));
-                 // Optional: Set display none after transition ends
-                 // Consider removing if it causes issues with re-showing
-                 /*
-                 reservationSectionEl.addEventListener('transitionend', function handleTransitionEnd() {
-                    if (!reservationSectionEl.classList.contains('opacity-100')) { // Check if it's hidden
-                        reservationSectionEl.style.display = 'none';
-                    }
-                    reservationSectionEl.removeEventListener('transitionend', handleTransitionEnd); // Clean up listener
-                 }, { once: true });
-                 */
-            }
-        }
+             }
+         }
 
 
         // --- Event Listeners for showing the form ---
@@ -1180,51 +1136,54 @@
             if(trigger) { // Check if the element exists
                 trigger.addEventListener('click', (event) => {
                     event.preventDefault();
+                    console.log("Reservation trigger clicked"); // Debug log
                     toggleReservationForm(true);
                 });
+            } else {
+                 console.warn("A reservation trigger element was not found."); // Warn if an element is missing
             }
          });
 
 
-        // --- Initialize time selects and hide reservation section on load ---
+        // --- Initialize time selects and set initial reservation section state ---
         document.addEventListener('DOMContentLoaded', () => {
+             console.log("DOM Loaded. Initializing..."); // Debug log
              populateTimeSelects();
              const reservationSectionEl = document.getElementById('reservation');
              if (reservationSectionEl) {
-                // Apply initial hidden classes using Tailwind and ensure no padding/margin
+                // Ensure initial hidden state is applied correctly using Tailwind
                 reservationSectionEl.classList.add('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
-                reservationSectionEl.classList.remove('py-20', 'md:py-32', 'my-16', 'md:my-24'); // Explicitly remove padding/margin
-                reservationSectionEl.style.display = 'block'; // Make sure it's not display:none initially
+                reservationSectionEl.classList.remove('py-20', 'md:py-32', 'my-16', 'md:my-24'); // Make sure padding/margin are 0
+                console.log("Reservation section initialized as hidden."); // Debug log
              } else {
                 console.error("Reservation section element not found on DOMContentLoaded");
              }
-        });
 
-        // --- Section Animations on Scroll ---
-        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
-        const observerCallback = (entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Check if it's the reservation section and prevent animation if triggered by scroll
-                    if (entry.target.id === 'reservation') {
-                        // We still need to unobserve it though, otherwise it might trigger later
-                        observer.unobserve(entry.target);
-                        return;
+             // --- Section Animations on Scroll ---
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+            const observerCallback = (entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Exclude the reservation section from scroll animation
+                        if (entry.target.id !== 'reservation') {
+                             entry.target.classList.add('visible'); // Use 'visible' class to trigger animation
+                        }
+                        observer.unobserve(entry.target); // Unobserve after first intersection
                     }
-                    entry.target.classList.add('visible'); // Use 'visible' class to trigger animation
-                    observer.unobserve(entry.target);
-                }
-            });
-        };
+                });
+            };
 
-        const observer = new IntersectionObserver(observerCallback, observerOptions);
-        // Observe all sections with section-animate, AND #reservation
-        document.querySelectorAll('.section-animate, #reservation').forEach(section => {
-             observer.observe(section);
-        });
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+            // Observe only sections with section-animate (excluding #reservation)
+            document.querySelectorAll('.section-animate').forEach(section => {
+                 observer.observe(section);
+                 console.log("Observing section:", section.id || section.tagName); // Debug log
+            });
+             console.log("Scroll observer initialized."); // Debug log
+
+        }); // End DOMContentLoaded
 
     </script>
 </body>
 </html>
-
 
