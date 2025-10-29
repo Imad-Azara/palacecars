@@ -6,7 +6,7 @@
     <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
+    <!-- Font Awesome (integrity corrigé) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; /* Slate-100 */ color: #334155; /* Slate-700 */ scroll-behavior: smooth; overflow-x: hidden; /* Prevent horizontal scroll */ }
@@ -63,7 +63,7 @@
         #mobile-menu a:hover { background-color: var(--color-primary-lighter); color: var(--color-primary); }
 
         /* Logo swap styling */
-        .logo-container { position: relative; width: 6rem; height: 6rem; /* h-24 w-24 */ } /* Ensure container has size */
+        .logo-container { position: relative; width: 4rem; height: 4rem; /* h-16 w-16 */ } /* Ensure container has size */
         .logo-container img {
             position: absolute; top: 0; left: 0;
             height: 100%; width: 100%;
@@ -260,7 +260,7 @@
     <div id="reservation-container" class="bg-gradient-to-b from-slate-100 to-white">
         <!-- The actual Reservation Form Section - Initially Hidden & Animated -->
         <!-- Start hidden with Tailwind classes, add padding classes that will be applied when visible -->
-        <section id="reservation" class="container mx-auto px-6 max-w-5xl max-h-0 opacity-0 overflow-hidden transition-all duration-700 ease-in-out">
+        <section id="reservation" class="container mx-auto px-6 max-w-5xl max-h-0 opacity-0 overflow-hidden transition-all duration-700 ease-in-out p-0 m-0">
             <!-- Apply padding when visible via Tailwind classes -->
             <div class="bg-white p-8 md:p-16 rounded-2xl shadow-xl border border-gray-100 relative overflow-hidden mt-16 mb-16 md:mt-24 md:mb-24">
                 <!-- Decorative elements -->
@@ -784,202 +784,61 @@
              }
          }
 
-        // --- Logique de Vérification de Disponibilité (Bouton Principal) ---
-        checkAvailabilityButton.addEventListener('click', async () => {
-             // Validation des champs
-             if (!dbReady) { showMessage("La base de données n'est pas prête. Réessayez.", "error"); return; }
-             const startDateStr = datePriseEnChargeInput.value; const startHourStr = heurePriseEnChargeHeureSelect.value;
-             const startMinuteStr = heurePriseEnChargeMinuteSelect.value; const endDateStr = dateRetourInput.value;
-             const endHourStr = heureRetourHeureSelect.value; const endMinuteStr = heureRetourMinuteSelect.value;
-             if (!startDateStr || startHourStr === "" || startMinuteStr === "" || !endDateStr || endHourStr === "" || endMinuteStr === "") { showMessage("Veuillez sélectionner les dates et heures complètes.", "warning"); return; }
-             currentPickupDateTime = getDateTimeObject(startDateStr, startHourStr, startMinuteStr);
-             currentReturnDateTime = getDateTimeObject(endDateStr, endHourStr, endMinuteStr);
-             if (!currentPickupDateTime || !currentReturnDateTime) { return; } // Error shown in getDateTimeObject
-             const now = new Date();
-             const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-              if (currentPickupDateTime < todayStart) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
-              if (currentPickupDateTime >= currentReturnDateTime) { showMessage("La date/heure de fin doit être après la date/heure de début.", "warning"); return; }
-
-             availabilitySpinner.classList.remove('hidden'); checkAvailabilityButton.disabled = true;
-             availableCarsSection.classList.add('hidden'); availableCarsListDiv.innerHTML = '';
-             noCarsMessage.classList.add('hidden'); submitBookingButton.classList.add('hidden');
-             selectedCarName = null; selectedCarInput.value = ''; messageBox.classList.add('hidden');
-
-             try {
-                 let availableCarsCount = 0;
-                 const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
-                 const manualStatusMap = new Map();
-                 manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
-
-                 const returnTimestamp = Timestamp.fromDate(currentReturnDateTime);
-                 const pickupTimestamp = Timestamp.fromDate(currentPickupDateTime);
-
-                 // Fetch all potential unavailability periods that might overlap
-                 // Fetch periods ending after our pickup starts
-                 const qPeriodsEndAfterPickup = query(
-                     unavailabilityPeriodsCollectionRef,
-                     where("endDate", ">", pickupTimestamp)
-                 );
-
-                 const periodsSnapshot = await getDocs(qPeriodsEndAfterPickup);
-                 const unavailabilityMap = new Map(); // Map<carName, Array<period>>
-
-                 periodsSnapshot.forEach(doc => {
-                     const period = doc.data();
-                     // Check if this period also STARTS before our return ends (actual overlap check)
-                     if (period.startDate && period.startDate.seconds < returnTimestamp.seconds) {
-                         if (!unavailabilityMap.has(period.car)) {
-                             unavailabilityMap.set(period.car, []);
-                         }
-                         unavailabilityMap.get(period.car).push(period);
-                     }
-                 });
-
-
-                 availableCarsListDiv.innerHTML = '';
-
-                 carNames.forEach((carName) => {
-                     let isAvailable = true; let reason = "";
-                     // Check manual status first
-                     if (manualStatusMap.get(carName) === 'unavailable') {
-                         isAvailable = false; reason = '(Indisponible)';
-                     } else {
-                         // Check overlapping periods
-                         const carPeriods = unavailabilityMap.get(carName) || [];
-                         if (carPeriods.length > 0) {
-                             // Check if the specific car has an overlapping period
-                             let overlaps = false;
-                             for (const p of carPeriods) {
-                                 if (p.car === carName) {
-                                     overlaps = true;
-                                     break;
-                                 }
-                             }
-                             if (overlaps) {
-                                isAvailable = false;
-                                reason = '(Indisponible)';
-                             }
-                         }
-                     }
-                     const carData = carFleet[carName];
-                     availableCarsListDiv.appendChild(createCarCard(carName, carData, isAvailable, reason));
-                     if (isAvailable) { availableCarsCount++; }
-                 });
-
-                 availableCarsSection.classList.remove('hidden');
-                 noCarsMessage.classList.toggle('hidden', availableCarsCount === 0);
-                 // Only scroll if availability was checked successfully
-                 availableCarsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-             } catch (error) {
-                 console.error("Erreur globale lors de la vérification:", error);
-                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    showMessage("Index Firestore manquant détecté. Ouvrez la console (F12) et suivez le lien fourni par Firebase pour créer l'index requis. Cela peut prendre quelques minutes.", "error");
-                 } else { showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error"); }
-             } finally {
-                 availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
-             }
-        });
-
-        // --- Création Carte Voiture ---
-         function createCarCard(carName, carData, isAvailable, unavailableReason = "(Indisponible)") {
-            const card = document.createElement('div');
-            const availabilityClasses = isAvailable ? 'cursor-pointer group' : 'opacity-60 cursor-not-allowed';
-            card.className = `car-card ${availabilityClasses} shadow-lg hover:shadow-primary/20`;
-            card.dataset.carName = carName;
-
-            card.innerHTML = `
-                <div class="relative overflow-hidden rounded-t-lg">
-                    <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-52 object-cover ${isAvailable ? 'group-hover:scale-110' : ''} transition-transform duration-500 ease-in-out" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
-                    ${!isAvailable ? `<div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-t-lg"><span class="text-white font-semibold text-sm px-3 py-1 rounded bg-red-600 shadow">${unavailableReason}</span></div>` : ''}
-                    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
-                </div>
-                <div class="p-6">
-                    <h4 class="text-xl font-bold text-text-dark mb-2 truncate">${carName}</h4>
-                    <div class="flex justify-between items-center mb-5">
-                         <p class="text-2xl font-extrabold text-primary price">${carData.price}<span class="text-sm font-medium text-text-medium"> Dhs/jour</span></p>
-                    </div>
-                    <button type="button" class="select-car-button btn w-full ${isAvailable ? 'btn-primary' : 'bg-gray-400 text-gray-700 cursor-not-allowed'} text-sm py-3" ${!isAvailable ? 'disabled' : ''}>
-                        <span class="button-text">${isAvailable ? 'Sélectionner' : 'Indisponible'}</span>
-                        ${isAvailable ? '<i class="fas fa-check ml-1 icon-check hidden"></i>' : ''}
-                    </button>
-                </div>
-            `;
-
-             if (isAvailable) {
-                 const selectButton = card.querySelector('.select-car-button');
-                 const buttonText = selectButton.querySelector('.button-text');
-                 const checkIcon = selectButton.querySelector('.icon-check');
-
-                 // Use click on the whole card for selection if available
-                 card.addEventListener('click', (e) => {
-                     // Prevent selection if clicking disabled button directly (though card handles it)
-                     if (e.target.closest('button') && e.target.closest('button').disabled) return;
-
-                     document.querySelectorAll('.car-card.selected').forEach(selectedCard => {
-                         selectedCard.classList.remove('selected', 'border-2');
-                         const btn = selectedCard.querySelector('.select-car-button');
-                         if (btn) {
-                            btn.querySelector('.button-text').textContent = 'Sélectionner';
-                            btn.querySelector('.icon-check')?.classList.add('hidden');
-                            btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
-                            btn.classList.add('btn-primary');
-                            btn.disabled = false;
-                         }
-                     });
-                     card.classList.add('selected', 'border-2');
-                     buttonText.textContent = 'Sélectionnée';
-                     checkIcon?.classList.remove('hidden');
-                     selectButton.classList.remove('btn-primary');
-                     selectButton.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
-                     selectButton.disabled = true; // Keep button disabled visually when selected
-                     selectedCarName = carName;
-                     selectedCarInput.value = carName;
-                     submitBookingButton.classList.remove('hidden');
-                     submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
-                     // Optionally scroll submit button into view
-                     // submitBookingButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                 });
-             }
-            return card;
-         }
-
-
         // --- Logique de Soumission Finale ---
         submitBookingButton.addEventListener('click', async () => {
+             console.log("Submit button clicked"); // Log 1: Button clicked
              // Validation and data gathering
-              if (!dbReady) { showMessage("La connexion à la base de données n'est pas prête.", "error"); return; }
+              if (!dbReady) {
+                  console.error("DB not ready during submit");
+                  showMessage("La connexion à la base de données n'est pas prête.", "error");
+                  return;
+              }
              if (!selectedCarName) { showMessage("Veuillez d'abord sélectionner une voiture.", "warning"); return; }
              if (!currentPickupDateTime || !currentReturnDateTime) { showMessage("Dates invalides. Revérifiez la disponibilité.", "warning"); return; }
-             const formData = new FormData(form); const bookingData = Object.fromEntries(formData.entries());
+
+             console.log("Validation passed, gathering data..."); // Log 2: Validation ok
+
+             const formData = new FormData(form);
+             const bookingData = Object.fromEntries(formData.entries());
              const requiredFields = ['nomPrenom', 'telephone', 'email', 'lieuPriseEnCharge', 'lieuRetour', 'datePriseEnCharge', 'heurePriseEnChargeHeure', 'heurePriseEnChargeMinute', 'dateRetour', 'heureRetourHeure', 'heureRetourMinute'];
              let firstEmptyField = null;
+             let formIsValid = true;
              for (const field of requiredFields) {
-                 // Ensure selects have a value chosen
                  if (!bookingData[field] || bookingData[field] === "") {
+                    formIsValid = false;
                     let label = document.querySelector(`label[for='${field}']`)?.textContent?.replace('*','').trim() || field;
-                    // Handle specific labels for time selects
                     if (field.includes('Heure')) label = field.includes('PriseEnCharge') ? 'Heure Début' : 'Heure Fin';
                     if (field.includes('Minute')) label = field.includes('PriseEnCharge') ? 'Minute Début' : 'Minute Fin';
                     showMessage(`Le champ "${label}" est requis.`, 'warning');
                     if (!firstEmptyField) firstEmptyField = document.getElementById(field);
                  }
              }
-             if (firstEmptyField) { firstEmptyField.focus(); return; }
+             if (!formIsValid) {
+                 if (firstEmptyField) firstEmptyField.focus();
+                 return;
+             }
 
+             console.log("Form data valid, proceeding..."); // Log 3: Form data collected
 
              submitBookingButton.disabled = true; submitSpinner.classList.remove('hidden'); messageBox.classList.add('hidden');
 
              // *** FINAL AVAILABILITY CHECK ***
+             console.log(`Checking final availability for ${selectedCarName}...`); // Log 4: Checking availability
              const availabilityCheck = await isCarAvailable(selectedCarName, currentPickupDateTime, currentReturnDateTime);
+             console.log("Availability check result:", availabilityCheck); // Log 5: Availability result
+
              if (!availabilityCheck.available) {
                  showMessage(`Désolé, la voiture "${selectedCarName}" vient d'être indisponible. Veuillez choisir une autre voiture.`, 'error');
                   // Re-run availability check visually
                   checkAvailabilityButton.click();
-                 submitBookingButton.classList.add('hidden'); submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                 submitBookingButton.classList.add('hidden'); // Hide submit button again
+                 submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                 console.log("Car became unavailable, submission cancelled."); // Log 6a: Unavailable
                  return;
              }
              // *** END FINAL CHECK ***
+
+             console.log("Car is still available, preparing details..."); // Log 6b: Available
 
              const heurePriseStr = `${bookingData.heurePriseEnChargeHeure.padStart(2, '0')}:${bookingData.heurePriseEnChargeMinute.padStart(2, '0')}`;
              const heureRetourStr = `${bookingData.heureRetourHeure.padStart(2, '0')}:${bookingData.heureRetourMinute.padStart(2, '0')}`;
@@ -987,12 +846,16 @@
                  nomPrenom: bookingData.nomPrenom, telephone: bookingData.telephone, email: bookingData.email, lieuPriseEnCharge: bookingData.lieuPriseEnCharge, lieuRetour: bookingData.lieuRetour, datePriseEnCharge: bookingData.datePriseEnCharge, heurePriseEnCharge: heurePriseStr, dateRetour: bookingData.dateRetour, heureRetour: heureRetourStr,
                  voiture: selectedCarName, timestamp: serverTimestamp(), confirmed: false, deleted: false
              };
+             console.log("Booking details object:", bookingDetails); // Log 7: Booking details ready
 
              let newBookingId = null;
              // 1. Save to Firestore
              try {
+                 console.log("Attempting to save booking to Firestore..."); // Log 8: Saving booking
                  const docRef = await addDoc(bookingsCollectionRef, bookingDetails);
-                 newBookingId = docRef.id; console.log("Réservation enregistrée ID: ", newBookingId);
+                 newBookingId = docRef.id;
+                 console.log("Booking saved to Firestore, ID: ", newBookingId); // Log 9: Booking saved success
+
                  // Automatically add unavailability period for this booking
                  const unavailabilityData = {
                     car: selectedCarName,
@@ -1001,28 +864,39 @@
                     type: 'booking', // Mark as automatically generated
                     bookingId: newBookingId // Link to the booking document
                  };
+                 console.log("Attempting to add unavailability period to Firestore..."); // Log 10: Saving unavailability
                  await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
-                 console.log("Période indisponibilité ajoutée automatiquement pour", selectedCarName);
+                 console.log("Unavailability period added automatically for", selectedCarName); // Log 11: Unavailability saved success
+
              } catch (error) {
-                 console.error("Erreur Firestore lors de l'enregistrement: ", error); showMessage("Erreur technique lors de l'enregistrement de la réservation. Veuillez réessayer.", 'error');
-                 submitBookingButton.disabled = false; submitSpinner.classList.add('hidden'); return;
+                 console.error("Erreur Firestore lors de l'enregistrement: ", error); // Log 12a: Firestore error
+                 showMessage("Erreur technique lors de l'enregistrement de la réservation. Veuillez réessayer.", 'error');
+                 submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                 return;
              }
 
              // 2. Send via Web3Forms
              try {
+                 console.log("Attempting to send email via Web3Forms..."); // Log 13: Sending Web3Forms
                  const objectForWeb3Forms = { ...bookingDetails };
-                 objectForWeb3Forms.access_key = bookingData.access_key; objectForWeb3Forms.subject = bookingData.subject; objectForWeb3Forms.from_name = bookingData.from_name; objectForWeb3Forms.redirect = bookingData.redirect;
+                 // Add necessary Web3Forms fields from hidden inputs
+                 objectForWeb3Forms.access_key = form.querySelector('input[name="access_key"]').value;
+                 objectForWeb3Forms.subject = form.querySelector('input[name="subject"]').value;
+                 objectForWeb3Forms.from_name = form.querySelector('input[name="from_name"]').value;
+                 objectForWeb3Forms.redirect = form.querySelector('input[name="redirect"]').value;
                  // Use a readable format for the email
                  objectForWeb3Forms.datePriseEnCharge = `${bookingDetails.datePriseEnCharge} ${bookingDetails.heurePriseEnCharge}`;
                  objectForWeb3Forms.dateRetour = `${bookingDetails.dateRetour} ${bookingDetails.heureRetour}`;
-                 objectForWeb3Forms.timestamp = formatReadableDateTime(new Date()); // Add submission time
+                 objectForWeb3Forms.timestamp_readable = formatReadableDateTime(new Date()); // Add submission time formatted
+                 delete objectForWeb3Forms.timestamp; // Remove server timestamp object for JSON
                  delete objectForWeb3Forms.confirmed; delete objectForWeb3Forms.deleted; delete objectForWeb3Forms.heurePriseEnCharge; delete objectForWeb3Forms.heureRetour; // Clean up redundant fields
 
                  const jsonPayload = JSON.stringify(objectForWeb3Forms);
+                 console.log("Web3Forms Payload:", jsonPayload); // Log 14: Web3Forms payload
                  const web3Response = await fetch("https://api.web3forms.com/submit", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: jsonPayload });
                  const result = await web3Response.json();
                  if (result.success) {
-                     console.log('Web3Forms Success:', result);
+                     console.log('Web3Forms Success:', result); // Log 15a: Web3Forms success
                      showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
                      form.reset();
                      // Reset time selects
@@ -1033,10 +907,27 @@
                      // Scroll back to top after success
                      window.scrollTo({ top: 0, behavior: 'smooth' });
                  } else {
-                     console.error('Web3Forms Error:', result); showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
+                     console.error('Web3Forms Error:', result); // Log 15b: Web3Forms error
+                     // Show warning: Firestore worked, but email failed
+                     showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
+                     // Reset form anyway, as the booking is in Firestore
+                     form.reset();
+                     heurePriseEnChargeHeureSelect.value = ""; heurePriseEnChargeMinuteSelect.value = "";
+                     heureRetourHeureSelect.value = ""; heureRetourMinuteSelect.value = "";
+                     availableCarsSection.classList.add('hidden'); submitBookingButton.classList.add('hidden');
+                     selectedCarName = null; selectedCarInput.value = '';
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
                  }
              } catch (web3Error) {
-                 console.error('Erreur fetch Web3Forms:', web3Error); showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
+                 console.error('Erreur fetch Web3Forms:', web3Error); // Log 16: Web3Forms fetch error
+                 showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
+                 // Reset form anyway, as the booking is in Firestore
+                 form.reset();
+                 heurePriseEnChargeHeureSelect.value = ""; heurePriseEnChargeMinuteSelect.value = "";
+                 heureRetourHeureSelect.value = ""; heureRetourMinuteSelect.value = "";
+                 availableCarsSection.classList.add('hidden'); submitBookingButton.classList.add('hidden');
+                 selectedCarName = null; selectedCarInput.value = '';
+                 window.scrollTo({ top: 0, behavior: 'smooth' });
              } finally {
                  submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
              }
@@ -1080,11 +971,11 @@
             // Define classes for hidden and visible states
             const hiddenClasses = ['max-h-0', 'opacity-0', 'py-0', 'my-0', 'overflow-hidden'];
             // Adjusted max-h for potential large content, adjust if needed
-            const visibleClasses = ['max-h-[3000px]', 'opacity-100', 'py-20', 'md:py-32', 'my-16', 'md:my-24'];
+            const visibleClasses = ['max-h-[3000px]', 'opacity-100', 'py-20', 'md:py-32', 'my-16', 'md:my-24']; // py-20 md:py-32 my-16 md:my-24
 
             if (show) {
                 // Ensure it's not display: none before animating
-                reservationSectionEl.style.display = 'block'; // Or 'grid', 'flex' depending on your layout
+                reservationSectionEl.style.display = 'block';
 
                 // Use requestAnimationFrame to ensure styles are applied before adding visible classes
                 requestAnimationFrame(() => {
@@ -1102,11 +993,15 @@
                  visibleClasses.forEach(c => reservationSectionEl.classList.remove(c));
                  hiddenClasses.forEach(c => reservationSectionEl.classList.add(c));
                  // Optional: Set display none after transition ends
-                 // reservationSectionEl.addEventListener('transitionend', () => {
-                 //    if (!reservationSectionEl.classList.contains('opacity-100')) { // Check if it's hidden
-                 //        reservationSectionEl.style.display = 'none';
-                 //    }
-                 // }, { once: true });
+                 // Consider removing if it causes issues with re-showing
+                 /*
+                 reservationSectionEl.addEventListener('transitionend', function handleTransitionEnd() {
+                    if (!reservationSectionEl.classList.contains('opacity-100')) { // Check if it's hidden
+                        reservationSectionEl.style.display = 'none';
+                    }
+                    reservationSectionEl.removeEventListener('transitionend', handleTransitionEnd); // Clean up listener
+                 }, { once: true });
+                 */
             }
         }
 
@@ -1135,9 +1030,10 @@
              populateTimeSelects();
              const reservationSectionEl = document.getElementById('reservation');
              if (reservationSectionEl) {
-                // Apply initial hidden classes using Tailwind
+                // Apply initial hidden classes using Tailwind and ensure no padding/margin
                 reservationSectionEl.classList.add('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
-                reservationSectionEl.classList.remove('py-20', 'md:py-32'); // Ensure padding is not applied initially
+                reservationSectionEl.classList.remove('py-20', 'md:py-32', 'my-16', 'md:my-24'); // Explicitly remove padding/margin
+                reservationSectionEl.style.display = 'block'; // Make sure it's not display:none initially
              } else {
                 console.error("Reservation section element not found on DOMContentLoaded");
              }
@@ -1150,7 +1046,6 @@
                 if (entry.isIntersecting) {
                     // Check if it's the reservation section and prevent animation if triggered by scroll
                     if (entry.target.id === 'reservation') {
-                        // Do nothing, visibility is controlled by toggleReservationForm
                         // We still need to unobserve it though, otherwise it might trigger later
                         observer.unobserve(entry.target);
                         return;
@@ -1162,7 +1057,7 @@
         };
 
         const observer = new IntersectionObserver(observerCallback, observerOptions);
-        // Observe all sections with section-animate, including the reservation section initially
+        // Observe all sections with section-animate, AND #reservation
         document.querySelectorAll('.section-animate, #reservation').forEach(section => {
              observer.observe(section);
         });
