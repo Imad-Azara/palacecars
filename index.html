@@ -71,13 +71,15 @@
         /* Logo swap styling */
         .logo-container { 
             position: relative; 
-            width: 6rem; /* h-24 (grande taille initiale) */
-            height: 6rem; /* w-24 (grande taille initiale) */
+            /* Taille initiale large (desktop centré, mobile gauche) */
+            width: 6rem; /* h-24 */
+            height: 6rem; /* w-24 */
             transition: width 0.3s ease, height 0.3s ease; 
         } 
+        /* Au scroll, logo plus petit */
         header.scrolled .logo-container {
-             width: 4rem; /* h-16 (petite taille au scroll) */
-             height: 4rem; /* w-16 (petite taille au scroll) */
+             width: 4rem; /* h-16 */
+             height: 4rem; /* w-16 */
         }
 
         .logo-container img {
@@ -89,15 +91,17 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
         }
 
-        /* Logic for logo swap */
-        #logo-color { opacity: 0; }
-        #logo-white { opacity: 1; }
-        header.scrolled #logo-color { opacity: 1; }
-        header.scrolled #logo-white { opacity: 0; }
+        /* Logic for logo swap (Desktop) */
+        #logo-desktop-color { opacity: 0; }
+        #logo-desktop-white { opacity: 1; }
+        header.scrolled #logo-desktop-color { opacity: 1; }
+        header.scrolled #logo-desktop-white { opacity: 0; }
         
-        /* Mobile-specific logo handling (in <nav>) */
-        /* md:hidden -> logo-mobile-container is hidden on desktop */
-        /* hidden md:block -> logo-desktop-container is hidden on mobile */
+        /* Logic for logo swap (Mobile) */
+        #logo-mobile-color { opacity: 0; }
+        #logo-mobile-white { opacity: 1; }
+        header.scrolled #logo-mobile-color { opacity: 1; }
+        header.scrolled #logo-mobile-white { opacity: 0; }
 
 
         /* Hero Section Styling */
@@ -225,8 +229,8 @@
             <!-- Mobile Logo (Left) -->
             <div class="md:hidden flex-shrink-0">
                  <a href="#accueil" class="logo-container">
-                   <img id="logo-white-mobile" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc" class="opacity-100">
-                   <img id="logo-color-mobile" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur" class="opacity-0">
+                   <img id="logo-mobile-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc" class="opacity-100">
+                   <img id="logo-mobile-color" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur" class="opacity-0">
                  </a>
             </div>
 
@@ -240,8 +244,8 @@
             <!-- Desktop Logo (Center) -->
             <div class="hidden md:flex w-1/3 justify-center">
                  <a href="#accueil" class="logo-container"> 
-                   <img id="logo-white-desktop" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc" class="opacity-100">
-                   <img id="logo-color-desktop" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur" class="opacity-0">
+                   <img id="logo-desktop-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc" class="opacity-100">
+                   <img id="logo-desktop-color" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur" class="opacity-0">
                  </a>
             </div>
 
@@ -691,6 +695,7 @@
         const mobileReserveButton = document.getElementById('mobile-reserve-button');
         const reserveNowLinks = document.querySelectorAll('.reserve-now-link');
         
+        // Logo elements
         const logoWhiteMobile = document.getElementById('logo-white-mobile');
         const logoColorMobile = document.getElementById('logo-color-mobile');
         const logoWhiteDesktop = document.getElementById('logo-white-desktop');
@@ -800,16 +805,17 @@
             });
         }
 
-        // --- Vérification de Disponibilité Spécifique (Version Optimisée SANS Index) ---
-        async function isCarAvailable(carName, pickupDateTime, returnDateTime, allManualStatuses, allUnavailabilityPeriods) {
+        // --- Vérification de Disponibilité Spécifique (Version SANS Index) ---
+        // Cette fonction prend les données déjà récupérées pour éviter des appels BDD répétés
+        function checkCarAvailabilityJS(carName, pickupDateTime, returnDateTime, allManualStatuses, allUnavailabilityPeriods) {
              if (!carName || !pickupDateTime || !returnDateTime || isNaN(pickupDateTime) || isNaN(returnDateTime)) {
-                 console.error("Données invalides pour isCarAvailable", carName, pickupDateTime, returnDateTime);
+                 console.error("Données invalides pour checkCarAvailabilityJS", carName, pickupDateTime, returnDateTime);
                  return { available: false, reason: 'Erreur interne' };
              }
              try {
                  // 1. Vérifier statut manuel (déjà récupéré)
                  if (allManualStatuses.get(carName) === 'unavailable') {
-                     return { available: false, reason: 'Indisponible' };
+                     return { available: false, reason: '(Indisponible)' };
                  }
 
                  // 2. Vérifier les périodes d'indisponibilité (déjà récupérées)
@@ -827,7 +833,6 @@
                  }
 
                  if (isUnavailable) {
-                     console.log(`${carName} a une période d'indisponibilité qui chevauche la demande.`);
                      return { available: false, reason: `(Indisponible)` };
                  }
                  return { available: true };
@@ -839,8 +844,9 @@
              }
          }
 
-        // --- Logique de Vérification de Disponibilité (Bouton Principal) (Optimisé SANS Index) ---
+        // --- Logique de Vérification de Disponibilité (Bouton Principal) (SANS Index) ---
         checkAvailabilityButton.addEventListener('click', async () => {
+             console.log("Vérification de la disponibilité lancée...");
              // Validation des champs
              if (!dbReady) { showMessage("La base de données n'est pas prête. Réessayez.", "error"); return; }
              const startDateStr = datePriseEnChargeInput.value; const startHourStr = heurePriseEnChargeHeureSelect.value;
@@ -862,64 +868,51 @@
 
              try {
                  // 1. Fetch ALL manual statuses
+                 console.log("Récupération des statuts manuels...");
                  const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
                  const manualStatusMap = new Map();
                  manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
+                 console.log("Statuts manuels récupérés:", manualStatusMap);
 
                  // 2. Fetch ALL unavailability periods
+                 console.log("Récupération de TOUTES les périodes d'indisponibilité...");
                  const periodsSnapshot = await getDocs(unavailabilityPeriodsCollectionRef);
                  const unavailabilityMap = new Map(); // Map<carName, Array<period>>
 
                  periodsSnapshot.forEach(doc => {
                      const period = doc.data();
                      if (period.startDate && period.endDate && period.car) {
-                         const periodStart = period.startDate.toDate();
-                         const periodEnd = period.endDate.toDate();
-                         // Check for overlap: (ReqStart < PeriodEnd) && (ReqEnd > PeriodStart)
-                         if (currentPickupDateTime < periodEnd && currentReturnDateTime > periodStart) {
-                             if (!unavailabilityMap.has(period.car)) {
-                                 unavailabilityMap.set(period.car, []);
-                             }
-                             unavailabilityMap.get(period.car).push(period);
+                         if (!unavailabilityMap.has(period.car)) {
+                             unavailabilityMap.set(period.car, []);
                          }
+                         unavailabilityMap.get(period.car).push(period);
                      }
                  });
+                 console.log("Périodes d'indisponibilité récupérées:", unavailabilityMap);
                  
                  availableCarsListDiv.innerHTML = '';
                  let availableCarsCount = 0;
 
                  // 3. Loop through car fleet (in JS) and check availability
-                 for (const carName of carNames) {
-                     let isAvailable = true;
-                     let reason = "";
-
-                     // Check manual status
-                     if (manualStatusMap.get(carName) === 'unavailable') {
-                         isAvailable = false;
-                         reason = '(Indisponible)';
-                     } else {
-                         // Check overlapping periods
-                         const carPeriods = unavailabilityMap.get(carName) || [];
-                         if (carPeriods.length > 0) {
-                             isAvailable = false;
-                             reason = '(Indisponible)';
-                         }
-                     }
-                     
+                 console.log("Vérification en JavaScript de chaque voiture...");
+                 carNames.forEach((carName) => {
                      const carData = carFleet[carName];
-                     availableCarsListDiv.appendChild(createCarCard(carName, carData, isAvailable, reason));
-                     if (isAvailable) {
+                     const availability = checkCarAvailabilityJS(carName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, unavailabilityMap);
+                     
+                     availableCarsListDiv.appendChild(createCarCard(carName, carData, availability.available, availability.reason));
+                     if (availability.available) {
                          availableCarsCount++;
                      }
-                 }
+                 });
+                 console.log("Vérification terminée. Voitures disponibles:", availableCarsCount);
 
                  availableCarsSection.classList.remove('hidden');
-                 noCarsMessage.classList.toggle('hidden', availableCarsCount === 0);
+                 noCarsMessage.classList.toggle('hidden', availableCarsCount > 0); // CORRIGÉ: Cache le message s'il y a des voitures
                  availableCarsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
              } catch (error) {
                  console.error("Erreur globale lors de la vérification:", error);
-                 // This error should no longer be 'index-required'
+                 // This error should no longer be 'index-required' unless for car_manual_status (unlikely)
                  showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error");
              } finally {
                  availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
@@ -1043,7 +1036,7 @@
                  }
              });
              
-             const availabilityCheck = await isCarAvailable(selectedCarName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, unavailabilityMap);
+             const availabilityCheck = checkCarAvailabilityJS(selectedCarName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, unavailabilityMap);
              console.log("Availability check result:", availabilityCheck); // Log 5: Availability result
 
              if (!availabilityCheck.available) {
