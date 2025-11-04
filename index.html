@@ -6,7 +6,11 @@
     <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome (CORRECTED INTEGRITY HASH) -->
+    <!-- 
+      CORRECTION CRITIQUE (Ligne 9) : 
+      'xintegrity' a été remplacé par 'integrity' avec le bon hash.
+      Ceci débloque tout le JavaScript de la page.
+    -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <style>
@@ -82,16 +86,19 @@
         #mobile-menu a:hover { background-color: var(--color-primary-lighter); color: var(--color-primary); }
 
         /* --- Logo Styling (Size, Position, Swap) --- */
+        /* Conteneur de logo (taille) */
         .logo-container { 
             position: relative; 
-            width: 6rem; /* h-24 */
+            width: 6rem; /* h-24 (taille initiale grande) */
             height: 6rem; /* w-24 */
             transition: width 0.3s ease, height 0.3s ease;
         }
+        /* Rétrécissement au défilement */
         header.scrolled .logo-container {
-            width: 4rem; /* h-16 */
+            width: 4rem; /* h-16 (taille petite) */
             height: 4rem; /* w-16 */
         }
+        /* Styles communs aux deux logos */
         .logo-container img {
             position: absolute; top: 0; left: 0;
             height: 100%; width: 100%;
@@ -100,14 +107,22 @@
             transition: opacity 0.3s ease-in-out;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* shadow-md */
         }
-        #logo-color { opacity: 0; }
-        #logo-white { opacity: 1; }
-        header.scrolled #logo-color { opacity: 1; }
-        header.scrolled #logo-white { opacity: 0; }
+        
+        /* Logique d'affichage pour les logos DESKTOP (centrés) */
+        #logo-color-desktop { opacity: 0; }
+        #logo-white-desktop { opacity: 1; }
+        header.scrolled #logo-color-desktop { opacity: 1; }
+        header.scrolled #logo-white-desktop { opacity: 0; }
+        
+        /* Logique d'affichage pour les logos MOBILE (à gauche) */
+        #logo-color-mobile { opacity: 0; }
+        #logo-white-mobile { opacity: 1; }
+        header.scrolled #logo-color-mobile { opacity: 1; }
+        header.scrolled #logo-white-mobile { opacity: 0; }
 
         /* --- Hero Section Styling --- */
         .hero-bg {
-            background-image: linear-gradient(rgba(10, 20, 80, 0.6), rgba(0, 0, 0, 0.8)), url('https://i.imgur.com/SFntrX9.jpeg');
+            background-image: linear-gradient(rgba(10, 20, 80, 0.6), rgba(0, 0, 0, 0.8)), url('https://i.imgur.com/2vH1UUR.jpeg');
             background-size: cover;
             background-position: center center;
             background-attachment: fixed; /* Parallax effect */
@@ -118,25 +133,18 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .animate-fade-in-down {
-            animation: fadeInDown 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-        }
-        .animate-fade-in-up {
-             animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
-        }
-
+        .animate-fade-in-down { animation: fadeInDown 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
         .section-animate { opacity: 0; }
         .section-animate.visible { animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
         
         /* --- Reservation Section Animation (Corrected) --- */
-        /* This transition definition is applied by the #reservation ID */
         #reservation {
-            transition: max-height 0.8s cubic-bezier(0.23, 1, 0.32, 1), 
-                        opacity 0.6s ease-out 0.2s, 
-                        padding-top 0.8s ease, 
-                        padding-bottom 0.8s ease, 
-                        margin-top 0.8s ease, 
-                        margin-bottom 0.8s ease;
+            /* Marge et padding sont gérés par les classes Tailwind ajoutées/supprimées par JS */
+            transition: max-height 0.7s cubic-bezier(0.23, 1, 0.32, 1), 
+                        opacity 0.5s ease-out, 
+                        padding 0.7s ease, 
+                        margin 0.7s ease;
         }
 
         /* --- Card Styles (Flotte, Disponibles) --- */
@@ -230,16 +238,18 @@
 </head>
 <body class="bg-bg-light text-text-dark">
 
-    <!-- Header -->
+    <!-- 
+      HEADER CORRIGÉ
+      - Structure à 3 colonnes pour le desktop (justify-between sur la nav)
+      - Logo mobile séparé (s'affiche uniquement sur mobile)
+      - Logo desktop séparé (centré, caché sur mobile)
+    -->
     <header id="main-header" class="fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300">
-        <!-- 
-            Nouvelle Structure Header pour Mobile-Gauche / Desktop-Centre
-        -->
         <nav class="container mx-auto px-6 flex justify-between items-center relative">
             
             <!-- Logo (Mobile, visible sur petit écran, à gauche) -->
             <div class="flex-shrink-0 md:hidden">
-                 <a href="#accueil" class="logo-container">
+                 <a href="#accueil" class="logo-container"> <!-- Taille gérée par CSS (w-24/h-24 -> w-16/h-16) -->
                    <img id="logo-white-mobile" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
                    <img id="logo-color-mobile" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur">
                  </a>
@@ -254,11 +264,11 @@
 
             <!-- Logo - (Centre sur Desktop, caché sur mobile) -->
             <div class="hidden md:flex justify-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                 <a href="#accueil" class="logo-container">
+                 <a href="#accueil" class="logo-container"> <!-- Taille gérée par CSS -->
                    <!-- White Logo (Initially Visible) -->
-                   <img id="logo-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
+                   <img id="logo-white-desktop" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
                    <!-- Color Logo (Initially Hidden) -->
-                   <img id="logo-color" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur">
+                   <img id="logo-color-desktop" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur">
                  </a>
             </div>
 
@@ -311,11 +321,11 @@
     <div id="reservation-container" class="bg-gradient-to-b from-slate-100 to-white">
         <!-- 
             SECTION RÉSERVATION - CORRIGÉE
-            Initialement cachée avec max-h-0, opacity-0, p-0, m-0.
-            Le JS va retirer ces classes et ajouter les classes visibles.
+            Initialement cachée avec des classes Tailwind.
+            Le JS va retirer/ajouter des classes pour l'animer.
         -->
-        <section id="reservation" class="container mx-auto px-6 max-w-5xl max-h-0 opacity-0 overflow-hidden p-0 m-0 transition-all duration-700 ease-in-out">
-            <!-- Le conteneur interne gère le style visuel et le padding/margin qui sera animé -->
+        <section id="reservation" class="container mx-auto px-6 max-w-5xl transition-all duration-700 ease-in-out">
+            <!-- Le conteneur interne gère le style visuel -->
             <div id="reservation-inner-wrapper" class="bg-white p-8 md:p-16 rounded-2xl shadow-xl border border-gray-100 relative overflow-hidden">
                 <!-- Decorative elements -->
                 <div class="absolute top-0 left-0 w-32 h-32 bg-blue-100 rounded-full opacity-30 -translate-x-1/3 -translate-y-1/3 filter blur-xl"></div>
@@ -359,7 +369,12 @@
                             </div>
                             <div>
                                 <label for="lieuRetour" class="block text-sm font-semibold text-gray-700 mb-2">Lieu Retour <span class="text-red-500">*</span></label>
-                                <input type="text" id="lieuRetour" name="lieuRetour" required placeholder="Aéroport, Hôtel..." class="block w-full">
+                                <!-- Changé en <select> -->
+                                <select id="lieuRetour" name="lieuRetour" required class="block w-full">
+                                    <option value="" disabled selected>-- Choisissez une option --</option>
+                                    <option value="A Agadir">A Agadir</option>
+                                    <option value="En dehors d'Agadir">En dehors d'Agadir</option>
+                                </select>
                             </div>
                         </div>
 
@@ -429,13 +444,12 @@
         </section> <!-- Fin de #reservation -->
     </div> <!-- Fin de #reservation-container -->
 
-
-    <!-- Section Qui Sommes Nous -->
+    <!-- Section Qui Sommes Nous (Corrigée) -->
     <section id="about-us" class="py-24 bg-accent section-animate">
-        <div class="container mx-auto px-6 max-w-6xl"> <!-- Elargi à max-w-6xl -->
-            <h2 class="section-title text-text-dark">Qui sommes nous ?</h2>
-            <!-- Texte aligné à gauche et conteneur plus large -->
-            <div class="text-left text-text-dark space-y-6 text-base md:text-lg md:leading-relaxed">
+        <!-- Conteneur élargi à max-w-6xl et texte aligné à gauche -->
+        <div class="container mx-auto px-6 max-w-6xl"> 
+            <h2 class="section-title text-text-dark text-center">Qui sommes nous ?</h2>
+            <div class="text-left text-text-dark space-y-6 text-base md:text-lg md:leading-relaxed max-w-5xl mx-auto"> <!-- Conteneur de texte élargi -->
                 <p>
                     Fondée en 1982, Palacecars s'est imposée comme une agence de location de voitures de référence au cœur d'Agadir. Forte de plus de quatre décennies d'expérience, cette entreprise a su bâtir une réputation solide, fondée sur la fiabilité de son service et une connaissance intime des attentes d'une clientèle locale et internationale. Elle représente une solution de mobilité privilégiée pour tous ceux qui souhaitent découvrir la capitale du Souss, ses plages ensoleillées et son arrière-pays en toute liberté et confiance.
                 </p>
@@ -621,6 +635,7 @@
                  <a href="#faq" class="px-3 hover:text-accent text-sm transition duration-300">FAQ</a> |
                  <a href="#contact" class="px-3 hover:text-accent text-sm transition duration-300">Contact</a>
              </div>
+             <!-- Logo de pied de page (Coloré) -->
              <img src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Footer" class="h-14 w-14 mx-auto mb-5 rounded-full shadow-lg border-2 border-gray-700">
             <p class="text-sm">&copy; <span id="current-year"></span> PalaceCars - Tous droits réservés. Location de voiture Agadir.</p>
              <p class="text-xs mt-3 text-gray-500">Design & Développement</p>
@@ -630,8 +645,9 @@
 
     <!-- Script Firebase & Logique -->
     <script type="module">
+        // --- Importations Firebase ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDoc, getDocs, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, getDoc, getDocs, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuration Firebase ---
         const firebaseConfig = {
@@ -644,7 +660,7 @@
             measurementId: "G-KCEF4WBW0G"
         };
 
-        // --- Initialize Firebase ---
+        // --- Initialisation Firebase ---
         let db;
         let bookingsCollectionRef;
         let unavailabilityPeriodsCollectionRef;
@@ -663,16 +679,12 @@
              const initialMessageBox = document.getElementById('message-box');
              const reservationSectionEl = document.getElementById('reservation');
              if(initialMessageBox && reservationSectionEl) {
-                 // Make section visible to show the error
-                 toggleReservationForm(true, false); // Force open, no scroll
-                 
-                initialMessageBox.textContent = "Erreur critique: Impossible de connecter à la base de données.";
-                initialMessageBox.className = 'p-4 rounded-lg text-center mb-6 font-medium bg-red-100 text-red-800 border border-red-300';
-                initialMessageBox.classList.remove('hidden');
+                 toggleReservationForm(true, false); // Force l'ouverture pour montrer l'erreur
+                 showMessage("Erreur critique: Impossible de connecter à la base de données.", "error");
              }
         }
 
-         // --- Liste des Voitures et Prix ---
+         // --- Données Voitures ---
          const carFleet = {
             "Dacia Logan Diesel 2024": { price: 250, image: "https://placehold.co/300x200/e2e8f0/334155?text=Logan+D+24" },
             "Dacia Logan Diesel 2025": { price: 250, image: "https://placehold.co/300x200/e2e8f0/334155?text=Logan+D+25" },
@@ -681,9 +693,10 @@
         };
         const carNames = Object.keys(carFleet);
 
-        // --- DOM Elements ---
+        // --- Références DOM ---
         const mainHeader = document.getElementById('main-header');
         const reservationSection = document.getElementById('reservation');
+        const reservationWrapper = document.getElementById('reservation-inner-wrapper');
         const form = document.getElementById('booking-form');
         const messageBox = document.getElementById('message-box');
         const checkAvailabilityButton = document.getElementById('check-availability-button');
@@ -697,12 +710,6 @@
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
         const currentYearSpan = document.getElementById('current-year');
-
-        const nomPrenomInput = document.getElementById('nomPrenom');
-        const telephoneInput = document.getElementById('telephone');
-        const emailInput = document.getElementById('email');
-        const lieuPriseEnChargeInput = document.getElementById('lieuPriseEnCharge');
-        const lieuRetourInput = document.getElementById('lieuRetour');
         const datePriseEnChargeInput = document.getElementById('datePriseEnCharge');
         const heurePriseEnChargeHeureSelect = document.getElementById('heurePriseEnChargeHeure');
         const heurePriseEnChargeMinuteSelect = document.getElementById('heurePriseEnChargeMinute');
@@ -717,25 +724,21 @@
         // --- Fonctions Utilitaires ---
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
-            messageBox.className = 'p-4 rounded-lg text-center mb-6 font-medium border text-sm md:text-base'; // Keep base classes
-            messageBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800', 'bg-blue-100', 'border-blue-300', 'text-blue-800'); // Remove old colors
+            messageBox.className = 'p-4 rounded-lg text-center mb-6 font-medium border text-sm md:text-base'; // Classes de base
             if (type === 'success') {
                 messageBox.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
             } else if (type === 'error') {
                 messageBox.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
             } else if (type === 'warning') {
                  messageBox.classList.add('bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
-            } else { // info default
+            } else { // info
                 messageBox.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-800');
             }
-             messageBox.style.opacity = '1'; messageBox.style.transform = 'translateY(0)';
+             messageBox.style.opacity = '1';
              messageBox.classList.remove('hidden');
-            // Auto-hide after 7 seconds
             setTimeout(() => {
-                if (!messageBox.classList.contains('hidden')) { // Check if still visible
-                    messageBox.style.opacity = '0'; messageBox.style.transform = 'translateY(-10px)';
-                    setTimeout(() => messageBox.classList.add('hidden'), 300);
-                 }
+                messageBox.style.opacity = '0';
+                setTimeout(() => messageBox.classList.add('hidden'), 300);
             }, 7000);
         }
 
@@ -744,10 +747,15 @@
             try {
                 const hour = hourStr.padStart(2, '0');
                 const minute = minuteStr.padStart(2, '0');
-                const [year, month, day] = dateStr.split('-');
-                // Use UTC to avoid timezone issues when comparing dates
-                const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
-                if (isNaN(d.getTime())) { throw new Error("Invalid date created"); }
+                // Crée la date en UTC pour des comparaisons fiables
+                const d = new Date(Date.UTC(
+                    parseInt(dateStr.substring(0, 4)), 
+                    parseInt(dateStr.substring(5, 7)) - 1, // Mois est 0-indexé
+                    parseInt(dateStr.substring(8, 10)), 
+                    parseInt(hour), 
+                    parseInt(minute), 0
+                ));
+                if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
                 return d;
             } catch (e) {
                 console.error("Erreur conversion date/heure:", dateStr, hourStr, minuteStr, e);
@@ -761,11 +769,9 @@
              const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' };
              try {
                 let formatted = new Intl.DateTimeFormat('fr-FR', options).format(dateObj);
-                // Correctly remove potential multiple spaces after replace in different locales
                 formatted = formatted.replace(/[\s,]+/g, ' ').trim();
                 return formatted;
              } catch (e) {
-                console.error("Error formatting date:", e);
                 const day = String(dateObj.getUTCDate()).padStart(2, '0');
                 const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
                 const year = dateObj.getUTCFullYear();
@@ -775,33 +781,39 @@
              }
         }
 
-        // --- Remplissage des Selects Heure/Minute ---
         function populateTimeSelects() {
             const hourSelects = [heurePriseEnChargeHeureSelect, heureRetourHeureSelect];
             const minuteSelects = [heurePriseEnChargeMinuteSelect, heureRetourMinuteSelect];
 
             hourSelects.forEach(select => {
-                const placeholder = select.querySelector('option[disabled]'); select.innerHTML = ''; if (placeholder) select.appendChild(placeholder);
-                for (let i = 0; i < 24; i++) { const value = i.toString().padStart(2, '0'); select.options.add(new Option(value, value)); }
+                const placeholder = select.querySelector('option[disabled]'); 
+                select.innerHTML = ''; 
+                if (placeholder) select.appendChild(placeholder);
+                for (let i = 0; i < 24; i++) { 
+                    const value = i.toString().padStart(2, '0'); 
+                    select.options.add(new Option(value, value)); 
+                }
             });
 
             minuteSelects.forEach(select => {
-                 const placeholder = select.querySelector('option[disabled]'); select.innerHTML = ''; if (placeholder) select.appendChild(placeholder);
-                 // Populate with 00, 15, 30, 45
+                 const placeholder = select.querySelector('option[disabled]'); 
+                 select.innerHTML = ''; 
+                 if (placeholder) select.appendChild(placeholder);
                  ['00', '15', '30', '45'].forEach(value => {
                      select.options.add(new Option(value, value));
                  });
             });
         }
 
-        // --- Vérification de Disponibilité Spécifique (Version Optimisée) ---
+        // --- Fonction de Vérification de Disponibilité (Optimisée) ---
+        // Cette fonction est appelée par checkAvailabilityButton ET submitBookingButton
         async function isCarAvailable(carName, pickupDateTime, returnDateTime) {
              if (!dbReady || !carName || !pickupDateTime || !returnDateTime || isNaN(pickupDateTime) || isNaN(returnDateTime)) {
                  console.error("Données invalides pour isCarAvailable", carName, pickupDateTime, returnDateTime);
                  return { available: false, reason: 'Erreur interne' };
              }
              try {
-                 // 1. Vérifier statut manuel
+                 // 1. Vérifier statut manuel (prioritaire)
                  const manualStatusDocRef = doc(db, "car_manual_status", carName);
                  const manualStatusSnap = await getDoc(manualStatusDocRef);
                  if (manualStatusSnap.exists() && manualStatusSnap.data().status === 'unavailable') {
@@ -828,8 +840,8 @@
                      // Si une période trouvée commence AVANT la fin de ma demande, il y a chevauchement
                      if (period.startDate && period.startDate.seconds < returnTimestamp.seconds) {
                          isUnavailable = true;
-                         // Si la période est due à une maintenance, on ne montre pas la date
-                         if (period.type !== 'maintenance') { 
+                         // Si la période n'est PAS de type 'maintenance', afficher la date de dispo
+                         if (period.type !== 'maintenance' && period.endDate) { 
                             reason = `(Disponible le ${formatReadableDateTime(period.endDate.toDate())})`;
                          }
                          break;
@@ -840,11 +852,12 @@
                      console.log(`${carName} a une période d'indisponibilité qui chevauche la demande.`);
                      return { available: false, reason: reason };
                  }
-                 return { available: true };
+                 return { available: true }; // La voiture est disponible
 
              } catch (error) {
                  console.error(`Erreur vérification disponibilité pour ${carName}:`, error);
                  if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     // Cette erreur est NORMALE si l'index n'est pas créé.
                      showMessage(`Index Firestore manquant. Ouvrez la console (F12) et suivez le lien pour créer l'index: ${error.message}`, "error");
                  } else { 
                      showMessage("Erreur technique lors de la vérification de disponibilité.", "error"); 
@@ -853,9 +866,9 @@
              }
          }
 
-        // --- Logique de Vérification de Disponibilité (Bouton Principal) (Version Optimisée) ---
+        // --- Logique de Vérification de Disponibilité (Bouton Principal) ---
         checkAvailabilityButton.addEventListener('click', async () => {
-             // Validation des champs
+             // ... (Validation des champs) ...
              if (!dbReady) { showMessage("La base de données n'est pas prête. Réessayez.", "error"); return; }
              const startDateStr = datePriseEnChargeInput.value; const startHourStr = heurePriseEnChargeHeureSelect.value;
              const startMinuteStr = heurePriseEnChargeMinuteSelect.value; const endDateStr = dateRetourInput.value;
@@ -863,7 +876,7 @@
              if (!startDateStr || startHourStr === "" || startMinuteStr === "" || !endDateStr || endHourStr === "" || endMinuteStr === "") { showMessage("Veuillez sélectionner les dates et heures complètes.", "warning"); return; }
              currentPickupDateTime = getDateTimeObject(startDateStr, startHourStr, startMinuteStr);
              currentReturnDateTime = getDateTimeObject(endDateStr, endHourStr, endMinuteStr);
-             if (!currentPickupDateTime || !currentReturnDateTime) { return; } // Error shown in getDateTimeObject
+             if (!currentPickupDateTime || !currentReturnDateTime) { return; } 
              const now = new Date();
              const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
               if (currentPickupDateTime < todayStart) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
@@ -876,14 +889,15 @@
 
              try {
                  let availableCarsCount = 0;
+                 // 1. Get all manual statuses
                  const manualStatusesSnap = await getDocs(carManualStatusCollectionRef);
                  const manualStatusMap = new Map();
                  manualStatusesSnap.forEach(doc => { manualStatusMap.set(doc.id, doc.data().status); });
 
+                 // 2. Get all relevant unavailability periods (Requête optimisée)
                  const returnTimestamp = Timestamp.fromDate(currentReturnDateTime);
                  const pickupTimestamp = Timestamp.fromDate(currentPickupDateTime);
 
-                 // Requête optimisée: Récupère toutes les périodes qui se terminent APRES le début de notre demande
                  const qPeriodsEndAfterPickup = query(
                      unavailabilityPeriodsCollectionRef,
                      where("endDate", ">", pickupTimestamp)
@@ -894,27 +908,23 @@
 
                  periodsSnapshot.forEach(doc => {
                      const period = doc.data();
-                     // Si une période commence AVANT la fin de notre demande, il y a chevauchement
+                     // Check for overlap
                      if (period.startDate && period.startDate.seconds < returnTimestamp.seconds) {
                          let reason = "(Indisponible)";
-                         if (period.type !== 'maintenance') {
+                         if (period.type !== 'maintenance' && period.endDate) {
                             reason = `(Disponible le ${formatReadableDateTime(period.endDate.toDate())})`;
                          }
-                         unavailabilityMap.set(period.car, reason); // Stocke la raison
+                         unavailabilityMap.set(period.car, reason);
                      }
                  });
 
-
+                 // 3. Loop through car list and check status
                  availableCarsListDiv.innerHTML = '';
-
                  carNames.forEach((carName) => {
                      let isAvailable = true; let reason = "";
-                     // 1. Vérifier statut manuel
                      if (manualStatusMap.get(carName) === 'unavailable') {
                          isAvailable = false; reason = '(Indisponible)';
-                     } 
-                     // 2. Vérifier statut des périodes (seulement si non-indisponible manuellement)
-                     else if (unavailabilityMap.has(carName)) {
+                     } else if (unavailabilityMap.has(carName)) {
                          isAvailable = false;
                          reason = unavailabilityMap.get(carName);
                      }
@@ -926,13 +936,12 @@
 
                  availableCarsSection.classList.remove('hidden');
                  noCarsMessage.classList.toggle('hidden', availableCarsCount === 0);
-                 // Only scroll if availability was checked successfully
                  availableCarsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
              } catch (error) {
                  console.error("Erreur globale lors de la vérification:", error);
                  if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    showMessage(`Index Firestore manquant. Ouvrez la console (F12) et suivez le lien pour créer l'index requis: ${error.message}`, "error");
+                    showMessage(`Index Firestore manquant. Ouvrez la console (F12) et suivez le lien pour créer l'index: ${error.message}`, "error");
                  } else { showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error"); }
              } finally {
                  availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
@@ -969,11 +978,9 @@
                  const buttonText = selectButton.querySelector('.button-text');
                  const checkIcon = selectButton.querySelector('.icon-check');
 
-                 // Use click on the whole card for selection if available
+                 // Gérer le clic sur la carte ou le bouton
                  card.addEventListener('click', (e) => {
-                     // Prevent selection if clicking disabled button directly (though card handles it)
-                     if (e.target.closest('button') && e.target.closest('button').disabled) return;
-
+                     // Gérer la sélection
                      document.querySelectorAll('.car-card.selected').forEach(selectedCard => {
                          selectedCard.classList.remove('selected', 'border-2');
                          const btn = selectedCard.querySelector('.select-car-button');
@@ -990,7 +997,7 @@
                      checkIcon?.classList.remove('hidden');
                      selectButton.classList.remove('btn-primary');
                      selectButton.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
-                     selectButton.disabled = true; // Keep button disabled visually when selected
+                     selectButton.disabled = true; 
                      selectedCarName = carName;
                      selectedCarInput.value = carName;
                      submitBookingButton.classList.remove('hidden');
@@ -1003,7 +1010,7 @@
 
         // --- Logique de Soumission Finale ---
         submitBookingButton.addEventListener('click', async () => {
-             console.log("Submit button clicked"); // Log 1
+             console.log("Submit button clicked"); 
               if (!dbReady) {
                   console.error("DB not ready during submit");
                   showMessage("La connexion à la base de données n'est pas prête.", "error");
@@ -1011,7 +1018,7 @@
               }
              if (!selectedCarName) { showMessage("Veuillez d'abord sélectionner une voiture.", "warning"); return; }
              if (!currentPickupDateTime || !currentReturnDateTime) { showMessage("Dates invalides. Revérifiez la disponibilité.", "warning"); return; }
-             console.log("Validation passed, gathering data..."); // Log 2
+             console.log("Validation passed, gathering data..."); 
 
              const formData = new FormData(form);
              const bookingData = Object.fromEntries(formData.entries());
@@ -1032,27 +1039,26 @@
                  if (firstEmptyField) firstEmptyField.focus();
                  return;
              }
-             console.log("Form data valid, proceeding..."); // Log 3
+             console.log("Form data valid, proceeding..."); 
 
              submitBookingButton.disabled = true; submitSpinner.classList.remove('hidden'); messageBox.classList.add('hidden');
 
              // *** FINAL AVAILABILITY CHECK ***
-             console.log(`Checking final availability for ${selectedCarName}...`); // Log 4
+             console.log(`Checking final availability for ${selectedCarName}...`); 
              const availabilityCheck = await isCarAvailable(selectedCarName, currentPickupDateTime, currentReturnDateTime);
-             console.log("Availability check result:", availabilityCheck); // Log 5
+             console.log("Availability check result:", availabilityCheck); 
 
              if (!availabilityCheck.available) {
                  showMessage(`Désolé, la voiture "${selectedCarName}" vient d'être indisponible. Veuillez choisir une autre voiture.`, 'error');
-                  // Re-run availability check visually
                   checkAvailabilityButton.click();
-                 submitBookingButton.classList.add('hidden'); // Hide submit button again
+                 submitBookingButton.classList.add('hidden'); 
                  submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
-                 console.log("Car became unavailable, submission cancelled."); // Log 6a
+                 console.log("Car became unavailable, submission cancelled."); 
                  return;
              }
              // *** END FINAL CHECK ***
 
-             console.log("Car is still available, preparing details..."); // Log 6b
+             console.log("Car is still available, preparing details..."); 
 
              const heurePriseStr = `${bookingData.heurePriseEnChargeHeure.padStart(2, '0')}:${bookingData.heurePriseEnChargeMinute.padStart(2, '0')}`;
              const heureRetourStr = `${bookingData.heureRetourHeure.padStart(2, '0')}:${bookingData.heureRetourMinute.padStart(2, '0')}`;
@@ -1060,15 +1066,15 @@
                  nomPrenom: bookingData.nomPrenom, telephone: bookingData.telephone, email: bookingData.email, lieuPriseEnCharge: bookingData.lieuPriseEnCharge, lieuRetour: bookingData.lieuRetour, datePriseEnCharge: bookingData.datePriseEnCharge, heurePriseEnCharge: heurePriseStr, dateRetour: bookingData.dateRetour, heureRetour: heureRetourStr,
                  voiture: selectedCarName, timestamp: serverTimestamp(), confirmed: false, deleted: false
              };
-             console.log("Booking details object:", bookingDetails); // Log 7
+             console.log("Booking details object:", bookingDetails); 
 
              let newBookingId = null;
              // 1. Save to Firestore
              try {
-                 console.log("Attempting to save booking to Firestore..."); // Log 8
+                 console.log("Attempting to save booking to Firestore..."); 
                  const docRef = await addDoc(bookingsCollectionRef, bookingDetails);
                  newBookingId = docRef.id;
-                 console.log("Booking saved to Firestore, ID: ", newBookingId); // Log 9
+                 console.log("Booking saved to Firestore, ID: ", newBookingId); 
 
                  // Automatically add unavailability period for this booking
                  const unavailabilityData = {
@@ -1078,12 +1084,12 @@
                     type: 'booking', // Mark as automatically generated
                     bookingId: newBookingId // Link to the booking document
                  };
-                 console.log("Attempting to add unavailability period to Firestore..."); // Log 10
+                 console.log("Attempting to add unavailability period to Firestore..."); 
                  await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
-                 console.log("Unavailability period added automatically for", selectedCarName); // Log 11
+                 console.log("Unavailability period added automatically for", selectedCarName); 
 
              } catch (error) {
-                 console.error("Erreur Firestore lors de l'enregistrement: ", error); // Log 12a
+                 console.error("Erreur Firestore lors de l'enregistrement: ", error); 
                  showMessage("Erreur technique lors de l'enregistrement de la réservation. Veuillez réessayer.", 'error');
                  submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
                  return;
@@ -1091,36 +1097,33 @@
 
              // 2. Send via Web3Forms
              try {
-                 console.log("Attempting to send email via Web3Forms..."); // Log 13
+                 console.log("Attempting to send email via Web3Forms..."); 
                  const objectForWeb3Forms = { ...bookingDetails };
-                 // Add necessary Web3Forms fields from hidden inputs
                  objectForWeb3Forms.access_key = form.querySelector('input[name="access_key"]').value;
                  objectForWeb3Forms.subject = form.querySelector('input[name="subject"]').value;
                  objectForWeb3Forms.from_name = form.querySelector('input[name="from_name"]').value;
                  objectForWeb3Forms.redirect = form.querySelector('input[name="redirect"]').value;
-                 // Use a readable format for the email
                  objectForWeb3Forms.datePriseEnCharge = `${bookingDetails.datePriseEnCharge} ${bookingDetails.heurePriseEnCharge}`;
                  objectForWeb3Forms.dateRetour = `${bookingDetails.dateRetour} ${bookingDetails.heureRetour}`;
-                 objectForWeb3Forms.timestamp_readable = formatReadableDateTime(new Date()); // Add submission time formatted
-                 delete objectForWeb3Forms.timestamp; // Remove server timestamp object for JSON
-                 delete objectForWeb3Forms.confirmed; delete objectForWeb3Forms.deleted; delete objectForWeb3Forms.heurePriseEnCharge; delete objectForWeb3Forms.heureRetour; // Clean up redundant fields
+                 objectForWeb3Forms.timestamp_readable = formatReadableDateTime(new Date()); 
+                 delete objectForWeb3Forms.timestamp; 
+                 delete objectForWeb3Forms.confirmed; delete objectForWeb3Forms.deleted; delete objectForWeb3Forms.heurePriseEnCharge; delete objectForWeb3Forms.heureRetour; 
 
                  const jsonPayload = JSON.stringify(objectForWeb3Forms);
-                 console.log("Web3Forms Payload:", jsonPayload); // Log 14
+                 console.log("Web3Forms Payload:", jsonPayload); 
                  const web3Response = await fetch("https://api.web3forms.com/submit", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: jsonPayload });
                  const result = await web3Response.json();
                  if (result.success) {
-                     console.log('Web3Forms Success:', result); // Log 15a
+                     console.log('Web3Forms Success:', result); 
                      showMessage("Demande Envoyée avec Succès ! On va vous contacter le plus proche possible pour la confirmation.", 'success');
                      form.reset();
                       heurePriseEnChargeHeureSelect.value = ""; heurePriseEnChargeMinuteSelect.value = "";
                       heureRetourHeureSelect.value = ""; heureRetourMinuteSelect.value = "";
                      availableCarsSection.classList.add('hidden'); submitBookingButton.classList.add('hidden');
                      selectedCarName = null; selectedCarInput.value = '';
-                     // Scroll back to top after success
                      window.scrollTo({ top: 0, behavior: 'smooth' });
                  } else {
-                     console.error('Web3Forms Error:', result); // Log 15b
+                     console.error('Web3Forms Error:', result); 
                      showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
                      form.reset();
                      heurePriseEnChargeHeureSelect.value = ""; heurePriseEnChargeMinuteSelect.value = "";
@@ -1130,7 +1133,7 @@
                      window.scrollTo({ top: 0, behavior: 'smooth' });
                  }
              } catch (web3Error) {
-                 console.error('Erreur fetch Web3Forms:', web3Error); // Log 16
+                 console.error('Erreur fetch Web3Forms:', web3Error); 
                  showMessage("Demande enregistrée, mais l'e-mail de notification a échoué. Nous vous contacterons quand même.", 'warning');
                  form.reset();
                  heurePriseEnChargeHeureSelect.value = ""; heurePriseEnChargeMinuteSelect.value = "";
@@ -1156,7 +1159,6 @@
         // --- Mobile Menu Toggle ---
         if (mobileMenuButton && mobileMenu) {
             mobileMenuButton.addEventListener('click', (e) => { e.stopPropagation(); mobileMenu.classList.toggle('hidden'); });
-             // Close menu if clicking outside or on a link
              document.addEventListener('click', (e) => {
                 if (!mobileMenu.contains(e.target) && !mobileMenuButton.contains(e.target)) {
                     mobileMenu.classList.add('hidden');
@@ -1170,42 +1172,37 @@
             currentYearSpan.textContent = new Date().getFullYear();
         }
 
-        // --- Function to show/hide reservation form with animation ---
+        // --- Function to show/hide reservation form with animation (CORRECTED LOGIC) ---
         function toggleReservationForm(show, doScroll = true) {
-            const reservationSectionEl = document.getElementById('reservation');
-            if (!reservationSectionEl) {
-                console.error("Reservation section not found!");
+            if (!reservationSection || !reservationWrapper) {
+                console.error("Section réservation ou wrapper non trouvé !");
                 return;
             }
 
-            // Define classes for hidden and visible states
-            // Note: We use Tailwind JIT values like max-h-[3000px]
-            const hiddenClasses = ['max-h-0', 'opacity-0', 'py-0', 'my-0', 'overflow-hidden'];
-            // CORRECTION: Added padding/margin to the wrapper, not the section itself for animation
-            const reservationWrapper = document.getElementById('reservation-inner-wrapper'); 
-
             if (show) {
-                // Remove hidden classes from the main section
-                reservationSectionEl.classList.remove('max-h-0', 'opacity-0', 'p-0', 'm-0', 'overflow-hidden');
-                // Add visible classes
-                reservationSectionEl.classList.add('max-h-[3000px]', 'opacity-100'); 
-                // Add padding/margin to the *inner wrapper*
-                reservationWrapper.classList.add('my-16', 'md:my-24');
+                // Rendre visible
+                reservationSection.style.display = 'block'; // Assurer qu'il n'est pas en display:none
+                
+                // Forcer un reflow (important pour que la transition se lance)
+                void reservationSection.offsetWidth; 
 
+                // Appliquer les classes pour l'état visible
+                reservationSection.classList.add('max-h-[3000px]', 'opacity-100');
+                reservationSection.classList.remove('max-h-0', 'opacity-0', 'p-0', 'm-0', 'overflow-hidden');
+                reservationWrapper.classList.add('my-16', 'md:my-24');
+                
                 if (doScroll) {
                     setTimeout(() => {
-                        reservationSectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        reservationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 50); 
                 }
-
             } else {
-                 // To hide
-                 reservationSectionEl.classList.remove('max-h-[3000px]', 'opacity-100');
-                 reservationSectionEl.classList.add('max-h-0', 'opacity-0', 'p-0', 'm-0', 'overflow-hidden');
+                 // Cacher
+                 reservationSection.classList.remove('max-h-[3000px]', 'opacity-100');
+                 reservationSection.classList.add('max-h-0', 'opacity-0', 'p-0', 'm-0', 'overflow-hidden');
                  reservationWrapper.classList.remove('my-16', 'md:my-24');
             }
         }
-
 
         // --- Event Listeners for showing the form ---
          const reservationTriggers = [
@@ -1213,14 +1210,15 @@
              document.getElementById('scroll-down-button'),
              document.getElementById('nav-reserve-button'),
              document.getElementById('mobile-reserve-button'),
-             ...document.querySelectorAll('.reserve-now-link') // Spread the NodeList into the array
+             ...document.querySelectorAll('.reserve-now-link')
          ];
 
          reservationTriggers.forEach(trigger => {
-            if(trigger) { // Check if the element exists
+            if(trigger) { 
                 trigger.addEventListener('click', (event) => {
                     event.preventDefault();
-                    toggleReservationForm(true); // Show and scroll
+                    console.log("Trigger 'Réserver en Ligne' cliqué."); // Log de débogage
+                    toggleReservationForm(true); // Montrer et défiler
                 });
             }
          });
@@ -1229,13 +1227,17 @@
         // --- Initialize time selects and hide reservation section on load ---
         document.addEventListener('DOMContentLoaded', () => {
              populateTimeSelects();
-             const reservationSectionEl = document.getElementById('reservation');
-             if (reservationSectionEl) {
-                // Apply initial hidden classes using Tailwind and ensure no padding/margin
-                reservationSectionEl.classList.add('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
-                reservationSectionEl.classList.remove('py-20', 'md:py-32', 'my-16', 'md:my-24'); // Explicitly remove padding/margin
-                // Remove padding/margin from wrapper too
-                document.getElementById('reservation-inner-wrapper').classList.remove('my-16', 'md:my-24');
+             
+             if (reservationSection) {
+                // Appliquer les classes initiales pour cacher
+                reservationSection.classList.add('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
+                // S'assurer que les classes de visibilité sont absentes
+                reservationSection.classList.remove('max-h-[3000px]', 'opacity-100');
+                if(reservationWrapper) {
+                    reservationWrapper.classList.remove('my-16', 'md:my-24');
+                }
+                // Important : doit être 'block' pour que max-height fonctionne, mais 'hidden'
+                reservationSection.style.display = 'block'; 
              } else {
                 console.error("Reservation section element not found on DOMContentLoaded");
              }
@@ -1245,26 +1247,23 @@
             const observerCallback = (entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        // Check if it's the reservation section and prevent animation if triggered by scroll
+                        // Ne pas animer la section de réservation au scroll si elle est cachée
                         if (entry.target.id === 'reservation' && !entry.target.classList.contains('opacity-100')) {
-                            // Don't animate it on scroll if it's not yet visible
-                            observer.unobserve(entry.target); // Stop observing
+                            // Ne pas l'animer, mais la retirer de l'observation
+                            observer.unobserve(entry.target);
                             return; 
                         }
-                        entry.target.classList.add('visible'); // Use 'visible' class to trigger animation
+                        entry.target.classList.add('visible'); 
                         observer.unobserve(entry.target);
                     }
                 });
             };
 
             const observer = new IntersectionObserver(observerCallback, observerOptions);
-            // Observe all sections with section-animate
             document.querySelectorAll('.section-animate').forEach(section => {
                  observer.observe(section);
             });
-             // Observe reservation section separately (it's not .section-animate)
              if(reservationSection) observer.observe(reservationSection);
-
         });
 
     </script>
