@@ -5,185 +5,268 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Palace Cars - Panneau d'Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome - Correction integrity -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icônes Font Awesome (CORRIGÉ DÉFINITIVEMENT) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="manifest" href="/manifest.json">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .booking-card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); margin-bottom: 1rem; padding: 1rem; }
-        .confirmed-booking { opacity: 0.7; } /* Légèrement moins opaque pour rester lisible */
-        .tab-button { padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; transition: background-color 0.2s; }
-        .tab-button.active { background-color: #3b82f6; color: white; }
-        .tab-button:not(.active) { background-color: #e5e7eb; color: #374151; }
-        .loader {
-            border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%;
-            width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; margin-left: 5px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hidden { display: none; }
-        .sticky-top { position: sticky; top: 1rem; align-self: flex-start; /* Important for sticky positioning in flex */ }
-        /* Style pour la modale */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        /* Specific input styles for modal */
-        .modal-input { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen">
 
-    <!-- Section Authentification -->
-    <div id="auth-section" class="flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Accès Administrateur</h1>
-            <input type="password" id="password-input" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 mb-4" placeholder="Entrez le mot de passe">
-            <button id="login-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
-                Connexion
-            </button>
-            <p id="error-message" class="text-red-500 text-sm mt-2 text-center hidden">Mot de passe incorrect.</p>
+    <!-- Style pour la modale et la mise en page -->
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; }
+        :root {
+            --color-primary: #2563eb; /* Blue-600 */
+            --color-accent: #f59e0b; /* Amber-500 */
+            --color-text-dark: #1e293b; /* Slate-800 */
+        }
+        /* Style pour la modale */
+        #confirmation-modal {
+            background-color: rgba(0, 0, 0, 0.6);
+            transition: opacity 0.3s ease-in-out;
+        }
+        #modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        #confirmation-modal:not(.hidden) #modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        /* Style pour le loader */
+        .loader {
+            border-top-color: var(--color-primary);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Désactiver le défilement lorsque la modale est ouverte */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        /* Style pour les champs de date/heure de la modale */
+        #modal-pickup-date, #modal-return-date, #modal-pickup-time, #modal-return-time {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #cbd5e1; /* Slate-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        /* Masquer les flèches sur les inputs de type 'time' */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            display: none;
+        }
+    </style>
+    <!-- Liens pour PWA (Application Mobile) -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <meta name="theme-color" content="#2563eb">
+</head>
+<body class="antialiased text-slate-800">
+
+    <!-- Section de Connexion (initialement visible) -->
+    <div id="login-section" class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div class="bg-white p-8 sm:p-12 rounded-2xl shadow-xl w-full max-w-md">
+            <img src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo" class="w-24 h-24 mx-auto mb-6 rounded-full shadow-md">
+            <h1 class="text-3xl font-bold text-center text-primary mb-6">Accès Administrateur</h1>
+            <div id="login-error-message" class="hidden text-center text-red-600 font-medium mb-4 p-3 bg-red-100 rounded-lg">Mot de passe incorrect.</div>
+            <div class="space-y-5">
+                <div>
+                    <label for="password-input" class="block text-sm font-semibold text-gray-700 mb-2">Mot de passe</label>
+                    <input type="password" id="password-input" placeholder="Entrez le mot de passe" class="block w-full px-5 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                </div>
+                <button id="login-button" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-blue-700 transition duration-300 ease-in-out transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+                    Connexion
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Panneau Principal -->
-    <div id="admin-panel" class="hidden container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Accès Administrateur Palace Cars</h1>
-
-        <!-- Section Notifications -->
-        <div class="text-center mb-8">
-             <button id="enable-notifications-button" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300 mr-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                Activer les Notifications
-            </button>
-             <span id="notification-status" class="text-gray-600 text-sm"></span>
-        </div>
-
-        <!-- Layout Deux Colonnes -->
-        <div class="flex flex-col md:flex-row md:space-x-8">
-
-            <!-- Colonne Gauche: Boîte de Réception -->
-            <div class="w-full md:w-2/3 mb-8 md:mb-0">
-                <div class="bg-white p-6 rounded-lg shadow-xl">
-                    <h2 class="text-2xl font-semibold text-center text-gray-700 mb-4">Boîte de Réception des Réservations</h2>
-                    <p class="text-center text-gray-600 mb-6">Mise à jour automatique.</p>
-                    <div id="loading-message" class="text-center text-blue-600 py-4">Chargement des réservations...</div>
-                    <div id="error-loading-message" class="hidden p-4 rounded-md text-center bg-red-100 text-red-700 mb-4"></div>
-                    <div class="flex justify-center space-x-4 mb-6">
-                        <button id="tab-new" class="tab-button active">Nouvelles Demandes</button>
-                        <button id="tab-confirmed" class="tab-button">Réservations Confirmées</button>
+    <!-- Panneau d'Administration Principal (initialement caché) -->
+    <div id="admin-panel" class="hidden">
+        
+        <!-- Header du Panneau Admin -->
+        <header class="bg-white shadow-md sticky top-0 z-40">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <!-- Logo et Titre -->
+                    <div class="flex items-center space-x-3">
+                         <img src="https://i.imgur.com/htqH0IE.png" alt="Logo" class="h-12 w-12 rounded-full">
+                         <h1 class="text-xl sm:text-2xl font-bold text-primary">
+                            <span class="hidden sm:inline">Panneau Administrateur</span>
+                            <span class="sm:hidden">Admin</span>
+                        </h1>
                     </div>
-                    <div id="bookings-list" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2"></div>
+                    <!-- Bouton Notifications -->
+                    <div class="flex items-center space-x-4">
+                        <button id="enable-notifications-button" class="text-sm font-medium text-gray-600 hover:text-primary transition duration-300">
+                            Activer les Notifications
+                        </button>
+                        <div id="notification-status" class="hidden text-sm font-medium p-2 rounded-md"></div>
+                    </div>
                 </div>
             </div>
+        </header>
 
-            <!-- Colonne Droite: Gérer Disponibilité (Sticky) -->
-            <div class="w-full md:w-1/3">
-                 <div class="bg-white p-6 rounded-lg shadow-xl sticky-top space-y-6">
-                     <h2 class="text-xl font-semibold text-center text-gray-700">Gérer la Disponibilité</h2>
-
-                     <!-- Section Ajout Période Indisponible -->
-                     <div>
-                         <h3 class="text-md font-semibold text-gray-700 mb-3 border-b pb-2">Ajouter Période Indisponible</h3>
-                         <div class="space-y-3">
-                             <div>
-                                <label for="period-car" class="block text-sm font-medium text-gray-700 mb-1">Voiture</label>
-                                <!-- Le menu déroulant des voitures -->
-                                <select id="period-car" name="period-car" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white text-sm">
-                                    <option value="" disabled selected>Choisir...</option>
-                                    <!-- Options ajoutées par JavaScript -->
-                                </select>
-                            </div>
-                             <div class="grid grid-cols-2 gap-2">
-                                 <div>
-                                    <label for="period-start-date" class="block text-sm font-medium text-gray-700 mb-1">Date Début</label>
-                                    <input type="date" id="period-start-date" name="period-start-date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
-                                 </div>
-                                 <div>
-                                    <label for="period-start-time" class="block text-sm font-medium text-gray-700 mb-1">Heure Début</label>
-                                    <input type="time" id="period-start-time" name="period-start-time" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
-                                 </div>
-                             </div>
-                              <div class="grid grid-cols-2 gap-2">
-                                 <div>
-                                    <label for="period-end-date" class="block text-sm font-medium text-gray-700 mb-1">Date Fin</label>
-                                    <input type="date" id="period-end-date" name="period-end-date" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
-                                 </div>
-                                  <div>
-                                    <label for="period-end-time" class="block text-sm font-medium text-gray-700 mb-1">Heure Fin</label>
-                                    <input type="time" id="period-end-time" name="period-end-time" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
-                                 </div>
-                             </div>
-                             <div class="text-center pt-2">
-                                 <button id="add-period-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition duration-300 disabled:opacity-50 text-sm">
-                                     Ajouter Période
-                                     <span id="period-spinner" class="loader hidden"></span>
-                                 </button>
-                            </div>
+        <!-- Contenu Principal (Grille) -->
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+            <div id="db-error-message" class="hidden text-center text-red-600 font-medium mb-6 p-4 bg-red-100 rounded-lg shadow"></div>
+            
+             <!-- Grille 2 Colonnes (responsive) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                
+                <!-- Colonne Gauche: Boîte de Réception -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg">
+                        <h2 class="text-2xl font-bold text-text-dark mb-6">Boîte de Réception des Réservations</h2>
+                        
+                        <!-- Tabs -->
+                        <div class="flex border-b border-gray-200 mb-6">
+                            <button id="tab-new" class="px-6 py-3 font-semibold text-primary border-b-2 border-primary -mb-px">
+                                Nouvelles Demandes
+                            </button>
+                            <button id="tab-confirmed" class="px-6 py-3 font-semibold text-gray-500 hover:text-gray-700">
+                                Réservations Confirmées
+                            </button>
+                        </div>
+                        
+                        <!-- Zone d'affichage des réservations -->
+                        <div id="bookings-list" class="space-y-4">
+                            <!-- Les cartes de réservation seront injectées ici -->
+                        </div>
+                         <div id="loading-spinner" class="flex justify-center items-center py-10">
+                            <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full"></div>
                          </div>
-                         <div id="period-message" class="hidden p-3 rounded-md text-center mt-3 text-sm"></div>
-                     </div>
-
-                     <!-- Section Statut Actuel des Voitures -->
-                     <div>
-                         <h3 class="text-md font-semibold text-gray-700 mb-3 border-b pb-2">Statut Actuel des Voitures</h3>
-                         <div id="manual-status-list" class="space-y-2 max-h-40 overflow-y-auto">
-                             <p id="manual-status-loading" class="text-gray-500 italic text-sm">Chargement...</p>
-                             <!-- Statut des voitures chargé ici -->
-                         </div>
-                     </div>
-
-                     <!-- Section Périodes Programmées -->
-                     <div>
-                         <h3 class="text-md font-semibold text-gray-700 mb-3 border-b pb-2">Périodes Programmées</h3>
-                         <div id="periods-list" class="space-y-2 max-h-40 overflow-y-auto">
-                             <p id="periods-loading" class="text-gray-500 italic text-sm">Chargement...</p>
-                             <!-- Liste des périodes chargée ici -->
-                         </div>
+                         <p id="no-bookings-message" class="text-center text-gray-500 py-10 hidden">Aucune réservation dans cette catégorie.</p>
                     </div>
-                 </div>
+                </div>
+                
+                <!-- Colonne Droite: Gestion Disponibilité (Sticky) -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="lg:sticky lg:top-28"> <!-- 20px (header) + 1.5rem (main padding) = ~112px = top-28 -->
+                        
+                        <!-- Gérer la Disponibilité -->
+                        <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
+                            <h3 class="text-xl font-bold text-text-dark mb-5">Ajouter Période Indisponible</h3>
+                            <form id="unavailability-form" class="space-y-4">
+                                <div>
+                                    <label for="car-select" class="block text-sm font-medium text-gray-700">Voiture</label>
+                                    <select id="car-select" name="car" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        <option value="" disabled selected>Choisir...</option>
+                                        <!-- Options remplies par JS -->
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                     <div>
+                                        <label for="unav-start-date" class="block text-sm font-medium text-gray-700">Date Début</label>
+                                        <input type="date" id="unav-start-date" name="unav-start-date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="unav-start-time" class="block text-sm font-medium text-gray-700">Heure Début</label>
+                                        <input type="time" id="unav-start-time" name="unav-start-time" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                     <div>
+                                        <label for="unav-end-date" class="block text-sm font-medium text-gray-700">Date Fin</label>
+                                        <input type="date" id="unav-end-date" name="unav-end-date" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="unav-end-time" class="block text-sm font-medium text-gray-700">Heure Fin</label>
+                                        <input type="time" id="unav-end-time" name="unav-end-time" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-primary text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
+                                    Ajouter Période
+                                </button>
+                                <div id="unavailability-message" class="text-sm text-center"></div>
+                            </form>
+                        </div>
+                        
+                        <!-- Statut Actuel des Voitures -->
+                        <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
+                            <h3 class="text-xl font-bold text-text-dark mb-5">Statut Actuel des Voitures</h3>
+                            <div id="manual-status-list" class="space-y-3">
+                                <!-- Liste générée par JS -->
+                            </div>
+                        </div>
+
+                         <!-- Périodes Programmées -->
+                        <div class="bg-white p-6 rounded-2xl shadow-lg">
+                            <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
+                            <div id="unavailability-list" class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                                <!-- Liste générée par JS -->
+                                <p id="no-periods-message" class="text-sm text-gray-500 text-center">Aucune période d'indisponibilité programmée.</p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+            </div> <!-- Fin de la Grille -->
+
+        </main> <!-- Fin du Main Container -->
+    </div> <!-- Fin du Panneau Admin -->
+
+    <!-- Modale de Confirmation de Réservation (initialement cachée) -->
+    <div id="confirmation-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300 bg-black bg-opacity-60">
+        <div id="modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 sm:p-8 transition-all duration-300 opacity-0 transform scale-95">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-primary">Confirmer Réservation</h2>
+                <button id="modal-close-button" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times fa-lg"></i>
+                </button>
             </div>
-        </div>
-    </div>
+            
+            <p class="text-text-dark mb-4">Veuillez confirmer les détails de la réservation. Vous pouvez modifier les dates/heures si nécessaire.</p>
 
-    <!-- Modale de Confirmation -->
-    <div id="confirmation-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Confirmer la Réservation</h3>
-            <p class="text-sm text-gray-600 mb-4">Veuillez vérifier ou modifier les dates et heures avant de confirmer.</p>
-
-            <input type="hidden" id="modal-booking-id">
-            <input type="hidden" id="modal-car-name">
+            <!-- Message d'erreur de la modale -->
+            <div id="modal-error-message" class="hidden text-sm text-red-700 bg-red-100 p-3 rounded-md mb-4"></div>
 
             <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                 <!-- Détails Client (Non modifiables) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-500">Client</label>
+                    <p id="modal-client-name" class="text-lg font-medium text-text-dark"></p>
+                    <p id="modal-client-contact" class="text-sm text-text-medium"></p>
+                </div>
+                 <div>
+                    <label class="block text-sm font-semibold text-gray-500">Voiture</label>
+                    <p id="modal-car-name" class="text-lg font-medium text-text-dark"></p>
+                </div>
+                
+                <!-- Champs Date/Heure Modifiables -->
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
-                        <label for="modal-start-date" class="block text-sm font-medium text-gray-700">Date Prise en Charge</label>
-                        <input type="date" id="modal-start-date" class="modal-input mt-1">
+                        <label for="modal-pickup-date" class="block text-sm font-medium text-gray-700">Date Prise en Charge</label>
+                        <input type="date" id="modal-pickup-date" class="mt-1">
                     </div>
-                    <div>
-                        <label for="modal-start-time" class="block text-sm font-medium text-gray-700">Heure Prise en Charge</label>
-                        <input type="time" id="modal-start-time" class="modal-input mt-1">
+                     <div>
+                        <label for="modal-pickup-time" class="block text-sm font-medium text-gray-700">Heure Prise en Charge</label>
+                        <input type="time" id="modal-pickup-time" class="mt-1">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="modal-end-date" class="block text-sm font-medium text-gray-700">Date Retour</label>
-                        <input type="date" id="modal-end-date" class="modal-input mt-1">
+                        <label for="modal-return-date" class="block text-sm font-medium text-gray-700">Date Retour</label>
+                        <input type="date" id="modal-return-date" class="mt-1">
                     </div>
-                    <div>
-                        <label for="modal-end-time" class="block text-sm font-medium text-gray-700">Heure Retour</label>
-                        <input type="time" id="modal-end-time" class="modal-input mt-1">
+                     <div>
+                        <label for="modal-return-time" class="block text-sm font-medium text-gray-700">Heure Retour</label>
+                        <input type="time" id="modal-return-time" class="mt-1">
                     </div>
                 </div>
             </div>
 
-            <div id="modal-error-message" class="text-red-500 text-sm mt-4 text-center hidden"></div>
-
-            <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" id="modal-cancel-button" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-md transition duration-300 text-sm">
+            <!-- Boutons d'action de la modale -->
+            <div class="flex justify-end space-x-4 mt-8">
+                <button id="modal-cancel-button" class="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300">
                     Annuler
                 </button>
-                <button type="button" id="modal-confirm-button" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition duration-300 text-sm flex items-center disabled:opacity-50">
-                    <span>Confirmer la Réservation</span>
-                    <span id="modal-confirm-spinner" class="loader !border-t-white !border-l-white !w-4 !h-4 hidden ml-2"></span>
+                <button id="modal-confirm-button" class="px-5 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg shadow-sm hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400">
+                    <i class="fas fa-check mr-1.5"></i>
+                    Confirmer la Réservation
                 </button>
             </div>
         </div>
@@ -192,11 +275,8 @@
 
     <!-- Script Firebase & Logique Admin -->
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc, deleteDoc, Timestamp, serverTimestamp, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // setLogLevel('debug'); // Pour debug Firestore
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, doc, getDoc, getDocs, updateDoc, deleteDoc, setDoc, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuration Firebase ---
         const firebaseConfig = {
@@ -207,731 +287,706 @@
             messagingSenderId: "469852272715",
             appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
             measurementId: "G-KCEF4WBW0G"
-         };
-
-        // --- Initialize Firebase ---
+        };
+        
+        // --- Liste des Voitures (Synchro avec index.html) ---
+        const carOptions = [
+            "Dacia Logan Diesel 2024",
+            "Dacia Logan Diesel 2025",
+            "Dacia Sandero Essence",
+            "Dacia Sandero Diesel"
+        ];
+        
+        // --- Variables Globales ---
         let db;
         let bookingsCollectionRef;
         let unavailabilityPeriodsCollectionRef;
         let carManualStatusCollectionRef;
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            bookingsCollectionRef = collection(db, "palace_cars_bookings");
-            unavailabilityPeriodsCollectionRef = collection(db, "car_unavailability_periods");
-            carManualStatusCollectionRef = collection(db, "car_manual_status");
-            console.log("Firebase initialisé avec succès.");
-        } catch (error) {
-            console.error("Erreur critique d'initialisation Firebase:", error);
-            const errorDiv = document.getElementById('error-loading-message') || document.body;
-            errorDiv.innerHTML = `<div class="p-4 rounded-md text-center bg-red-100 text-red-700 m-4">Erreur critique : Impossible d'initialiser la base de données. Vérifiez la console (F12) et la configuration Firebase.</div>`;
-            if (errorDiv) errorDiv.classList.remove('hidden'); // Check if errorDiv exists
-        }
-
-        // --- DOM Elements ---
-        const authSection = document.getElementById('auth-section');
-        const adminPanel = document.getElementById('admin-panel');
-        const passwordInput = document.getElementById('password-input');
-        const loginButton = document.getElementById('login-button');
-        const errorMessage = document.getElementById('error-message');
-        const bookingsList = document.getElementById('bookings-list');
-        const loadingMessage = document.getElementById('loading-message');
-        const errorLoadingMessage = document.getElementById('error-loading-message');
-        const enableNotificationsButton = document.getElementById('enable-notifications-button');
-        const notificationStatus = document.getElementById('notification-status');
-        const tabNew = document.getElementById('tab-new');
-        const tabConfirmed = document.getElementById('tab-confirmed');
-        const periodCarSelect = document.getElementById('period-car');
-        const periodStartDateInput = document.getElementById('period-start-date');
-        const periodStartTimeInput = document.getElementById('period-start-time');
-        const periodEndDateInput = document.getElementById('period-end-date');
-        const periodEndTimeInput = document.getElementById('period-end-time');
-        const addPeriodButton = document.getElementById('add-period-button');
-        const periodSpinner = document.getElementById('period-spinner');
-        const periodMessage = document.getElementById('period-message');
-        const manualStatusListDiv = document.getElementById('manual-status-list');
-        const manualStatusLoading = document.getElementById('manual-status-loading');
-        const periodsListDiv = document.getElementById('periods-list');
-        const periodsLoading = document.getElementById('periods-loading');
-        const confirmationModal = document.getElementById('confirmation-modal');
-        const modalBookingIdInput = document.getElementById('modal-booking-id');
-        const modalCarNameInput = document.getElementById('modal-car-name');
-        const modalStartDateInput = document.getElementById('modal-start-date');
-        const modalStartTimeInput = document.getElementById('modal-start-time');
-        const modalEndDateInput = document.getElementById('modal-end-date');
-        const modalEndTimeInput = document.getElementById('modal-end-time');
-        const modalErrorMessage = document.getElementById('modal-error-message');
-        const modalCancelButton = document.getElementById('modal-cancel-button');
-        const modalConfirmButton = document.getElementById('modal-confirm-button');
-        const modalConfirmSpinner = document.getElementById('modal-confirm-spinner');
-
-        const CORRECT_PASSWORD = "12234";
+        let dbReady = false;
         let unsubscribeBookings = null;
         let unsubscribePeriods = null;
         let unsubscribeManualStatus = null;
-        let currentFilterConfirmed = false;
-        let notificationPermission = Notification.permission;
+        let currentBookingListener = 'new'; // 'new' or 'confirmed'
+        let currentBookingsData = new Map(); // Cache pour les données de la modale
 
-        // --- Liste des voitures ---
-        const carOptions = [
-            "Dacia Logan Diesel 2024", "Dacia Logan Diesel 2025", "Dacia Sandero Essence", "Dacia Sandero Diesel"
-        ];
+        // --- DOM Elements ---
+        const loginSection = document.getElementById('login-section');
+        const adminPanel = document.getElementById('admin-panel');
+        const passwordInput = document.getElementById('password-input');
+        const loginButton = document.getElementById('login-button');
+        const loginErrorMessage = document.getElementById('login-error-message');
+        const dbErrorMessage = document.getElementById('db-error-message');
+        const bookingsListDiv = document.getElementById('bookings-list');
+        const noBookingsMessage = document.getElementById('no-bookings-message');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const tabNew = document.getElementById('tab-new');
+        const tabConfirmed = document.getElementById('tab-confirmed');
+        const enableNotificationsButton = document.getElementById('enable-notifications-button');
+        const notificationStatus = document.getElementById('notification-status');
+        
+        // Elements Geston Disponibilité
+        const carSelect = document.getElementById('car-select');
+        const unavailabilityForm = document.getElementById('unavailability-form');
+        const unavMessage = document.getElementById('unavailability-message');
+        const unavListDiv = document.getElementById('unavailability-list');
+        const noPeriodsMessage = document.getElementById('no-periods-message');
+        const manualStatusListDiv = document.getElementById('manual-status-list');
 
-        // --- Authentification ---
-        loginButton.addEventListener('click', handleLogin);
-        passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+        // Elements Modale
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        const modalCancelButton = document.getElementById('modal-cancel-button');
+        const modalConfirmButton = document.getElementById('modal-confirm-button');
+        const modalErrorMessage = document.getElementById('modal-error-message');
+        const modalClientName = document.getElementById('modal-client-name');
+        const modalClientContact = document.getElementById('modal-client-contact');
+        const modalCarName = document.getElementById('modal-car-name');
+        const modalPickupDate = document.getElementById('modal-pickup-date');
+        const modalPickupTime = document.getElementById('modal-pickup-time');
+        const modalReturnDate = document.getElementById('modal-return-date');
+        const modalReturnTime = document.getElementById('modal-return-time');
 
-        function handleLogin() {
-            if (passwordInput.value === CORRECT_PASSWORD) {
-                authSection.style.display = 'none';
-                adminPanel.style.display = 'block';
-                errorMessage.classList.add('hidden');
-                checkNotificationPermission();
-                populateCarSelects(); // CORRECTION: Appel ajouté ici pour remplir le select
-                loadBookings();
-                listenForManualStatusChanges();
-                listenForUnavailabilityPeriods();
-            } else {
-                errorMessage.classList.remove('hidden');
-            }
-        }
-
-        // --- Gestion des Onglets (Réservations) ---
-        tabNew.addEventListener('click', () => switchTab(false));
-        tabConfirmed.addEventListener('click', () => switchTab(true));
-        function switchTab(showConfirmed) {
-             if (currentFilterConfirmed !== showConfirmed) {
-                currentFilterConfirmed = showConfirmed;
-                tabNew.classList.toggle('active', !showConfirmed);
-                tabConfirmed.classList.toggle('active', showConfirmed);
-                loadBookings(); // Recharge les réservations avec le nouveau filtre
-            }
-        }
-
-        // --- Chargement des Réservations ---
-        let currentBookingsData = new Map(); // Stocker les données pour la modale
-
-        function loadBookings() {
-            if (!db) {
-                console.error("Firestore DB non initialisé. Impossible de charger les réservations.");
-                errorLoadingMessage.textContent = "Erreur de connexion à la base de données. Vérifiez la console.";
-                if (errorLoadingMessage) errorLoadingMessage.classList.remove('hidden');
-                if (loadingMessage) loadingMessage.classList.add('hidden');
+        // --- Initialisation ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialisation Firebase
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                bookingsCollectionRef = collection(db, "palace_cars_bookings");
+                unavailabilityPeriodsCollectionRef = collection(db, "car_unavailability_periods");
+                carManualStatusCollectionRef = collection(db, "car_manual_status");
+                dbReady = true;
+                console.log("Firebase initialisé avec succès.");
+            } catch (error) {
+                console.error("Erreur critique d'initialisation Firebase:", error);
+                // Afficher l'erreur sur la page de connexion
+                loginErrorMessage.textContent = "Erreur critique de connexion à la base de données.";
+                loginErrorMessage.classList.remove('hidden');
+                loginButton.disabled = true;
+                loginButton.classList.add('opacity-50', 'cursor-not-allowed');
                 return;
             }
-            if (loadingMessage) {
-                loadingMessage.textContent = 'Chargement...';
-                loadingMessage.classList.remove('hidden');
-            }
-            if (errorLoadingMessage) errorLoadingMessage.classList.add('hidden');
-            if (bookingsList) bookingsList.innerHTML = '';
-            if (unsubscribeBookings) {
-                console.log("Arrêt de l'écouteur précédent des réservations.");
-                unsubscribeBookings(); // Arrêter l'écouteur précédent
-            }
-            currentBookingsData.clear(); // Vider le cache des données
 
-            // Définir la query Firestore
-            const q = query(
-                bookingsCollectionRef,
-                where("confirmed", "==", currentFilterConfirmed),
-                where("deleted", "==", false)
-                // Note: orderBy requires a composite index if combined with where filters.
-                // orderBy("timestamp", "desc") // Consider adding this back if index is created
-            );
-            console.log(`Chargement des réservations: confirmed=${currentFilterConfirmed}, deleted=false`);
-
-            // Écouter les changements en temps réel
-            unsubscribeBookings = onSnapshot(q, (querySnapshot) => {
-                console.log(`Snapshot reçu: ${querySnapshot.docs.length} documents.`);
-                if (loadingMessage) loadingMessage.classList.add('hidden');
-                if (bookingsList) bookingsList.innerHTML = ''; // Vider la liste avant de la remplir
-                if (querySnapshot.empty) {
-                     if (bookingsList) bookingsList.innerHTML = `<p class="text-center text-gray-500 italic">Aucune ${currentFilterConfirmed ? 'réservation confirmée' : 'nouvelle demande'} trouvée.</p>`;
-                } else {
-                    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Trier côté client car orderBy Firestore peut nécessiter index complexe
-                    bookings.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
-
-                     bookings.forEach(booking => {
-                         currentBookingsData.set(booking.id, booking); // Stocker les données
-                         if (bookingsList) bookingsList.appendChild(createBookingCard(booking));
-
-                         // Déclencher notification seulement si c'est une nouvelle demande non confirmée et pas une modification locale
-                        if (!booking.confirmed && !booking.deleted && !currentFilterConfirmed && booking.timestamp && !querySnapshot.metadata.hasPendingWrites) {
-                            showNotification('Nouvelle Réservation!', `Client: ${booking.nomPrenom || 'Inconnu'}\nVoiture: ${booking.voiture || 'N/A'}`);
-                        }
-                     });
-                }
-            }, (error) => {
-                console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
-                if (loadingMessage) loadingMessage.classList.add('hidden');
-                if (errorLoadingMessage) {
-                    errorLoadingMessage.classList.remove('hidden');
-                    let specificError = error.message;
-                    // Analyse plus fine de l'erreur pour aider l'utilisateur
-                    if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                        specificError = `Index Firestore manquant. Veuillez suivre le lien dans la console (F12) pour le créer. Vérifiez la console (F12) pour plus de détails (index manquant ?).`;
-                    } else if (error.code === 'permission-denied') {
-                        specificError = "Permission refusée par les règles Firestore. Vérifiez vos règles de sécurité.";
-                    } else {
-                        specificError = `Erreur de connexion à la base de données. Détails dans la console (F12). Code: ${error.code}`;
-                    }
-                    errorLoadingMessage.textContent = `Erreur: ${specificError}`;
-                }
+            // Logique de Connexion
+            loginButton.addEventListener('click', handleLogin);
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
             });
-        }
 
-
-        // --- Création Carte Réservation & Actions (Confirm ouvre modale) ---
-         function createBookingCard(booking) {
-             const card = document.createElement('div');
-            card.className = `booking-card border-l-4 ${booking.confirmed ? 'border-green-500' : 'border-blue-500'} ${booking.confirmed ? 'opacity-70' : ''}`; // Opacité si confirmé
-            card.dataset.id = booking.id;
-             const receivedDate = booking.timestamp?.toDate ? booking.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short'}) : 'Date inconnue';
-            const statusText = booking.confirmed ? 'Confirmée' : 'Nouvelle Demande';
-            const statusIcon = booking.confirmed ? 'fa-solid fa-check-circle text-green-500' : 'fa-regular fa-clock text-blue-500';
-
-            // Fonction helper pour formater date/heure
-            const formatDate = (dateValue, timeValue) => {
-                // Check if dateValue is a Firestore Timestamp object
-                if (dateValue && typeof dateValue.toDate === 'function') {
-                    // It's likely a Timestamp, format it directly
-                    const dateObj = dateValue.toDate();
-                    return dateObj.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
-                }
-                // Otherwise, treat as strings
-                const dateStr = String(dateValue || '');
-                const timeStr = String(timeValue || '00:00'); // Default time if missing
-                if (!dateStr) return 'N/A';
-                 try {
-                     // Attempt to combine date and time string
-                     const dateTimeStr = `${dateStr}T${timeStr}`;
-                     const d = new Date(dateTimeStr);
-
-                    // Check if the date is valid
-                    if (isNaN(d.getTime())) {
-                        console.warn(`Invalid date/time combination: ${dateTimeStr}`);
-                        return 'Date/Heure invalide';
-                     }
-                    return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
-                 } catch (e) {
-                     console.error(`Error formatting date: ${dateStr}, ${timeStr}`, e);
-                     return 'Format invalide';
-                 }
-             };
-
-            card.innerHTML = `
-                <div class="flex justify-between items-start mb-3">
-                    <p class="text-xs text-gray-500">Reçu le : ${receivedDate}</p>
-                    <span class="text-xs font-semibold py-1 px-2 rounded-full ${booking.confirmed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}"><i class="${statusIcon} mr-1"></i>${statusText}</span>
-                </div>
-                <p class="mb-1"><strong class="font-semibold text-gray-700">Nom:</strong> ${booking.nomPrenom || 'N/A'}</p>
-                <p class="mb-1"><strong class="font-semibold text-gray-700">Téléphone:</strong> ${booking.telephone ? `<a href="tel:${booking.telephone}" class="text-blue-600 hover:underline">${booking.telephone}</a>` : 'N/A'}</p>
-                <p class="mb-1"><strong class="font-semibold text-gray-700">Email:</strong> ${booking.email ? `<a href="mailto:${booking.email}" class="text-blue-600 hover:underline">${booking.email}</a>` : 'N/A'}</p>
-                <p class="mb-3"><strong class="font-semibold text-gray-700">Voiture:</strong> ${booking.voiture || 'N/A'}</p>
-                <div class="text-sm text-gray-600 space-y-1">
-                    <p><strong class="font-semibold">Prise en charge:</strong> ${booking.lieuPriseEnCharge || 'N/A'} - ${formatDate(booking.datePriseEnCharge, booking.heurePriseEnCharge)}</p>
-                    <p><strong class="font-semibold">Retour:</strong> ${booking.lieuRetour || 'N/A'} - ${formatDate(booking.dateRetour, booking.heureRetour)}</p>
-                </div>
-                <div class="flex flex-wrap justify-end gap-2 mt-4">
-                    ${!booking.confirmed ? `<button data-action="open-confirm-modal" data-id="${booking.id}" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm transition duration-300 flex items-center"><i class="fas fa-check mr-1"></i>Confirmer</button>` : ''}
-                    <button data-action="delete" data-id="${booking.id}" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition duration-300 flex items-center"><i class="fas fa-trash-alt mr-1"></i>Supprimer</button>
-                    ${booking.telephone ? `<a href="https://wa.me/${formatPhoneNumberForWhatsApp(booking.telephone)}" target="_blank" class="bg-teal-500 hover:bg-teal-600 text-white px-3 py-1 rounded-md text-sm transition duration-300 flex items-center"><i class="fab fa-whatsapp mr-1"></i> Contacter</a>` : ''}
-                </div>`;
-            // Le bouton "Confirmer" ouvre la modale
-            card.querySelector('button[data-action="open-confirm-modal"]')?.addEventListener('click', () => openConfirmationModal(booking.id));
-            card.querySelector('button[data-action="delete"]')?.addEventListener('click', handleDeleteBooking);
-            return card;
-         }
-
-        // Action de suppression directe (MAJ pour supprimer période associée)
-        async function handleDeleteBooking(event) {
-            const button = event.currentTarget;
-            const bookingId = button.dataset.id;
-            if (!bookingId || !db) return;
-            if (!confirm('Êtes-vous sûr de vouloir marquer cette demande comme supprimée ? La période d\'indisponibilité associée sera aussi supprimée.')) return;
-            button.disabled = true;
-            button.innerHTML = '<span class="loader !border-t-white !border-l-white !w-4 !h-4 !inline-block mr-1"></span> Suppr.';
-            try {
-                // Marquer comme supprimé au lieu de supprimer pour historique potentiel
-                await updateDoc(doc(db, "palace_cars_bookings", bookingId), { deleted: true });
-                console.log("Réservation marquée comme supprimée:", bookingId);
-
-                // Rechercher et supprimer la période d'indisponibilité associée
-                const qPeriods = query(unavailabilityPeriodsCollectionRef, where("bookingId", "==", bookingId));
-                const periodSnapshot = await getDocs(qPeriods);
-
-                if (!periodSnapshot.empty) {
-                    const deletePromises = [];
-                    periodSnapshot.forEach((docSnap) => {
-                        console.log("Trouvé période à supprimer:", docSnap.id);
-                        deletePromises.push(deleteDoc(doc(db, "car_unavailability_periods", docSnap.id)));
+            // Logique de PWA (Service Worker)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker enregistré avec succès:', registration);
+                        // Transmettre l'instance de registration pour les notifications
+                        setupNotifications(registration);
+                    })
+                    .catch(error => {
+                        console.error('Échec de l\'enregistrement du Service Worker:', error);
                     });
-                    await Promise.all(deletePromises); // Attendre toutes les suppressions
-                    console.log("Période(s) d'indisponibilité associée(s) supprimée(s) pour bookingId:", bookingId);
-                } else {
-                    console.log("Aucune période d'indisponibilité trouvée pour bookingId:", bookingId);
-                }
-                // L'UI se mettra à jour via les listeners onSnapshot
-                 showAvailabilityMessage("Réservation et période associée supprimées.", false);
-
-
-            } catch (error) {
-                console.error("Erreur suppression:", error);
-                showModalMessage(`Erreur lors de la suppression: ${error.message}`);
-                // Réactiver le bouton seulement si l'opération a échoué
-                button.disabled = false;
-                button.innerHTML = '<i class="fas fa-trash-alt mr-1"></i>Supprimer';
-             }
-         }
-
-         function formatPhoneNumberForWhatsApp(phone) {
-             if (!phone) return '';
-            let cleaned = phone.replace(/\D/g, '');
-            if (cleaned.startsWith('2120')) cleaned = '212' + cleaned.substring(4);
-            else if (cleaned.startsWith('0') && cleaned.length === 10) cleaned = '212' + cleaned.substring(1);
-            else if (!cleaned.startsWith('212') && cleaned.length === 9 && (cleaned.startsWith('6') || cleaned.startsWith('7'))) cleaned = '212' + cleaned;
-            return cleaned.startsWith('212') && cleaned.length >= 11 ? cleaned : '';
-         }
-
-        // --- Logique de la Modale de Confirmation ---
-        function openConfirmationModal(bookingId) {
-            const booking = currentBookingsData.get(bookingId);
-            if (!booking) {
-                console.error("Données de réservation non trouvées pour ID:", bookingId);
-                showModalMessage("Erreur : Impossible de charger les détails de la réservation.");
-                return;
             }
-
-            modalBookingIdInput.value = booking.id;
-            modalCarNameInput.value = booking.voiture || ''; // Stocker le nom de la voiture
-            // Pré-remplir avec les dates/heures actuelles de la réservation
-            modalStartDateInput.value = booking.datePriseEnCharge || '';
-            modalStartTimeInput.value = booking.heurePriseEnCharge || '';
-            modalEndDateInput.value = booking.dateRetour || '';
-            modalEndTimeInput.value = booking.heureRetour || '';
-
-            modalErrorMessage.classList.add('hidden');
-            modalConfirmButton.disabled = false;
-            modalConfirmSpinner.classList.add('hidden');
-            confirmationModal.classList.remove('hidden');
-        }
-
-        function closeConfirmationModal() {
-            confirmationModal.classList.add('hidden');
-        }
-
-        modalCancelButton.addEventListener('click', closeConfirmationModal);
-        modalConfirmButton.addEventListener('click', handleFinalConfirmation);
-
-        async function handleFinalConfirmation() {
-            const bookingId = modalBookingIdInput.value;
-            const carName = modalCarNameInput.value;
-            const startDate = modalStartDateInput.value;
-            const startTime = modalStartTimeInput.value || "00:00"; // Default time if empty
-            const endDate = modalEndDateInput.value;
-            const endTime = modalEndTimeInput.value || "23:59"; // Default time if empty
-
-            modalErrorMessage.classList.add('hidden'); // Cacher ancien message
-
-            if (!bookingId || !carName || !startDate || !startTime || !endDate || !endTime) {
-                modalErrorMessage.textContent = "Tous les champs date/heure sont requis.";
-                modalErrorMessage.classList.remove('hidden');
-                return;
-            }
-
-            // Conversion en objets Date pour validation et conversion en Timestamp
-            const startDateTime = new Date(`${startDate}T${startTime}`);
-            const endDateTime = new Date(`${endDate}T${endTime}`);
-
-            if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-                modalErrorMessage.textContent = "Dates ou heures invalides.";
-                modalErrorMessage.classList.remove('hidden');
-                return;
-            }
-            if (startDateTime >= endDateTime) {
-                modalErrorMessage.textContent = "La date/heure de retour doit être après la prise en charge.";
-                modalErrorMessage.classList.remove('hidden');
-                return;
-            }
-
-            modalConfirmButton.disabled = true;
-            modalConfirmSpinner.classList.remove('hidden');
-
-            try {
-                // 1. Mettre à jour la réservation
-                await updateDoc(doc(db, "palace_cars_bookings", bookingId), {
-                    confirmed: true,
-                    datePriseEnCharge: startDate, // Sauvegarder les dates/heures (potentiellement modifiées)
-                    heurePriseEnCharge: startTime,
-                    dateRetour: endDate,
-                    heureRetour: endTime,
-                    // Potentiellement ajouter un champ 'confirmedAt'
-                    // confirmedAt: serverTimestamp()
-                });
-                console.log("Réservation confirmée:", bookingId);
-
-                // 2. Ajouter la période d'indisponibilité correspondante
-                await addDoc(unavailabilityPeriodsCollectionRef, {
-                    car: carName,
-                    startDate: Timestamp.fromDate(startDateTime), // Convertir en Timestamp Firestore
-                    endDate: Timestamp.fromDate(endDateTime),     // Convertir en Timestamp Firestore
-                    type: 'booking', // Marquer comme venant d'une réservation confirmée
-                    bookingId: bookingId, // Lier à la réservation
-                    addedAt: serverTimestamp()
-                 });
-                console.log("Période d'indisponibilité ajoutée pour", bookingId);
-
-                closeConfirmationModal();
-                showAvailabilityMessage("Réservation confirmée et voiture marquée indisponible.", false); // Message global
-
-            } catch (error) {
-                console.error("Erreur lors de la confirmation finale:", error);
-                modalErrorMessage.textContent = `Erreur lors de la confirmation: ${error.message}. Réessayez.`;
-                modalErrorMessage.classList.remove('hidden');
-                modalConfirmButton.disabled = false;
-                modalConfirmSpinner.classList.add('hidden');
-            }
-        }
-
-         // Fonction helper pour afficher messages hors modale
-         function showAvailabilityMessage(message, isError = false) {
-             periodMessage.textContent = message;
-             periodMessage.className = `p-3 rounded-md text-center mt-3 text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
-             periodMessage.classList.remove('hidden');
-             setTimeout(() => periodMessage.classList.add('hidden'), 5000);
-         }
-
-
-        // --- Logique de Disponibilité (Manuelle et Périodes) ---
-
-        // Peuple les menus déroulants de voiture
-        function populateCarSelects() {
-            if (!periodCarSelect) { console.warn("Element select #period-car introuvable."); return; } // Check element exists
-            periodCarSelect.innerHTML = '<option value="" disabled selected>Choisir...</option>';
-            carOptions.forEach(car => {
-                const option = document.createElement('option');
-                option.value = car;
-                option.textContent = car;
-                periodCarSelect.appendChild(option);
-            });
-             console.log("Select voiture peuplé.");
-        }
-
-        // Affiche un message dans la section disponibilité
-        function showPeriodMessage(message, isError = false) {
-             periodMessage.textContent = message;
-             periodMessage.className = `p-3 rounded-md text-center mt-3 text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
-             periodMessage.classList.remove('hidden');
-             setTimeout(() => periodMessage.classList.add('hidden'), 5000);
-         }
-
-        // Ajouter une période d'indisponibilité MANUELLE
-        addPeriodButton.addEventListener('click', async () => {
-             const car = periodCarSelect.value;
-             const startDateStr = periodStartDateInput.value;
-             const startTimeStr = periodStartTimeInput.value || "00:00";
-             const endDateStr = periodEndDateInput.value;
-             const endTimeStr = periodEndTimeInput.value || "23:59";
-
-             if (!car || !startDateStr || !endDateStr) {
-                 showPeriodMessage("Veuillez sélectionner voiture, date début et date fin.", true); return;
-             }
-
-             const startDateTime = new Date(`${startDateStr}T${startTimeStr}:00`);
-             const endDateTime = new Date(`${endDateStr}T${endTimeStr}:00`);
-
-             if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
-                 showPeriodMessage("Dates ou heures invalides.", true); return;
-             }
-             if (startDateTime >= endDateTime) {
-                 showPeriodMessage("Le début doit être avant la fin.", true); return;
-             }
-
-             const startTimestamp = Timestamp.fromDate(startDateTime);
-             const endTimestamp = Timestamp.fromDate(endDateTime);
-
-             addPeriodButton.disabled = true; periodSpinner.classList.remove('hidden');
-
-             try {
-                 await addDoc(unavailabilityPeriodsCollectionRef, {
-                    car: car,
-                    startDate: startTimestamp,
-                    endDate: endTimestamp,
-                    type: 'manual', // Indiquer que c'est une période manuelle
-                    addedAt: serverTimestamp()
-                 });
-                 showPeriodMessage(`Période ajoutée pour ${car}.`, false);
-                 // Réinitialiser le formulaire
-                 periodCarSelect.value = ""; periodStartDateInput.value = ""; periodStartTimeInput.value = "";
-                 periodEndDateInput.value = ""; periodEndTimeInput.value = "";
-             } catch (error) {
-                 console.error("Erreur ajout période manuelle:", error);
-                 showPeriodMessage("Erreur lors de l'ajout de la période.", true);
-             } finally {
-                 addPeriodButton.disabled = false; periodSpinner.classList.add('hidden');
-             }
         });
 
-        // Écouter et afficher les périodes d'indisponibilité programmées
-        function listenForUnavailabilityPeriods() {
-            if (!db) return;
-            if (periodsLoading) periodsLoading.classList.remove('hidden');
-            if (periodsListDiv) periodsListDiv.innerHTML = ''; // Clear previous entries
+        // --- Logique de Connexion Admin ---
+        function handleLogin() {
+            const password = passwordInput.value;
+            if (password === "12234") {
+                loginSection.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                // Charger les données initiales
+                loadBookings('new'); // Charger les nouvelles demandes par défaut
+                listenForUnavailabilityPeriods();
+                listenForManualStatusChanges();
+                populateCarSelects();
+            } else {
+                loginErrorMessage.classList.remove('hidden');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+        
+        // --- Remplir les Selects ---
+        function populateCarSelects() {
+            carSelect.innerHTML = '<option value="" disabled selected>Choisir...</option>'; // Reset
+            carOptions.forEach(carName => {
+                const option = new Option(carName, carName);
+                carSelect.add(option);
+            });
+        }
 
+        // --- Gestion des Tabs ---
+        tabNew.addEventListener('click', () => switchTab('new'));
+        tabConfirmed.addEventListener('click', () => switchTab('confirmed'));
+
+        function switchTab(tabName) {
+            currentBookingListener = tabName;
+            if (tabName === 'new') {
+                tabNew.classList.add('text-primary', 'border-primary', '-mb-px');
+                tabNew.classList.remove('text-gray-500', 'hover:text-gray-700');
+                tabConfirmed.classList.add('text-gray-500', 'hover:text-gray-700');
+                tabConfirmed.classList.remove('text-primary', 'border-primary', '-mb-px');
+                loadBookings('new');
+            } else {
+                tabConfirmed.classList.add('text-primary', 'border-primary', '-mb-px');
+                tabConfirmed.classList.remove('text-gray-500', 'hover:text-gray-700');
+                tabNew.classList.add('text-gray-500', 'hover:text-gray-700');
+                tabNew.classList.remove('text-primary', 'border-primary', '-mb-px');
+                loadBookings('confirmed');
+            }
+        }
+
+        // --- Chargement des Données Firestore ---
+        
+        // Écouter les Périodes d'Indisponibilité
+        function listenForUnavailabilityPeriods() {
+            if (!dbReady) return;
             if (unsubscribePeriods) unsubscribePeriods();
 
             const now = Timestamp.now();
-            // Récupérer les périodes qui se terminent après maintenant, triées par date de fin
-            const q = query(unavailabilityPeriodsCollectionRef, where("endDate", ">=", now), orderBy("endDate", "asc"));
+            const q = query(
+                unavailabilityPeriodsCollectionRef,
+                where("endDate", ">", now), // Ne charger que les périodes futures ou en cours
+                orderBy("endDate", "asc")
+            );
 
-            unsubscribePeriods = onSnapshot(q, (snapshot) => {
-                if (periodsLoading) periodsLoading.classList.add('hidden');
-                if (periodsListDiv) periodsListDiv.innerHTML = ''; // Vider la liste avant de la remplir
-                if (snapshot.empty) {
-                     if (periodsListDiv) periodsListDiv.innerHTML = `<p class="text-gray-500 italic text-sm">Aucune période d'indisponibilité future ou en cours.</p>`;
-                } else {
-                    snapshot.forEach((doc) => {
-                        const period = { id: doc.id, ...doc.data() };
-                        if (periodsListDiv) periodsListDiv.appendChild(createPeriodListItem(period));
-                    });
+            unsubscribePeriods = onSnapshot(q, (querySnapshot) => {
+                unavListDiv.innerHTML = '';
+                if (querySnapshot.empty) {
+                    noPeriodsMessage.classList.remove('hidden');
+                    return;
                 }
+                noPeriodsMessage.classList.add('hidden');
+                querySnapshot.forEach((doc) => {
+                    unavListDiv.appendChild(createPeriodListItem(doc.id, doc.data()));
+                });
             }, (error) => {
-                console.error("Erreur chargement périodes d'indisponibilité:", error);
-                if (periodsListDiv) periodsListDiv.innerHTML = `<p class="text-red-500 text-sm">Erreur chargement des périodes.</p>`;
-                 if (periodsLoading) periodsLoading.classList.add('hidden');
-                if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     if (periodsListDiv) periodsListDiv.innerHTML = `<p class="text-red-500 text-sm">Index Firestore manquant pour les périodes. Cliquez sur le lien dans la console (F12) pour le créer.</p>`;
+                console.error("Erreur écoute périodes indispo:", error);
+                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     dbErrorMessage.classList.remove('hidden');
+                     dbErrorMessage.innerHTML += `<br><b>Erreur Index Périodes:</b> Un index est requis pour 'car_unavailability_periods'. Vérifiez la console (F12) pour le lien de création.`;
                 }
             });
         }
 
-        // Crée un élément de liste pour une période d'indisponibilité
-        function createPeriodListItem(period) {
-            const item = document.createElement('div');
-            item.className = 'flex justify-between items-center p-2 border-b border-gray-200 text-xs';
-            const formatDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-            const typeLabel = period.type === 'manual' ? 'Manuel' : (period.type === 'booking' ? 'Réservé' : 'Autre');
-            const typeColor = period.type === 'manual' ? 'text-orange-600' : (period.type === 'booking' ? 'text-blue-600' : 'text-gray-500');
+        // Écouter les Statuts Manuels
+        function listenForManualStatusChanges() {
+             if (!dbReady) return;
+             if (unsubscribeManualStatus) unsubscribeManualStatus();
+             
+             // Créer les éléments de la liste pour toutes les voitures
+             manualStatusListDiv.innerHTML = '';
+             const statusMap = new Map();
+             carOptions.forEach(carName => {
+                statusMap.set(carName, 'available'); // Par défaut
+                // L'ajout à l'UI se fera par l'snapshot
+             });
+             
+             // Écouter les changements de la collection
+             unsubscribeManualStatus = onSnapshot(carManualStatusCollectionRef, (querySnapshot) => {
+                // Mettre à jour la Map avec les statuts réels
+                querySnapshot.forEach((doc) => {
+                    if (statusMap.has(doc.id)) {
+                        statusMap.set(doc.id, doc.data().status || 'available');
+                    }
+                });
+                
+                // Mettre à jour l'UI
+                manualStatusListDiv.innerHTML = '';
+                statusMap.forEach((status, carName) => {
+                     manualStatusListDiv.appendChild(createManualStatusItem(carName, status));
+                });
+                
+             }, (error) => {
+                console.error("Erreur écoute statuts manuels:", error);
+             });
+        }
 
-            item.innerHTML = `
-                <span class="text-gray-700 flex-1 mr-2">
-                    <strong class="font-semibold">${period.car}</strong><br>
-                    ${formatDate(period.startDate)} - ${formatDate(period.endDate)}
-                     <span class="${typeColor} ml-1">(${typeLabel})</span>
-                </span>
-                <!-- Permettre suppression pour TOUTES les périodes -->
-                <button data-id="${period.id}" class="delete-period-button bg-gray-200 hover:bg-red-500 hover:text-white text-gray-600 px-2 py-1 rounded text-xs transition duration-300">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            // Ajouter le listener pour le bouton de suppression
-            const deleteButton = item.querySelector('.delete-period-button');
-            if (deleteButton) {
-                deleteButton.addEventListener('click', async (e) => {
-                    const button = e.currentTarget;
-                    const id = button.dataset.id;
-                    if (!id || !db) return;
-                     if (confirm(`Supprimer cette période d'indisponibilité ?`)) { // Message générique
-                        button.disabled = true;
-                         try {
-                             await deleteDoc(doc(db, "car_unavailability_periods", id));
-                             console.log("Période supprimée:", id);
-                             showAvailabilityMessage("Période supprimée.", false);
-                         } catch (error) {
-                             console.error("Erreur suppression période:", error);
-                             showModalMessage("Erreur suppression période.");
-                             button.disabled = false; // Réactiver seulement si erreur
+        // --- Création des Éléments d'UI ---
+
+        // (CREATE) Ajouter Période Indisponible
+        unavailabilityForm.addEventListener('submit', async (e) => {
+             e.preventDefault();
+             if (!dbReady) return;
+             
+             const car = carSelect.value;
+             const startDateStr = document.getElementById('unav-start-date').value;
+             const startTimeStr = document.getElementById('unav-start-time').value;
+             const endDateStr = document.getElementById('unav-end-date').value;
+             const endTimeStr = document.getElementById('unav-end-time').value;
+
+             if (!car || !startDateStr || !startTimeStr || !endDateStr || !endTimeStr) {
+                 unavMessage.textContent = "Tous les champs sont requis.";
+                 unavMessage.className = 'text-sm text-center text-red-600';
+                 return;
+             }
+             
+             // Convertir en objet Date puis en Timestamp
+             const startDate = new Date(`${startDateStr}T${startTimeStr}:00`);
+             const endDate = new Date(`${endDateStr}T${endTimeStr}:00`);
+
+             if (endDate <= startDate) {
+                 unavMessage.textContent = "La date de fin doit être après la date de début.";
+                 unavMessage.className = 'text-sm text-center text-red-600';
+                 return;
+             }
+             
+             const data = {
+                car: car,
+                startDate: Timestamp.fromDate(startDate),
+                endDate: Timestamp.fromDate(endDate),
+                type: 'manual', // Période manuelle
+                bookingId: null // Pas de lien de réservation
+             };
+             
+             try {
+                const docRef = await addDoc(unavailabilityPeriodsCollectionRef, data);
+                console.log("Période manuelle ajoutée:", docRef.id);
+                unavMessage.textContent = "Période ajoutée !";
+                unavMessage.className = 'text-sm text-center text-green-600';
+                unavailabilityForm.reset();
+             } catch (error) {
+                console.error("Erreur ajout période:", error);
+                unavMessage.textContent = "Erreur lors de l'ajout.";
+                unavMessage.className = 'text-sm text-center text-red-600';
+             }
+             setTimeout(() => { unavMessage.textContent = ''; }, 3000);
+        });
+
+        // (UPDATE/DELETE) Gérer Statut Manuel
+        async function handleToggleManualStatus(carName, newStatus) {
+            if (!dbReady) return;
+            const carDocRef = doc(db, "car_manual_status", carName);
+            try {
+                if (newStatus === 'unavailable') {
+                     await setDoc(carDocRef, { status: 'unavailable', lastUpdated: serverTimestamp() });
+                     console.log(`${carName} marqué Indisponible.`);
+                } else {
+                    // Si 'available', on peut soit mettre à jour le statut, soit supprimer le document
+                    // Supprimer est plus propre pour "disponible par défaut"
+                    await deleteDoc(carDocRef);
+                    console.log(`${carName} marqué Disponible (document supprimé).`);
+                }
+            } catch (error) {
+                console.error(`Erreur maj statut ${carName}:`, error);
+                dbErrorMessage.textContent = "Erreur lors de la mise à jour du statut de la voiture.";
+                dbErrorMessage.classList.remove('hidden');
+            }
+        }
+        
+        // (DELETE) Supprimer Période d'Indisponibilité
+        async function handleDeletePeriod(periodId) {
+            if (!dbReady) return;
+            if (!confirm("Vraiment supprimer cette période d'indisponibilité ?")) return;
+            
+            const periodDocRef = doc(db, "car_unavailability_periods", periodId);
+            try {
+                await deleteDoc(periodDocRef);
+                console.log("Période supprimée:", periodId);
+            } catch (error) {
+                 console.error("Erreur suppression période:", error);
+                 dbErrorMessage.textContent = "Erreur lors de la suppression de la période.";
+                 dbErrorMessage.classList.remove('hidden');
+            }
+        }
+
+        // --- Logique de la Modale de Confirmation ---
+        
+        let currentBookingIdToConfirm = null;
+
+        function openConfirmationModal(bookingId) {
+            const booking = currentBookingsData.get(bookingId);
+            if (!booking) {
+                console.error("Impossible de trouver les données de réservation pour", bookingId);
+                return;
+            }
+            currentBookingIdToConfirm = bookingId;
+
+            // Remplir les champs
+            modalClientName.textContent = booking.nomPrenom;
+            modalClientContact.textContent = `${booking.telephone} | ${booking.email}`;
+            modalCarName.textContent = booking.voiture;
+            
+            // Remplir les champs date/heure
+            modalPickupDate.value = booking.datePriseEnCharge;
+            modalPickupTime.value = booking.heurePriseEnCharge;
+            modalReturnDate.value = booking.dateRetour;
+            modalReturnTime.value = booking.heureRetour;
+            
+            modalErrorMessage.classList.add('hidden');
+            confirmationModal.classList.remove('hidden');
+            modalContent.classList.remove('opacity-0', 'scale-95'); // Déclenche l'animation d'entrée
+            document.body.classList.add('modal-open');
+        }
+
+        function closeConfirmationModal() {
+            modalContent.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                confirmationModal.classList.add('hidden');
+                document.body.classList.remove('modal-open');
+            }, 300); // Attend la fin de la transition
+        }
+
+        modalCloseButton.addEventListener('click', closeConfirmationModal);
+        modalCancelButton.addEventListener('click', closeConfirmationModal);
+
+        // (UPDATE) Logique de Confirmation Finale
+        modalConfirmButton.addEventListener('click', async () => {
+            if (!currentBookingIdToConfirm) return;
+
+            const bookingDocRef = doc(db, "palace_cars_bookings", currentBookingIdToConfirm);
+            const bookingData = currentBookingsData.get(currentBookingIdToConfirm);
+            
+            // 1. Récupérer les valeurs (potentiellement modifiées) de la modale
+            const newPickupDateStr = modalPickupDate.value;
+            const newPickupTimeStr = modalPickupTime.value;
+            const newReturnDateStr = modalReturnDate.value;
+            const newReturnTimeStr = modalReturnTime.value;
+            
+            // 2. Valider les dates/heures
+            const newPickupDateTime = new Date(`${newPickupDateStr}T${newPickupTimeStr}:00`);
+            const newReturnDateTime = new Date(`${newReturnDateStr}T${newReturnTimeStr}:00`);
+
+            if (isNaN(newPickupDateTime.getTime()) || isNaN(newReturnDateTime.getTime())) {
+                modalErrorMessage.textContent = "Format de date ou d'heure invalide.";
+                modalErrorMessage.classList.remove('hidden');
+                return;
+            }
+            if (newReturnDateTime <= newPickupDateTime) {
+                 modalErrorMessage.textContent = "La date de fin doit être après la date de début.";
+                 modalErrorMessage.classList.remove('hidden');
+                 return;
+            }
+            
+            modalErrorMessage.classList.add('hidden');
+            modalConfirmButton.disabled = true;
+            modalConfirmButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i>Confirmation...';
+
+            try {
+                // 3. Mettre à jour la réservation
+                const updateData = {
+                    confirmed: true,
+                    datePriseEnCharge: newPickupDateStr,
+                    heurePriseEnCharge: newPickupTimeStr,
+                    dateRetour: newReturnDateStr,
+                    heureRetour: newReturnTimeStr
+                };
+                await updateDoc(bookingDocRef, updateData);
+                console.log("Réservation confirmée:", currentBookingIdToConfirm);
+
+                // 4. *** CORRECTION LOGIQUE ***
+                // Ajouter la période d'indisponibilité MAINTENANT, lors de la confirmation
+                const unavailabilityData = {
+                    car: bookingData.voiture,
+                    startDate: Timestamp.fromDate(newPickupDateTime),
+                    endDate: Timestamp.fromDate(newReturnDateTime),
+                    type: 'booking', // Marqué comme généré par une réservation
+                    bookingId: currentBookingIdToConfirm // Lien vers la réservation
+                 };
+                 await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
+                 console.log(`Période d'indisponibilité ajoutée pour ${bookingData.voiture} (Booking ID: ${currentBookingIdToConfirm})`);
+
+                // 5. Fermer la modale
+                closeConfirmationModal();
+                // (l'écouteur onSnapshot s'occupera de rafraîchir l'UI)
+                
+            } catch (error) {
+                console.error("Erreur lors de la confirmation finale:", error);
+                 modalErrorMessage.textContent = `Erreur: ${error.message}`;
+                 modalErrorMessage.classList.remove('hidden');
+            } finally {
+                modalConfirmButton.disabled = false;
+                modalConfirmButton.innerHTML = '<i class="fas fa-check mr-1.5"></i>Confirmer la Réservation';
+            }
+        });
+
+
+        // (DELETE) Supprimer une Réservation
+        async function handleDeleteBooking(bookingId) {
+            if (!dbReady) return;
+            
+            const bookingData = currentBookingsData.get(bookingId);
+            if (!bookingData) {
+                console.error("Impossible de trouver les données pour supprimer", bookingId);
+                return;
+            }
+
+            const confirmMessage = `Êtes-vous sûr de vouloir supprimer cette demande ?\n\nClient: ${bookingData.nomPrenom}\nVoiture: ${bookingData.voiture}`;
+            
+            // Utiliser un simple confirm()
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            console.log("Suppression de la réservation:", bookingId);
+
+            try {
+                 // 1. Marquer la réservation comme supprimée (Soft delete)
+                 const bookingDocRef = doc(db, "palace_cars_bookings", bookingId);
+                 await updateDoc(bookingDocRef, { deleted: true });
+                 console.log("Réservation marquée comme supprimée.");
+                 
+                 // 2. Si la réservation était confirmée, supprimer la période d'indisponibilité associée
+                 if (bookingData.confirmed) {
+                    console.log("Réservation confirmée, recherche de la période d'indispo associée...");
+                    const q = query(unavailabilityPeriodsCollectionRef, where("bookingId", "==", bookingId));
+                    const periodSnapshot = await getDocs(q);
+                    
+                    if (!periodSnapshot.empty) {
+                        const periodDocId = periodSnapshot.docs[0].id;
+                         const periodDocRef = doc(db, "car_unavailability_periods", periodDocId);
+                         await deleteDoc(periodDocRef);
+                         console.log("Période d'indisponibilité associée supprimée:", periodDocId);
+                    } else {
+                         console.log("Aucune période d'indisponibilité trouvée pour ce bookingId (peut-être déjà supprimée).");
+                    }
+                 }
+                 // L'écouteur onSnapshot mettra à jour l'UI
+                 
+            } catch (error) {
+                 console.error("Erreur lors de la suppression:", error);
+                 dbErrorMessage.textContent = `Erreur lors de la suppression. Vérifiez la console. Message: ${error.message}`;
+                 dbErrorMessage.classList.remove('hidden');
+                  // Gérer l'erreur d'index si elle se produit ici
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     dbErrorMessage.innerHTML += `<br><b>Erreur Index Suppression:</b> Un index est requis pour 'car_unavailability_periods' sur 'bookingId'. Vérifiez la console (F12) pour le lien de création.`;
+                }
+            }
+        }
+        
+        // --- Notifications ---
+        let swRegistration = null;
+        function setupNotifications(registration) {
+            swRegistration = registration;
+            
+            enableNotificationsButton.addEventListener('click', () => {
+                if ('Notification' in window) {
+                    if (Notification.permission === 'granted') {
+                        setNotificationStatus('Notifications déjà activées.', 'success');
+                    } else if (Notification.permission !== 'denied') {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                setNotificationStatus('Notifications activées !', 'success');
+                                // Tester la notification
+                                showNotification('Palace Cars Admin', 'Vous recevrez maintenant les nouvelles demandes.');
+                            } else {
+                                setNotificationStatus('Notifications bloquées.', 'error');
+                            }
+                        });
+                    } else {
+                         setNotificationStatus('Notifications bloquées par le navigateur.', 'error');
+                    }
+                } else {
+                     setNotificationStatus('Notifications non supportées.', 'error');
+                }
+            });
+            
+             // Vérifier le statut au chargement
+             if (Notification.permission === 'granted') {
+                 setNotificationStatus('Alertes activées.', 'success');
+             } else if (Notification.permission === 'denied') {
+                 setNotificationStatus('Alertes bloquées.', 'error');
+                 enableNotificationsButton.disabled = true;
+             }
+        }
+        
+        function setNotificationStatus(message, type) {
+            notificationStatus.textContent = message;
+            notificationStatus.className = 'text-sm font-medium p-2 rounded-md'; // Reset
+             if (type === 'success') {
+                notificationStatus.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'error') {
+                 notificationStatus.classList.add('bg-red-100', 'text-red-700');
+            }
+            notificationStatus.classList.remove('hidden');
+        }
+
+        // Fonction pour afficher une notification via le Service Worker
+        function showNotification(title, body, bookingData = null) {
+            if (Notification.permission !== 'granted' || !swRegistration) {
+                console.log("Permission de notification non accordée ou SW non prêt.");
+                return;
+            }
+
+            const options = {
+                body: body,
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/icon-192x192.png',
+                tag: bookingData ? `booking-${bookingData.bookingId}` : 'general-notification', // Utiliser un tag unique
+                renotify: true, // Permet de notifier à nouveau même si le tag est le même
+                data: {
+                    url: window.location.href // Pour que le clic ouvre cette page
+                }
+            };
+
+            // Essayer d'envoyer au Service Worker (préféré pour l'arrière-plan)
+            if (navigator.serviceWorker.controller) {
+                 navigator.serviceWorker.controller.postMessage({
+                    type: 'show-notification',
+                    title: title,
+                    options: options
+                 });
+            } else {
+                 // Fallback pour l'affichage direct (si le SW n'est pas encore actif)
+                 swRegistration.showNotification(title, options)
+                    .catch(err => console.error("Erreur showNotification:", err));
+            }
+        }
+                
+        // (Cette fonction est maintenant la SEULE déclaration de loadBookings)
+        function loadBookings(type = 'new') {
+            if (!dbReady) return;
+            if (unsubscribeBookings) unsubscribeBookings(); // Détacher l'ancien écouteur
+
+            loadingSpinner.classList.remove('hidden');
+            bookingsListDiv.innerHTML = '';
+            noBookingsMessage.classList.add('hidden');
+            
+            const showConfirmed = (type === 'confirmed');
+            
+            const q = query(
+                bookingsCollectionRef,
+                where("confirmed", "==", showConfirmed),
+                where("deleted", "==", false),
+                orderBy("timestamp", "desc")
+            );
+
+            let isInitialLoad = true; // Pour éviter les notifications au premier chargement
+            
+            unsubscribeBookings = onSnapshot(q, (querySnapshot) => {
+                loadingSpinner.classList.add('hidden');
+                
+                if (isInitialLoad && querySnapshot.empty) {
+                     bookingsListDiv.innerHTML = '';
+                     noBookingsMessage.classList.remove('hidden');
+                }
+                
+                querySnapshot.docChanges().forEach((change) => {
+                    const booking = change.doc.data();
+                    const bookingId = change.doc.id;
+                    
+                    const existingCard = bookingsListDiv.querySelector(`[data-booking-id='${bookingId}']`);
+
+                    if (change.type === "added") {
+                         if (!existingCard) {
+                            currentBookingsData.set(bookingId, booking);
+                            const newCard = createBookingCard(bookingId, booking);
+                            // Insérer au début (car trié par desc)
+                            bookingsListDiv.prepend(newCard);
+                            noBookingsMessage.classList.add('hidden');
                          }
-                     }
+
+                        // Déclencher la notification SEULEMENT si ce n'est pas le chargement initial
+                        // ET si c'est une 'nouvelle' demande
+                        if (!isInitialLoad && type === 'new') {
+                            console.log("Nouvelle réservation détectée, envoi notification...");
+                            showNotification(
+                                'Nouvelle Demande de Réservation !',
+                                `${booking.nomPrenom} veut louer: ${booking.voiture}`,
+                                { bookingId: bookingId }
+                            );
+                        }
+                    }
+                    if (change.type === "modified") {
+                        currentBookingsData.set(bookingId, booking);
+                        if (existingCard) {
+                            // Remplacer l'ancienne carte
+                            const updatedCard = createBookingCard(bookingId, booking);
+                            bookingsListDiv.replaceChild(updatedCard, existingCard);
+                        }
+                    }
+                    if (change.type === "removed") {
+                        currentBookingsData.delete(bookingId);
+                         if(existingCard) {
+                            existingCard.remove();
+                         }
+                    }
+                });
+                
+                // Mettre à jour l'état après le premier traitement
+                 isInitialLoad = false;
+                 // Gérer le cas où la liste est vide après les modifications
+                 if (bookingsListDiv.children.length === 0) {
+                     noBookingsMessage.classList.remove('hidden');
+                 }
+
+            }, (error) => {
+                console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
+                loadingSpinner.classList.add('hidden');
+                dbErrorMessage.textContent = `Erreur de chargement des réservations. Vérifiez la console (F12). Message: ${error.message}`;
+                dbErrorMessage.classList.remove('hidden');
+                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     dbErrorMessage.innerHTML = `<b>Erreur: Index Firestore manquant.</b><br>Veuillez ouvrir la console (F12) et cliquer sur le lien fourni dans l'erreur rouge pour créer l'index requis par Firestore.`;
+                }
+            });
+        }
+        
+        // (Cette fonction est maintenant la SEULE déclaration de createBookingCard)
+        function createBookingCard(bookingId, booking) {
+            const card = document.createElement('div');
+            // Ajout de data-booking-id pour le remplacement 'modified'
+            card.setAttribute('data-booking-id', bookingId);
+            card.className = 'border border-gray-200 rounded-lg p-5 shadow-sm bg-white hover:shadow-md transition-shadow duration-300';
+            
+            const bookingDate = booking.timestamp ? formatReadableDateTime(booking.timestamp.toDate()) : 'Date inconnue';
+            const pickupDateTime = `${booking.datePriseEnCharge} ${booking.heurePriseEnCharge}`;
+            const returnDateTime = `${booking.dateRetour} ${booking.heureRetour}`;
+
+            let statusTag = '';
+            if (booking.confirmed === false && booking.deleted === false) {
+                statusTag = '<span class="text-xs font-semibold text-blue-800 bg-blue-100 px-3 py-1 rounded-full"><i class="fas fa-hourglass-half mr-1.5"></i>Nouvelle Demande</span>';
+            } else if (booking.confirmed === true && booking.deleted === false) {
+                 statusTag = '<span class="text-xs font-semibold text-green-800 bg-green-100 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1.5"></i>Confirmée</span>';
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-xs text-gray-500 font-medium">Reçu le : ${bookingDate}</span>
+                    ${statusTag}
+                </div>
+                <div class="mb-4">
+                    <p class="text-lg font-bold text-text-dark">${booking.nomPrenom || 'Non spécifié'}</p>
+                    <p class="text-sm text-primary font-medium">${booking.telephone || 'Non spécifié'}</p>
+                    <p class="text-sm text-gray-600">${booking.email || 'Non spécifié'}</p>
+                </div>
+                <div class="border-t border-gray-100 pt-4">
+                     <p class="text-sm font-semibold text-text-dark mb-1">Voiture : <span class="font-bold text-primary">${booking.voiture || 'Non spécifié'}</span></p>
+                     <p class="text-xs text-gray-600">Prise en charge : <span class="font-medium">${pickupDateTime}</span></p>
+                     <p class="text-xs text-gray-600">Retour : <span class="font-medium">${returnDateTime}</span></p>
+                     <p class="text-xs text-gray-600">Lieux : <span class="font-medium">${booking.lieuPriseEnCharge} / ${booking.lieuRetour}</span></p>
+                </div>
+                <div class="flex justify-end items-center space-x-3 mt-5">
+                    ${booking.confirmed === false ? `
+                    <button data-id="${bookingId}" class="confirm-button px-4 py-2 text-xs font-bold text-white bg-green-500 rounded-lg shadow-sm hover:bg-green-600 transition-all transform hover:scale-105">
+                        <i class="fas fa-check mr-1.5"></i>Confirmer
+                    </button>` : ''}
+                    <button data-id="${bookingId}" class="delete-button px-4 py-2 text-xs font-bold text-white bg-red-500 rounded-lg shadow-sm hover:bg-red-600 transition-all transform hover:scale-105">
+                        <i class="fas fa-trash-alt mr-1.5"></i>Supprimer
+                    </button>
+                    <a href="https://wa.me/${booking.telephone ? booking.telephone.replace(/\D/g,'') : ''}" target="_blank" class="contact-button px-4 py-2 text-xs font-bold text-white bg-green-400 rounded-lg shadow-sm hover:bg-green-500 transition-all transform hover:scale-105 ${!booking.telephone ? 'hidden' : ''}">
+                        <i class="fab fa-whatsapp mr-1.5"></i>Contacter
+                    </a>
+                </div>
+            `;
+            
+            // Attacher les écouteurs d'événements
+            const confirmBtn = card.querySelector('.confirm-button');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    openConfirmationModal(id);
                 });
             }
-            return item;
-        }
-
-        // --- Statut Actuel & Maintenance (Marquer Indisponible/Disponible) ---
-        function listenForManualStatusChanges() {
-             if (!db) return;
-             if(manualStatusLoading) manualStatusLoading.classList.remove('hidden');
-             if(manualStatusListDiv) manualStatusListDiv.innerHTML = ''; // Vider avant d'écouter
-
-             if (unsubscribeManualStatus) unsubscribeManualStatus();
-
-             // Écouter les changements dans la collection des statuts manuels
-             unsubscribeManualStatus = onSnapshot(collection(db, "car_manual_status"), (snapshot) => {
-                 const manualStatuses = new Map();
-                 snapshot.forEach(doc => {
-                     manualStatuses.set(doc.id, doc.data().status); // doc.id = carName
-                 });
-
-                 if(manualStatusListDiv) manualStatusListDiv.innerHTML = ''; // Vider la liste
-                 if(manualStatusLoading) manualStatusLoading.classList.add('hidden');
-
-                 if (carOptions.length === 0) {
-                     if(manualStatusListDiv) manualStatusListDiv.innerHTML = `<p class="text-gray-500 italic text-sm">Aucune voiture configurée.</p>`; return;
-                 }
-
-                 // Afficher le statut manuel pour chaque voiture de la liste carOptions
-                 carOptions.forEach(carName => {
-                     const status = manualStatuses.get(carName) || 'available'; // Default to available
-                     if(manualStatusListDiv) manualStatusListDiv.appendChild(createManualStatusItem(carName, status));
-                 });
-
-             }, (error) => {
-                 console.error("Erreur chargement statuts manuels:", error);
-                 if(manualStatusListDiv) manualStatusListDiv.innerHTML = `<p class="text-red-500 text-sm">Erreur chargement des statuts.</p>`;
-                 if(manualStatusLoading) manualStatusLoading.classList.add('hidden');
-                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     if(manualStatusListDiv) manualStatusListDiv.innerHTML = `<p class="text-red-500 text-sm">Index Firestore manquant pour les statuts. Vérifiez la console F12.</p>`;
-                 }
-             });
-        }
-
-        // Crée un élément pour le statut manuel d'une voiture
-        function createManualStatusItem(carName, currentStatus) {
-            const item = document.createElement('div');
-            item.className = 'flex justify-between items-center p-2 border-b border-gray-200 text-xs';
-            const isUnavailable = currentStatus === 'unavailable';
-            item.innerHTML = `
-                <div class="flex-1 mr-2">
-                    <strong class="font-semibold text-gray-800">${carName}</strong><br>
-                    Statut: ${isUnavailable
-                        ? '<span class="text-red-600 font-semibold">Indisponible</span>'
-                        : '<span class="text-green-600 font-semibold">Disponible</span>'}
-                </div>
-                <button data-carname="${carName}" data-currentstatus="${currentStatus}" class="toggle-manual-status-button ${isUnavailable ? 'bg-green-500 hover:bg-green-600' : 'bg-orange-500 hover:bg-orange-600'} text-white px-2 py-1 rounded text-xs transition duration-300">
-                    ${isUnavailable ? 'Rendre Disponible' : 'Marquer Indisponible'}
-                </button>
-            `;
-            item.querySelector('.toggle-manual-status-button').addEventListener('click', async (e) => {
-                const button = e.currentTarget;
-                const carToToggle = button.dataset.carname;
-                const current = button.dataset.currentstatus;
-                const newStatus = (current === 'unavailable') ? 'available' : 'unavailable';
-                if (!carToToggle || !db) return;
-                const confirmationMessage = newStatus === 'unavailable' ? `Marquer '${carToToggle}' comme INDISPONIBLE manuellement ?` : `Marquer '${carToToggle}' comme DISPONIBLE ?`;
-                if (confirm(confirmationMessage)) {
-                    button.disabled = true;
-                    const originalText = button.textContent;
-                    button.innerHTML = '<span class="loader !border-t-white !border-l-white !w-3 !h-3 !inline-block"></span>';
-                    try {
-                        const docRef = doc(db, "car_manual_status", carToToggle);
-                        if (newStatus === 'available') {
-                            await deleteDoc(docRef); // Supprimer le document pour indiquer disponible
-                        } else {
-                            // Créer ou mettre à jour le document pour indiquer indisponible
-                            await setDoc(docRef, { status: 'unavailable', updatedAt: serverTimestamp() });
-                        }
-                        console.log(`${carToToggle} mis à jour à ${newStatus}.`);
-                    } catch (error) {
-                        console.error("Erreur toggle statut manuel:", error);
-                        showAvailabilityMessage("Erreur mise à jour statut.", true);
-                        button.disabled = false;
-                        button.innerHTML = originalText;
-                    }
-                }
-            });
-            return item;
-        }
-
-
-        // --- Notification Logic ---
-        function checkNotificationPermission() {
-            if (!("Notification" in window)) {
-                if(notificationStatus) notificationStatus.textContent = "Notifications non supportées.";
-                if(enableNotificationsButton) {
-                    enableNotificationsButton.disabled = true;
-                    enableNotificationsButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-                    enableNotificationsButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                }
-            } else { updateNotificationButtonState(Notification.permission); }
-        }
-        function updateNotificationButtonState(permission) {
-             notificationPermission = permission;
-             if (permission === "granted") {
-                if(notificationStatus) notificationStatus.textContent = "Alertes activées.";
-                 if(enableNotificationsButton) {
-                    enableNotificationsButton.disabled = true;
-                    enableNotificationsButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-                    enableNotificationsButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                 }
-            } else if (permission === "denied") {
-                 if(notificationStatus) notificationStatus.textContent = "Alertes bloquées.";
-                 if(enableNotificationsButton) {
-                    enableNotificationsButton.disabled = true;
-                    enableNotificationsButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-                    enableNotificationsButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                 }
-            } else {
-                 if(notificationStatus) notificationStatus.textContent = "";
-                 if(enableNotificationsButton) {
-                    enableNotificationsButton.disabled = false;
-                    enableNotificationsButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                    enableNotificationsButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                 }
+            
+            const deleteBtn = card.querySelector('.delete-button');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    handleDeleteBooking(id);
+                });
             }
-         }
-        if(enableNotificationsButton) {
-             enableNotificationsButton.addEventListener('click', () => {
-                 if (Notification.permission === "default") {
-                    Notification.requestPermission().then(permission => {
-                        updateNotificationButtonState(permission);
-                        if (permission === "granted") { showNotification('Notifications Activées', 'Vous recevrez maintenant les alertes.'); }
-                    });
-                }
-             });
-        }
-         // Modifié pour utiliser le Service Worker si disponible
-        function showNotification(title, body) {
-             if (notificationPermission !== "granted") { console.log("Permission notif non accordée."); return; }
-             const options = { body: body, icon: '/icons/icon-192x192.png', tag: 'new-booking' }; // Added tag to prevent multiple notifs for same event sometimes
-
-             if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
-                 navigator.serviceWorker.ready.then(registration => {
-                     // Vérifier si showNotification est supporté
-                     if ('showNotification' in registration) {
-                         registration.showNotification(title, options);
-                     } else {
-                         // Fallback pour navigateurs plus anciens ou contextes non sécurisés
-                         console.warn("Service Worker ne supporte pas showNotification, tentative via Notification API directe.");
-                         try { new Notification(title, options); } catch (err) { console.error("Erreur notif directe:", err); }
-                     }
-                 }).catch(err => {
-                     console.error("Erreur Service Worker Ready:", err);
-                     // Fallback si SW non prêt
-                      try { new Notification(title, options); } catch (e) { console.error("Erreur notif directe (fallback SW):", e); }
-                 });
-             } else {
-                 console.warn("Service Worker non disponible, tentative via Notification API directe.");
-                 try { new Notification(title, options); } catch (err) { console.error("Erreur notif directe:", err); }
-             }
-         }
-
-
-        // --- PWA Service Worker Registration ---
-        if ('serviceWorker' in navigator) {
-             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js') // Assurez-vous que sw.js est à la racine
-                  .then(reg => console.log('SW enregistré:', reg.scope))
-                  .catch(err => console.log('Échec enregistrement SW:', err));
-              });
-        }
-
-        // --- Simple Modal (remplacé par alert) ---
-        function showModalMessage(message) {
-            // Using a more robust way than alert for better UX
-            if(modalErrorMessage) { // Try to show in modal if possible
-                modalErrorMessage.textContent = message;
-                modalErrorMessage.classList.remove('hidden');
-            } else if (errorLoadingMessage) { // Fallback to general error area
-                 errorLoadingMessage.textContent = message;
-                 errorLoadingMessage.classList.remove('hidden');
-                 setTimeout(() => errorLoadingMessage.classList.add('hidden'), 5000);
-            } else {
-                console.error("Modal message fallback: ", message); // Log if no UI element found
-                alert(message); // Last resort
-            }
+            
+            return card;
         }
 
     </script>
