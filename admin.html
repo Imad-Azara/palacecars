@@ -337,11 +337,11 @@
              try {
                  if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
                  // ** FIX: Crée un objet Date basé sur le temps local du navigateur (ex: Maroc) **
-                 // new Date("2025-11-06T11:30:00")
-                 // Cela crée une date à 11:30 heure locale.
+                 // new Date("2025-11-06T19:00:00")
+                 // Cela crée une date à 19:00 heure locale. C'est la bonne méthode.
                  const d = new Date(`${dateStr}T${timeStr}:00`); 
                  
-                 // L'ancienne méthode (Date.UTC) interprétait 11:30 comme 11:30 UTC, ce qui causait le décalage.
+                 // L'ancienne méthode (Date.UTC) interprétait 19:00 comme 19:00 UTC, ce qui causait le décalage.
                  // const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
                  
                  if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
