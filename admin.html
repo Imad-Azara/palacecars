@@ -818,7 +818,7 @@
                 // 3. Exécuter le batch
                 await batch.commit();
 
-                showAdminMessage(`Réservation ${currentBookingId.substring(0, 5)}... supprimée/archivée.`, 'success');
+                showAdminMessage(`Réservation ${bookingId.substring(0, 5)}... supprimée/archivée.`, 'success');
                 // L'affichage se mettra à jour via onSnapshot
             } catch (error) {
                 console.error("Erreur lors de la suppression:", error);
