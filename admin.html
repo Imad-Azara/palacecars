@@ -6,7 +6,7 @@
     <title>Palace Cars - Panneau d'Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome: CORRECTION DÉFINITIVE de 'xintegrity' en 'integrity' -->
+    <!-- Icônes Font Awesome: CORRECTION 'xintegrity' en 'integrity' -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -145,7 +145,7 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-1">Début Indisponibilité</label>
                                 <div class="flex gap-2">
                                     <input type="date" id="unav-start-date" name="startDate" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <input type="time" id="unav-start-time" name="startTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <input type="time" id="unav-start-time" name="startTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
                                 </div>
                             </div>
                              <!-- Date et Heure de Fin -->
@@ -153,7 +153,7 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-1">Fin Indisponibilité</label>
                                 <div class="flex gap-2">
                                     <input type="date" id="unav-end-date" name="endDate" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <input type="time" id="unav-end-time" name="endTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <input type="time" id="unav-end-time" name="endTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
                                 </div>
                             </div>
                             <button type="submit" id="add-period-button" class="btn btn-primary w-full py-2.5">
@@ -166,7 +166,7 @@
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
                          <h3 class="text-xl font-bold text-text-dark mb-5">Statut Actuel des Voitures</h3>
                          <div id="manual-status-list" class="space-y-3">
-                            <!-- Statuts chargés par JS -->
+                             <!-- Statuts chargés par JS -->
                          </div>
                     </div>
 
@@ -174,7 +174,7 @@
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
                          <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
                          <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                            <!-- Périodes chargées par JS -->
+                             <!-- Périodes chargées par JS -->
                              <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
                          </div>
                     </div>
@@ -204,13 +204,13 @@
                 <div>
                     <label for="modal-start-date" class="block text-sm font-semibold text-gray-700 mb-1">Début Location</label>
                     <input type="date" id="modal-start-date" name="modalStartDate" required class="block w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                    <input type="time" id="modal-start-time" name="modalStartTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                    <input type="time" id="modal-start-time" name="modalStartTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
                 </div>
                 <!-- Date et Heure de Fin -->
                 <div>
                     <label for="modal-end-date" class="block text-sm font-semibold text-gray-700 mb-1">Fin Location</label>
                     <input type="date" id="modal-end-date" name="modalEndDate" required class="block w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                    <input type="time" id="modal-end-time" name="modalEndTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                    <input type="time" id="modal-end-time" name="modalEndTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
                 </div>
             </div>
 
@@ -235,21 +235,19 @@
             Timestamp, serverTimestamp, setDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // *** C'EST ICI : Votre configuration Firebase ***
+        // *** CONFIGURATION FIREBASE ***
         const firebaseConfig = {
-          apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
-          authDomain: "palace-cars.firebaseapp.com",
-          projectId: "palace-cars",
-          storageBucket: "palace-cars.firebasestorage.app",
-          messagingSenderId: "469852272715",
-          appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
-          measurementId: "G-KCEF4WBW0G"
+            apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+            authDomain: "palace-cars.firebaseapp.com",
+            projectId: "palace-cars",
+            storageBucket: "palace-cars.firebasestorage.app",
+            messagingSenderId: "469852272715",
+            appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+            measurementId: "G-KCEF4WBW0G"
         };
-        // *** FIN DE LA CONFIGURATION ***
+        // *** FIN CONFIGURATION ***
 
-        // *** CORRECTION : DÉPLACEMENT DE TOUTES LES FONCTIONS EN HAUT ***
-        // (Pour corriger les erreurs 'ReferenceError: ... is not defined')
-
+        // --- Variables Globales ---
         let db;
         let bookingsCollectionRef;
         let unavailabilityPeriodsCollectionRef;
@@ -259,12 +257,10 @@
         let currentView = 'new'; // 'new' or 'confirmed'
         let currentBookingId = null; // Pour la modale de confirmation
         let currentBookingData = null; // Pour la modale de confirmation
-        let isConfirmationBusy = false; // ** FIX: Verrou pour empêcher les double-clics **
+        let isConfirmationBusy = false; // Verrou pour éviter double-clic
 
-        // ** FIX: Variables pour les éléments DOM importants **
-        let listDiv, loadingMsg, countNew, countConfirmed;
-        let tabNew, tabConfirmed;
-        // ** FIN FIX **
+        // Fuseau horaire de référence
+        const TIMEZONE = 'Africa/Casablanca';
 
         // Liste statique des voitures
         const carOptions = [
@@ -273,60 +269,46 @@
             "Dacia Sandero Essence",
             "Dacia Sandero Diesel"
         ];
-
+        
+        // --- Références DOM Globales (pour éviter 'not defined') ---
+        let listDiv, loadingMsg, countNew, countConfirmed, periodsListDiv, loadingPeriodsMsg, manualStatusListDiv, unavCarSelect;
+        
         // --- FONCTIONS UTILITAIRES ---
 
         function formatReadableDateTime(timestamp) {
-            // ** FIX: Définir le fuseau horaire du Maroc **
-            const timeZone = 'Africa/Casablanca';
-
             if (!timestamp || !timestamp.seconds) {
-                // Essayer de le traiter comme une date-chaîne (ex: 2025-10-24 10:30)
-                if(typeof timestamp === 'string') {
-                    // Si c'est juste une date (YYYY-MM-DD) et une heure (HH:MM)
-                    const parts = timestamp.split(' ');
-                    if(parts.length === 2) {
-                        const dateParts = parts[0].split('-');
-                        const timeParts = parts[1].split(':');
-                        if (dateParts.length === 3 && timeParts.length === 2) {
-                             // On suppose que la chaîne est en UTC, puis on la formate pour le Maroc
-                             const date = new Date(Date.UTC(dateParts[0], dateParts[1]-1, dateParts[2], timeParts[0], timeParts[1]));
-                             if(!isNaN(date)) {
-                                 return new Intl.DateTimeFormat('fr-FR', {
-                                    day: '2-digit', month: '2-digit', year: 'numeric',
-                                    hour: '2-digit', minute: '2-digit', hour12: false, 
-                                    timeZone: timeZone // Utiliser le fuseau horaire du Maroc
-                                }).format(date).replace('à ', '');
-                             }
-                        }
-                    }
+                // Tenter de parser une chaîne ISO (ex: 2025-11-05T19:00:00)
+                try {
+                    const d = new Date(timestamp);
+                    if (isNaN(d.getTime())) throw new Error();
+                    // Si c'est une chaîne valide, la formater
+                    return new Intl.DateTimeFormat('fr-FR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TIMEZONE
+                    }).format(d).replace('à ', '');
+                } catch (e) {
+                     return "Date invalide";
                 }
-                return "Date non spécifiée"; // Retour par défaut
             }
             // Si c'est un objet Timestamp Firebase
-            const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+            const date = timestamp.toDate(); // Convertit en objet Date local
             return new Intl.DateTimeFormat('fr-FR', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: false, 
-                timeZone: timeZone // Utiliser le fuseau horaire du Maroc
+                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TIMEZONE
             }).format(date).replace('à ', '');
         }
 
-
+        // ** CORRECTION FUSEAU HORAIRE (Lecture) **
         function getDateTimeObjectFromTimestamp(timestamp) {
             if (!timestamp || !timestamp.seconds) return { date: '', time: '' };
-            // Crée un objet Date à partir du timestamp Firebase
-            // Le constructeur new Date() convertit automatiquement le timestamp UTC en date locale du navigateur (Maroc)
-            const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
-            
-            // ** FIX: Utiliser les getters LOCAUX (getHours) et non UTC (getUTCHours) **
-            // Cela remplira la modale avec 11:00 (heure locale) et non 10:00 (heure UTC)
-            
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hour = String(date.getHours()).padStart(2, '0');
-            const minute = String(date.getMinutes()).padStart(2, '0');
+            const date = timestamp.toDate(); // Convertit en objet Date local
+
+            // Formate la date en utilisant le fuseau horaire du Maroc
+            const year = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', timeZone: TIMEZONE }).format(date);
+            const month = new Intl.DateTimeFormat('fr-FR', { month: '2-digit', timeZone: TIMEZONE }).format(date);
+            const day = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', timeZone: TIMEZONE }).format(date);
+            const hour = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', hour12: false, timeZone: TIMEZONE }).format(date).replace('24', '00');
+            const minute = new Intl.DateTimeFormat('fr-FR', { minute: '2-digit', timeZone: TIMEZONE }).format(date).padStart(2, '0');
             
             const dateISO = `${year}-${month}-${day}`;
             const timeISO = `${hour}:${minute}`;
@@ -334,20 +316,17 @@
             return { date: dateISO, time: timeISO };
         }
 
-        // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM en objet Date (en UTC)
+        // ** CORRECTION FUSEAU HORAIRE (Écriture) **
+        // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM (heure locale) en objet Date
         function getDateTimeObjectFromISO(dateStr, timeStr) {
              try {
                  if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
-                 // ** FIX: Crée un objet Date basé sur le temps local du navigateur (ex: Maroc) **
-                 // new Date("2025-11-06T19:00:00")
-                 // Cela crée une date à 19:00 heure locale. C'est la bonne méthode.
-                 const d = new Date(`${dateStr}T${timeStr}:00`); 
-                 
-                 // L'ancienne méthode (Date.UTC) interprétait 19:00 comme 19:00 UTC, ce qui causait le décalage.
-                 // const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
-                 
+                 // Crée la chaîne ISO locale (ex: "2025-11-05T19:00:00")
+                 const localIsoString = `${dateStr}T${timeStr}:00`;
+                 // Crée un objet Date. Le navigateur l'interprète comme heure locale.
+                 const d = new Date(localIsoString); 
                  if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
-                 return d; // Retourne un objet Date local
+                 return d; // Retourne l'objet Date correct (ex: 5 Nov 19:00 Maroc)
              } catch (e) {
                  console.error("Erreur conversion ISO date/heure:", dateStr, timeStr, e);
                  return null;
@@ -377,7 +356,6 @@
         }
 
         function populateCarSelects() {
-            const unavCarSelect = document.getElementById('unav-car');
             if (!unavCarSelect) return;
             const placeholder = unavCarSelect.querySelector('option[disabled]');
             unavCarSelect.innerHTML = '';
@@ -395,16 +373,11 @@
             card.className = 'border border-gray-200 rounded-xl shadow-sm overflow-hidden';
             card.id = `booking-${booking.id}`;
 
-            // Assurer que le timestamp est valide avant de formater
-            // Utilise maintenant formatReadableDateTime qui est réglé sur Africa/Casablanca
             const receivedAt = booking.timestamp ? formatReadableDateTime(booking.timestamp) : 'Date inconnue';
             
-            // Créer les chaînes de date/heure pour l'affichage
-            // Celles-ci proviennent de la base de données (qui sont en UTC)
-            // Nous les affichons telles quelles, mais le "Reçu le" est corrigé.
-            // Si pickupTimestamp existe, nous devrions l'utiliser pour un affichage localisé.
-            const pickupDateTime = booking.pickupTimestamp ? formatReadableDateTime(booking.pickupTimestamp) : `${booking.datePriseEnCharge || 'jj/mm/aaaa'} ${booking.heurePriseEnCharge || 'hh:mm'}`;
-            const returnDateTime = booking.returnTimestamp ? formatReadableDateTime(booking.returnTimestamp) : `${booking.dateRetour || 'jj/mm/aaaa'} ${booking.heureRetour || 'hh:mm'}`;
+            // ** FIX: Utiliser les Timestamps pour un affichage cohérent **
+            const pickupDateTime = booking.pickupTimestamp ? formatReadableDateTime(booking.pickupTimestamp) : `${booking.datePriseEnCharge} ${booking.heurePriseEnCharge}`;
+            const returnDateTime = booking.returnTimestamp ? formatReadableDateTime(booking.returnTimestamp) : `${booking.dateRetour} ${booking.heureRetour}`;
 
             const statusClass = booking.confirmed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
             const statusText = booking.confirmed ? '<i class="fas fa-check-circle mr-1.5"></i> Confirmée' : '<i class="fas fa-hourglass-start mr-1.5"></i> Nouvelle Demande';
@@ -464,7 +437,6 @@
             item.id = `period-${period.id}`;
 
             const carName = period.car || "Inconnue";
-            // Utilise la fonction mise à jour pour l'heure du Maroc
             const startDate = period.startDate ? formatReadableDateTime(period.startDate) : "N/A";
             const endDate = period.endDate ? formatReadableDateTime(period.endDate) : "N/A";
             const typeText = period.type === 'booking' ? '(Réservé)' : '(Manuel)';
@@ -514,33 +486,23 @@
 
         // --- FONCTIONS LOGIQUES (Firestore) ---
 
-        // ** CORRECTION: LOGIQUE DE FILTRAGE DÉPLACÉE EN JAVASCRIPT **
         function displayBookings(view) {
-            // ** FIX: Utilisation des variables globales mises en cache **
-            // const listDiv = document.getElementById('bookings-list');
-            // const loadingMsg = document.getElementById('loading-bookings');
-            // const countNew = document.getElementById('count-new');
-            // const countConfirmed = document.getElementById('count-confirmed');
-            
             if (!listDiv || !loadingMsg || !countNew || !countConfirmed) {
-                console.error("Éléments UI manquants pour displayBookings (Vérification échouée)");
-                return;
+                 console.error("Éléments UI des réservations non trouvés (displayBookings)");
+                 return;
             }
 
             listDiv.innerHTML = ''; // Nettoyer la liste
             currentView = view;
 
             // Mettre à jour les styles des onglets
-            // ** FIX: Utilisation des variables globales mises en cache **
-            tabNew.classList.toggle('active', view === 'new');
-            tabConfirmed.classList.toggle('active', view === 'confirmed');
+            document.getElementById('tab-new').classList.toggle('active', view === 'new');
+            document.getElementById('tab-confirmed').classList.toggle('active', view === 'confirmed');
 
             const isConfirmedView = (view === 'confirmed');
             
             // Filtrer le cache JavaScript
             const bookingsToDisplay = allBookingsCache.filter(booking => {
-                // (booking.confirmed === true) pour 'confirmed'
-                // (booking.confirmed === false) pour 'new'
                 return booking.confirmed === isConfirmedView;
             });
 
@@ -559,27 +521,16 @@
             }
         }
 
-        // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE (Évite l'erreur d'index) **
         function loadBookings() {
-            // ** FIX: Utilisation de la variable globale 'loadingMsg' **
-            // const loadingMsg = document.getElementById('loading-bookings');
-
-            // Requête simplifiée: ne trie que par date.
-            // Le filtrage 'deleted' et 'confirmed' se fait en JS (fonction displayBookings).
-            // CELA PEUT NÉCESSITER UN INDEX SIMPLE SUR 'timestamp', mais évite l'index composite.
-            // **MISE À JOUR :** La requête précédente (`where("deleted", "==", false)`) nécessitait un index.
-            // Nous allons essayer SANS le `where` pour tout télécharger et filtrer en JS.
+            if (!loadingMsg) { console.error("Élément loading-bookings non trouvé."); return; }
             
+            // Requête simplifiée: ne trie que par date.
             const q = query(
                 bookingsCollectionRef, 
                 orderBy("timestamp", "desc")
             );
 
             onSnapshot(q, (snapshot) => {
-                if (!loadingMsg) { // Sécurité supplémentaire
-                    console.error("loadBookings: loadingMsg est null");
-                    return;
-                }
                 loadingMsg.textContent = 'Chargement des réservations...';
                 allBookingsCache = []; // Vider le cache
                 
@@ -596,21 +547,17 @@
 
             }, (error) => {
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
-                if (loadingMsg) {
-                    loadingMsg.textContent = "Erreur: Impossible de charger les réservations. Vérifiez la console (F12).";
-                    loadingMsg.style.color = 'red';
-                    // Si l'erreur est un index manquant (maintenant juste sur 'timestamp')
-                    if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                         loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer (index sur 'timestamp' desc).`;
-                    }
+                loadingMsg.textContent = "Erreur: Impossible de charger les réservations. Vérifiez la console (F12).";
+                loadingMsg.style.color = 'red';
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                     loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer (index sur 'timestamp' desc).`;
                 }
             });
         }
 
 
         function listenForPeriods() {
-            const listDiv = document.getElementById('periods-list');
-            const loadingMsg = document.getElementById('loading-periods');
+             if (!periodsListDiv || !loadingPeriodsMsg) { console.error("Éléments UI des périodes non trouvés."); return; }
 
             const q = query(
                 unavailabilityPeriodsCollectionRef, 
@@ -618,28 +565,28 @@
             );
 
             onSnapshot(q, (snapshot) => {
-                listDiv.innerHTML = ''; // Clear list
+                periodsListDiv.innerHTML = ''; // Clear list
                 if (snapshot.empty) {
-                    loadingMsg.textContent = 'Aucune période programmée.';
-                    loadingMsg.style.display = 'block';
+                    loadingPeriodsMsg.textContent = 'Aucune période programmée.';
+                    loadingPeriodsMsg.style.display = 'block';
                 } else {
-                    loadingMsg.style.display = 'none';
+                    loadingPeriodsMsg.style.display = 'none';
                     snapshot.forEach((doc) => {
-                        listDiv.appendChild(createPeriodListItem({ ...doc.data(), id: doc.id }));
+                        periodsListDiv.appendChild(createPeriodListItem({ ...doc.data(), id: doc.id }));
                     });
                 }
             }, (error) => {
                 console.error("Erreur écoute périodes:", error);
-                loadingMsg.textContent = 'Erreur chargement périodes.';
-                loadingMsg.style.color = 'red';
+                loadingPeriodsMsg.textContent = 'Erreur chargement périodes.';
+                loadingPeriodsMsg.style.color = 'red';
                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant (périodes). <br>Suivez le lien dans la console (F12) pour le créer.`;
+                     loadingPeriodsMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant (périodes). <br>Suivez le lien dans la console (F12) pour le créer.`;
                 }
             });
         }
 
         function listenForManualStatusChanges() {
-            const listDiv = document.getElementById('manual-status-list');
+             if (!manualStatusListDiv) { console.error("Élément UI des statuts manuels non trouvé."); return; }
             const statusMap = new Map();
 
             // Initialiser toutes les voitures comme "disponibles"
@@ -653,14 +600,14 @@
                 });
 
                 // Rafraîchir l'affichage
-                listDiv.innerHTML = '';
+                manualStatusListDiv.innerHTML = '';
                 statusMap.forEach((status, carName) => {
-                    listDiv.appendChild(createManualStatusItem(carName, status));
+                    manualStatusListDiv.appendChild(createManualStatusItem(carName, status));
                 });
 
             }, (error) => {
                 console.error("Erreur écoute statuts manuels:", error);
-                listDiv.innerHTML = '<p class="text-red-500">Erreur chargement statuts.</p>';
+                manualStatusListDiv.innerHTML = '<p class="text-red-500">Erreur chargement statuts.</p>';
             });
         }
 
@@ -688,9 +635,7 @@
                 <p><strong>Voiture:</strong> ${currentBookingData.voiture}</p>
             `;
             
-            // Remplir les dates/heures actuelles
-            // Tenter de parser les timestamps s'ils existent, sinon utiliser les strings
-            // On utilise getDateTimeObjectFromTimestamp qui formate en UTC pour les champs
+            // ** FIX: Utiliser les Timestamps pour remplir la modale **
             let pickupDate = { date: currentBookingData.datePriseEnCharge, time: currentBookingData.heurePriseEnCharge };
             let returnDate = { date: currentBookingData.dateRetour, time: currentBookingData.heureRetour };
 
@@ -723,6 +668,7 @@
                     modalError.classList.add('hidden');
                     currentBookingId = null;
                     currentBookingData = null;
+                    isConfirmationBusy = false; // Relâcher le verrou
                 }, 300);
             }, 300);
         }
@@ -730,14 +676,9 @@
         // --- ACTIONS ADMIN (Confirmation, Suppression, etc.) ---
 
         async function handleFinalConfirmation() {
-            if (!currentBookingId || !currentBookingData) return;
-            // ** FIX: Vérifier si une confirmation est déjà en cours **
-            if (isConfirmationBusy) {
-                console.warn("Confirmation déjà en cours, double-clic ignoré.");
-                return; 
-            }
+            if (!currentBookingId || !currentBookingData || isConfirmationBusy) return; // Vérifier le verrou
             
-            isConfirmationBusy = true; // ** FIX: Activer le verrou **
+            isConfirmationBusy = true; // Activer le verrou
 
             const modalError = document.getElementById('modal-error');
             const confirmButton = document.getElementById('confirm-modal-button');
@@ -750,7 +691,16 @@
             const newEndDate = document.getElementById('modal-end-date').value;
             const newEndTime = document.getElementById('modal-end-time').value;
 
-            // Combiner date et heure (format HH:MM)
+            // ** FIX: NOUVELLE VALIDATION **
+            if (!newStartDate || !newStartTime || !newEndDate || !newEndTime) {
+                modalError.textContent = "Erreur : Tous les champs de date et d'heure sont requis.";
+                modalError.classList.remove('hidden');
+                confirmButton.disabled = false;
+                isConfirmationBusy = false; // Relâcher le verrou en cas d'erreur
+                return;
+            }
+
+            // ** FIX: Utiliser la fonction locale **
             const newPickupDateTime = getDateTimeObjectFromISO(newStartDate, newStartTime);
             const newReturnDateTime = getDateTimeObjectFromISO(newEndDate, newEndTime);
 
@@ -759,6 +709,7 @@
                 modalError.textContent = "Erreur : La date/heure de fin doit être après la date/heure de début.";
                 modalError.classList.remove('hidden');
                 confirmButton.disabled = false;
+                isConfirmationBusy = false; // Relâcher le verrou en cas d'erreur
                 return;
             }
             
@@ -786,8 +737,7 @@
                     type: 'booking', // Marqué comme généré par une réservation
                     bookingId: currentBookingId // Lien vers la réservation
                 };
-                // Nous créons un nouveau doc dans la collection d'indisponibilité
-                // ** FIX: Corrected Firestore reference. Was doc(collection(unavailabilityPeriodsCollectionRef)) **
+                // ** FIX: Correction de l'erreur "empty path". On passe directement la CollectionReference. **
                 const newPeriodRef = doc(unavailabilityPeriodsCollectionRef);
                 batch.set(newPeriodRef, unavailabilityData);
 
@@ -795,15 +745,15 @@
                 await batch.commit();
 
                 showAdminMessage(`Réservation ${currentBookingId.substring(0, 5)}... confirmée et voiture bloquée.`, 'success');
-                closeConfirmationModal();
-                // L'affichage se mettra à jour via onSnapshot de loadBookings
+                closeConfirmationModal(); // Relâchera le verrou
             } catch (error) {
                 console.error("Erreur lors de la confirmation finale:", error);
                 modalError.textContent = "Erreur Firestore. Vérifiez la console.";
                 modalError.classList.remove('hidden');
+                isConfirmationBusy = false; // Relâcher le verrou en cas d'erreur
             } finally {
                 confirmButton.disabled = false;
-                isConfirmationBusy = false; // ** FIX: Désactiver le verrou **
+                // Le verrou est relâché dans closeConfirmationModal() ou dans les catch
             }
         }
 
@@ -819,6 +769,7 @@
                 batch.update(bookingRef, { deleted: true });
 
                 // 2. Trouver et supprimer la période d'indisponibilité associée
+                // ** NÉCESSITE L'INDEX SUR 'bookingId' **
                 const q = query(unavailabilityPeriodsCollectionRef, where("bookingId", "==", bookingId));
                 const periodSnapshot = await getDocs(q);
                 
@@ -827,6 +778,8 @@
                         batch.delete(docSnap.ref);
                     });
                     console.log("Période d'indisponibilité associée supprimée.");
+                } else {
+                    console.log("Aucune période d'indisponibilité trouvée pour ce bookingId (c'est normal si la résa n'a jamais été confirmée).");
                 }
 
                 // 3. Exécuter le batch
@@ -914,15 +867,15 @@
                      bookingId: null // Pas de lien de réservation
                  };
                 
-                await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
-                showAdminMessage(`Période d'indisponibilité ajoutée pour ${car}.`, 'success');
-                form.reset();
+                 await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
+                 showAdminMessage(`Période d'indisponibilité ajoutée pour ${car}.`, 'success');
+                 form.reset();
 
             } catch (error) {
-                console.error("Erreur ajout période:", error);
-                showAdminMessage("Erreur Firestore. Vérifiez la console.", 'error');
+                 console.error("Erreur ajout période:", error);
+                 showAdminMessage("Erreur Firestore. Vérifiez la console.", 'error');
             } finally {
-                button.disabled = false;
+                 button.disabled = false;
             }
         }
 
@@ -934,13 +887,16 @@
         // --- INITIALISATION (Login, PWA, etc.) ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            // ** FIX: Assignation des variables DOM globales **
+            // -- Récupérer les éléments DOM --
+            // (Fait ici pour garantir qu'ils existent)
             listDiv = document.getElementById('bookings-list');
             loadingMsg = document.getElementById('loading-bookings');
             countNew = document.getElementById('count-new');
             countConfirmed = document.getElementById('count-confirmed');
-            tabNew = document.getElementById('tab-new');
-            tabConfirmed = document.getElementById('tab-confirmed');
+            periodsListDiv = document.getElementById('periods-list');
+            loadingPeriodsMsg = document.getElementById('loading-periods');
+            manualStatusListDiv = document.getElementById('manual-status-list');
+            unavCarSelect = document.getElementById('unav-car');
             
             const loginOverlay = document.getElementById('login-overlay');
             const loginButton = document.getElementById('login-button');
@@ -948,18 +904,17 @@
             const loginError = document.getElementById('login-error');
             const mainContent = document.getElementById('main-content');
 
-            // ** FIX: Vérification initiale des éléments DOM **
-            if (!listDiv || !loadingMsg || !countNew || !countConfirmed || !tabNew || !tabConfirmed || !loginError || !loginButton || !passwordInput || !mainContent) {
-                console.error("ERREUR CRITIQUE: Éléments DOM non trouvés au chargement.");
-                // Afficher une erreur à l'utilisateur si possible
-                if(loginError) {
-                    loginError.textContent = "Erreur de chargement de l'application (DOM).";
+            // -- Vérification de la présence des éléments --
+            if (!listDiv || !loadingMsg || !countNew || !countConfirmed || !periodsListDiv || !loadingPeriodsMsg || !manualStatusListDiv || !unavCarSelect) {
+                 console.error("Erreur critique: Un ou plusieurs éléments DOM principaux sont manquants.");
+                 // Affiche une erreur majeure si le DOM est cassé
+                 if (loginError) {
+                    loginError.textContent = "Erreur critique de la page. Vérifiez la console.";
                     loginError.classList.remove('hidden');
-                }
-                // Empêcher le reste du script de s'exécuter
-                return; 
+                 }
+                 return; // Arrête l'exécution si les éléments de base sont absents
             }
-
+            
             // Liste des voitures
             populateCarSelects();
 
@@ -1009,9 +964,8 @@
             document.getElementById('unavailability-form').addEventListener('submit', addUnavailability);
 
             // Écouteurs Onglets
-            // ** FIX: Utilisation des variables globales mises en cache **
-            tabNew.addEventListener('click', () => toggleView('new'));
-            tabConfirmed.addEventListener('click', () => toggleView('confirmed'));
+            document.getElementById('tab-new').addEventListener('click', () => toggleView('new'));
+            document.getElementById('tab-confirmed').addEventListener('click', () => toggleView('confirmed'));
 
             // Initialisation PWA (Service Worker & Notifications)
             const notifButton = document.getElementById('enable-notifications');
@@ -1019,20 +973,20 @@
             
             // 1. Enregistrement Service Worker
             if ('serviceWorker' in navigator) {
-                 // ** CORRECTION: Vérifier le protocole **
-                 if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-                     window.addEventListener('load', () => {
-                         navigator.serviceWorker.register('/sw.js')
-                             .then(registration => {
-                                 console.log('Service Worker enregistré avec succès:', registration.scope);
-                             })
-                             .catch(error => {
-                                 console.error('Échec de l\'enregistrement du Service Worker:', error);
-                             });
-                     });
-                 } else {
-                     console.warn("Le Service Worker ne peut pas être enregistré sur ce protocole:", window.location.protocol);
-                 }
+                 // Vérifier le protocole
+                if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('/sw.js')
+                            .then(registration => {
+                                console.log('Service Worker enregistré avec succès:', registration.scope);
+                            })
+                            .catch(error => {
+                                console.error('Échec de l\'enregistrement du Service Worker:', error);
+                            });
+                    });
+                } else {
+                    console.warn("Le Service Worker ne peut pas être enregistré sur ce protocole:", window.location.protocol);
+                }
             }
 
             // 2. Demande de Permission Notification
@@ -1078,7 +1032,6 @@
             // --- Connexion Firebase ---
             (async () => {
                 try {
-                    // Cette ligne va maintenant fonctionner car firebaseConfig est défini juste au-dessus
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     bookingsCollectionRef = collection(db, "palace_cars_bookings");
