@@ -259,6 +259,7 @@
         let currentView = 'new'; // 'new' or 'confirmed'
         let currentBookingId = null; // Pour la modale de confirmation
         let currentBookingData = null; // Pour la modale de confirmation
+        let isConfirmationBusy = false; // ** FIX: Verrou pour empêcher les double-clics **
 
         // ** FIX: Variables pour les éléments DOM importants **
         let listDiv, loadingMsg, countNew, countConfirmed;
@@ -729,6 +730,13 @@
 
         async function handleFinalConfirmation() {
             if (!currentBookingId || !currentBookingData) return;
+            // ** FIX: Vérifier si une confirmation est déjà en cours **
+            if (isConfirmationBusy) {
+                console.warn("Confirmation déjà en cours, double-clic ignoré.");
+                return; 
+            }
+            
+            isConfirmationBusy = true; // ** FIX: Activer le verrou **
 
             const modalError = document.getElementById('modal-error');
             const confirmButton = document.getElementById('confirm-modal-button');
@@ -794,6 +802,7 @@
                 modalError.classList.remove('hidden');
             } finally {
                 confirmButton.disabled = false;
+                isConfirmationBusy = false; // ** FIX: Désactiver le verrou **
             }
         }
 
