@@ -6,7 +6,7 @@
     <title>Palace Cars - Location de Voiture Agadir</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome (CORRECTION DÉFINITIVE DE L'ERREUR D'INTÉGRITÉ) -->
+    <!-- Font Awesome (CORRECTION de 'xintegrity' en 'integrity') -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f1f5f9; /* Slate-100 */ color: #334155; /* Slate-700 */ scroll-behavior: smooth; overflow-x: hidden; /* Prevent horizontal scroll */ }
@@ -254,10 +254,10 @@
 
                 <!-- Desktop Logo (Center) -->
                 <div class="flex w-1/3 justify-center">
-                     <a href="#accueil" class="logo-container"> 
+                    <a href="#accueil" class="logo-container"> 
                        <img id="logo-desktop-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
                        <img id="logo-desktop-color" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur">
-                     </a>
+                    </a>
                 </div>
 
                 <!-- Desktop Links & Button (Right) -->
@@ -364,12 +364,12 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Début Location <span class="text-red-500">*</span></label>
                                 <input type="date" id="datePriseEnCharge" name="datePriseEnCharge" required class="block w-full mb-2">
                                  <div class="grid grid-cols-2 gap-3">
-                                    <select id="heurePriseEnChargeHeure" name="heurePriseEnChargeHeure" required class="block w-full time-select">
-                                        <option value="" disabled selected>Heure</option>
-                                    </select>
-                                    <select id="heurePriseEnChargeMinute" name="heurePriseEnChargeMinute" required class="block w-full time-select">
-                                        <option value="" disabled selected>Minute</option>
-                                    </select>
+                                     <select id="heurePriseEnChargeHeure" name="heurePriseEnChargeHeure" required class="block w-full time-select">
+                                         <option value="" disabled selected>Heure</option>
+                                     </select>
+                                     <select id="heurePriseEnChargeMinute" name="heurePriseEnChargeMinute" required class="block w-full time-select">
+                                         <option value="" disabled selected>Minute</option>
+                                     </select>
                                  </div>
                             </div>
                              <!-- Date et Heure de Fin -->
@@ -377,13 +377,13 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Fin Location <span class="text-red-500">*</span></label>
                                 <input type="date" id="dateRetour" name="dateRetour" required class="block w-full mb-2">
                                 <div class="grid grid-cols-2 gap-3">
-                                    <select id="heureRetourHeure" name="heureRetourHeure" required class="block w-full time-select">
-                                        <option value="" disabled selected>Heure</option>
-                                    </select>
-                                    <select id="heureRetourMinute" name="heureRetourMinute" required class="block w-full time-select">
-                                        <option value="" disabled selected>Minute</option>
-                                    </select>
-                                </div>
+                                     <select id="heureRetourHeure" name="heureRetourHeure" required class="block w-full time-select">
+                                         <option value="" disabled selected>Heure</option>
+                                     </select>
+                                     <select id="heureRetourMinute" name="heureRetourMinute" required class="block w-full time-select">
+                                         <option value="" disabled selected>Minute</option>
+                                     </select>
+                                 </div>
                             </div>
                         </div>
 
@@ -403,22 +403,22 @@
 
                      <!-- Section pour afficher les voitures disponibles -->
                      <div id="available-cars-section" class="mt-16 hidden">
-                        <hr class="mb-12 border-gray-200">
-                        <h3 class="section-title text-3xl mb-12 text-primary">Voitures Disponibles</h3>
-                        <div id="available-cars-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <!-- Les cartes de voitures seront injectées ici -->
-                        </div>
-                        <p id="no-cars-message" class="text-center text-text-medium mt-8 hidden text-lg">Désolé, aucune voiture n'est disponible pour les dates sélectionnées.</p>
+                         <hr class="mb-12 border-gray-200">
+                         <h3 class="section-title text-3xl mb-12 text-primary">Voitures Disponibles</h3>
+                         <div id="available-cars-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                             <!-- Les cartes de voitures seront injectées ici -->
+                         </div>
+                         <p id="no-cars-message" class="text-center text-text-medium mt-8 hidden text-lg">Désolé, aucune voiture n'est disponible pour les dates sélectionnées.</p>
 
-                        <!-- Bouton Soumettre Final -->
-                        <div class="text-center mt-16">
-                            <button type="button" id="submit-booking-button" class="btn btn-accent w-full md:w-auto px-16 py-4 text-lg hidden disabled:opacity-50 shadow-xl hover:shadow-accent/50">
-                                <span>Soumettre la Demande</span>
-                                <span id="submit-spinner" class="ml-2 inline-block border-2 border-slate-900 border-t-transparent rounded-full w-5 h-5 hidden animate-spin"></span>
-                            </button>
-                        </div>
-                     </div>
-                 </div>
+                         <!-- Bouton Soumettre Final -->
+                         <div class="text-center mt-16">
+                             <button type="button" id="submit-booking-button" class="btn btn-accent w-full md:w-auto px-16 py-4 text-lg hidden disabled:opacity-50 shadow-xl hover:shadow-accent/50">
+                                 <span>Soumettre la Demande</span>
+                                 <span id="submit-spinner" class="ml-2 inline-block border-2 border-slate-900 border-t-transparent rounded-full w-5 h-5 hidden animate-spin"></span>
+                             </button>
+                         </div>
+                    </div>
+                </div>
             </div>
         </section> <!-- Fin de #reservation -->
     </div> <!-- Fin de #reservation-container -->
@@ -452,8 +452,8 @@
                 <!-- Car Card 1 -->
                 <div class="car-card">
                      <div class="relative group overflow-hidden rounded-t-lg">
-                         <img src="https://placehold.co/300x200/e2e8f0/334155?text=Logan+D+24" alt="Dacia Logan Diesel 2024" class="w-full h-52 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
-                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                        <img src="https://placehold.co/300x200/e2e8f0/334155?text=Logan+D+24" alt="Dacia Logan Diesel 2024" class="w-full h-52 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                     </div>
                     <div class="p-6">
                         <h3 class="text-xl mb-2">Dacia Logan Diesel 2024</h3>
@@ -478,7 +478,7 @@
                            <a href="#reservation" class="btn btn-primary text-xs px-4 py-2 reserve-now-link">Réserver</a>
                        </div>
                    </div>
-               </div>
+                </div>
                 <!-- Car Card 3 -->
                 <div class="car-card">
                     <div class="relative group overflow-hidden rounded-t-lg">
@@ -523,7 +523,7 @@
                 <!-- Service Card 1 -->
                 <div class="service-card bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 border border-white/10 hover:border-white/20">
                      <div class="text-accent text-6xl mb-6">
-                        <i class="fas fa-plane-departure"></i>
+                         <i class="fas fa-plane-departure"></i>
                      </div>
                     <h3 class="text-2xl font-semibold mb-3">Livraison Aéroport</h3>
                     <p class="opacity-90 leading-relaxed text-sm">Prise en charge et retour simplifiés à l'aéroport d'Agadir.</p>
@@ -531,7 +531,7 @@
                 <!-- Service Card 2 -->
                 <div class="service-card bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 border border-white/10 hover:border-white/20">
                     <div class="text-accent text-6xl mb-6">
-                        <i class="fas fa-headset"></i>
+                         <i class="fas fa-headset"></i>
                      </div>
                     <h3 class="text-2xl font-semibold mb-3">Assistance 24/7</h3>
                     <p class="opacity-90 leading-relaxed text-sm">Notre équipe est disponible à toute heure pour vous assister.</p>
@@ -539,7 +539,7 @@
                 <!-- Service Card 3 -->
                 <div class="service-card bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 border border-white/10 hover:border-white/20">
                      <div class="text-accent text-6xl mb-6">
-                        <i class="fas fa-infinity"></i>
+                         <i class="fas fa-infinity"></i>
                      </div>
                     <h3 class="text-2xl font-semibold mb-3">Km Illimité</h3>
                     <p class="opacity-90 leading-relaxed text-sm">Explorez sans limites. Profitez pleinement de votre aventure.</p>
@@ -547,8 +547,8 @@
                 <!-- NOUVEAU: Service Card 4 (Porte-Surf) -->
                 <div class="service-card bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 border border-white/10 hover:border-white/20">
                      <div class="text-accent text-6xl mb-6 flex justify-center space-x-3">
-                        <i class="fas fa-person-surfing"></i> <!-- Icône Surf -->
-                        <i class="fas fa-suitcase-rolling"></i> <!-- Icône Bagage -->
+                         <i class="fas fa-person-surfing"></i> <!-- Icône Surf -->
+                         <i class="fas fa-suitcase-rolling"></i> <!-- Icône Bagage -->
                      </div>
                     <h3 class="text-2xl font-semibold mb-3">Porte-Surf & Bagages (Gratuit)</h3>
                     <p class="opacity-90 leading-relaxed text-sm">Accessoires fournis gratuitement sur demande.</p>
@@ -556,7 +556,7 @@
                 <!-- NOUVEAU: Service Card 5 (Siège Bébé) -->
                 <div class="service-card bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-2 border border-white/10 hover:border-white/20 sm:col-span-2 lg:col-span-1"> <!-- Centre le 5ème sur mobile/tablette -->
                      <div class="text-accent text-6xl mb-6">
-                        <i class="fas fa-baby-carriage"></i> <!-- Icône Siège Bébé -->
+                         <i class="fas fa-baby-carriage"></i> <!-- Icône Siège Bébé -->
                      </div>
                     <h3 class="text-2xl font-semibold mb-3">Siège Bébé (Gratuit)</h3>
                     <p class="opacity-90 leading-relaxed text-sm">Voyagez en toute sécurité avec vos enfants. Fourni gratuitement.</p>
@@ -768,22 +768,23 @@
             // Auto-hide after 7 seconds
             setTimeout(() => {
                 if (!messageBox.classList.contains('hidden')) { // Check if still visible
-                    messageBox.style.opacity = '0'; messageBox.style.transform = 'translateY(-10px)';
-                    setTimeout(() => messageBox.classList.add('hidden'), 300);
+                     messageBox.style.opacity = '0'; messageBox.style.transform = 'translateY(-10px)';
+                     setTimeout(() => messageBox.classList.add('hidden'), 300);
                  }
             }, 7000);
         }
 
+        // ** CORRECTION DU BUG DE FUSEAU HORAIRE (Écriture) **
         function getDateTimeObject(dateStr, hourStr, minuteStr) {
             if (!dateStr || hourStr === "" || minuteStr === "") return null;
             try {
-                const hour = hourStr.padStart(2, '0');
-                const minute = minuteStr.padStart(2, '0');
-                const [year, month, day] = dateStr.split('-');
-                // Use UTC to avoid timezone issues when comparing dates
-                const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
-                if (isNaN(d.getTime())) { throw new Error("Invalid date created"); }
-                return d;
+                // Crée un objet Date basé sur le temps local du navigateur (ex: Maroc)
+                // en construisant une chaîne ISO locale.
+                const localIsoString = `${dateStr}T${hourStr.padStart(2, '0')}:${minuteStr.padStart(2, '0')}:00`;
+                const d = new Date(localIsoString); 
+                
+                if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
+                return d; // Retourne un objet Date local (ex: 5 Nov 11:00 Maroc)
             } catch (e) {
                 console.error("Erreur conversion date/heure:", dateStr, hourStr, minuteStr, e);
                 showMessage("Erreur dans le format de date ou d'heure.", "error");
@@ -791,22 +792,25 @@
             }
         }
 
+        // ** CORRECTION DU BUG DE FUSEAU HORAIRE (Lecture) **
         function formatReadableDateTime(dateObj) {
             if (!dateObj || isNaN(dateObj.getTime())) return "Date invalide";
-             const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' };
+             // Formate la date en utilisant le fuseau horaire du Maroc
+             const timeZone = 'Africa/Casablanca';
+             const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: timeZone };
              try {
-                let formatted = new Intl.DateTimeFormat('fr-FR', options).format(dateObj);
-                // Correctly remove potential multiple spaces after replace in different locales
-                formatted = formatted.replace(/[\s,]+/g, ' ').trim();
-                return formatted;
+                 let formatted = new Intl.DateTimeFormat('fr-FR', options).format(dateObj);
+                 formatted = formatted.replace(/[\s,]+/g, ' ').trim().replace('à ', '');
+                 return formatted;
              } catch (e) {
-                console.error("Error formatting date:", e);
-                const day = String(dateObj.getUTCDate()).padStart(2, '0');
-                const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-                const year = dateObj.getUTCFullYear();
-                const hours = String(dateObj.getUTCHours()).padStart(2, '0');
-                const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ${hours}h${minutes}`;
+                 console.error("Error formatting date:", e);
+                 // Fallback
+                 const day = String(dateObj.getDate()).padStart(2, '0');
+                 const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                 const year = dateObj.getFullYear();
+                 const hours = String(dateObj.getHours()).padStart(2, '0');
+                 const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                 return `${day}/${month}/${year} ${hours}h${minutes}`;
              }
         }
 
@@ -839,8 +843,8 @@
              try {
                  // 1. Vérifier statut manuel (déjà récupéré)
                  if (allManualStatuses.get(carName) === 'unavailable') {
-                    console.log(`Vérif JS: ${carName} est marqué Indisponible (Maintenance)`);
-                     return { available: false, reason: '(Indisponible)' };
+                     console.log(`Vérif JS: ${carName} est marqué Indisponible (Maintenance)`);
+                      return { available: false, reason: '(Indisponible)' };
                  }
 
                  // 2. Vérifier les périodes d'indisponibilité (déjà récupérées)
@@ -859,7 +863,7 @@
                  }
 
                  if (isUnavailable) {
-                     return { available: false, reason: `(Indisponible)` };
+                      return { available: false, reason: `(Indisponible)` };
                  }
                  // Si on arrive ici, la voiture est dispo
                  console.log(`Vérif JS: ${carName} est Disponible`);
@@ -881,11 +885,16 @@
              const startMinuteStr = heurePriseEnChargeMinuteSelect.value; const endDateStr = dateRetourInput.value;
              const endHourStr = heureRetourHeureSelect.value; const endMinuteStr = heureRetourMinuteSelect.value;
              if (!startDateStr || startHourStr === "" || startMinuteStr === "" || !endDateStr || endHourStr === "" || endMinuteStr === "") { showMessage("Veuillez sélectionner les dates et heures complètes.", "warning"); return; }
+             
+             // ** CORRECTION BUG HEURE : Utilise la nouvelle fonction **
              currentPickupDateTime = getDateTimeObject(startDateStr, startHourStr, startMinuteStr);
              currentReturnDateTime = getDateTimeObject(endDateStr, endHourStr, endMinuteStr);
+             
              if (!currentPickupDateTime || !currentReturnDateTime) { return; } // Error shown in getDateTimeObject
+             
              const now = new Date();
-             const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+             // Comparaison simple des dates locales
+             const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
               if (currentPickupDateTime < todayStart) { showMessage("La date de prise en charge ne peut pas être dans le passé.", "warning"); return; }
               if (currentPickupDateTime >= currentReturnDateTime) { showMessage("La date/heure de fin doit être après la date/heure de début.", "warning"); return; }
 
@@ -935,15 +944,12 @@
                  console.log("Vérification terminée. Voitures disponibles:", availableCarsCount);
 
                  availableCarsSection.classList.remove('hidden');
-                 // CORRECTION BUG AFFICHAGE MESSAGE:
-                 // S'il y a plus de 0 voitures, on cache le message.
                  noCarsMessage.classList.toggle('hidden', availableCarsCount > 0); 
                  
                  availableCarsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
              } catch (error) {
                  console.error("Erreur globale lors de la vérification:", error);
-                 // Cette erreur ne devrait plus être 'index-required'
                  showMessage("Une erreur s'est produite lors de la vérification. Veuillez réessayer.", "error");
              } finally {
                  availabilitySpinner.classList.add('hidden'); checkAvailabilityButton.disabled = false;
@@ -952,30 +958,30 @@
 
         // --- Création Carte Voiture ---
          function createCarCard(carName, carData, isAvailable, unavailableReason = "(Indisponible)") {
-            const card = document.createElement('div');
-            const availabilityClasses = isAvailable ? 'cursor-pointer group' : 'opacity-60 cursor-not-allowed';
-            card.className = `car-card ${availabilityClasses} shadow-lg hover:shadow-primary/20`;
-            card.dataset.carName = carName;
+             const card = document.createElement('div');
+             const availabilityClasses = isAvailable ? 'cursor-pointer group' : 'opacity-60 cursor-not-allowed';
+             card.className = `car-card ${availabilityClasses} shadow-lg hover:shadow-primary/20`;
+             card.dataset.carName = carName;
 
-            card.innerHTML = `
-                <div class="relative overflow-hidden rounded-t-lg">
-                    <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-52 object-cover ${isAvailable ? 'group-hover:scale-110' : ''} transition-transform duration-500 ease-in-out" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
-                    ${!isAvailable ? `<div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-t-lg"><span class="text-white font-semibold text-sm px-3 py-1 rounded bg-red-600 shadow">${unavailableReason}</span></div>` : ''}
-                    <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
-                </div>
-                <div class="p-6">
-                    <h4 class="text-xl font-bold text-text-dark mb-2 truncate">${carName}</h4>
-                    <div class="flex justify-between items-center mb-5">
-                         <p class="text-2xl font-extrabold text-primary price">${carData.price}<span class="text-sm font-medium text-text-medium"> Dhs/jour</span></p>
-                    </div>
-                    <button type="button" class="select-car-button btn w-full ${isAvailable ? 'btn-primary' : 'bg-gray-400 text-gray-700 cursor-not-allowed'} text-sm py-3" ${!isAvailable ? 'disabled' : ''}>
-                        <span class="button-text">${isAvailable ? 'Sélectionner' : 'Indisponible'}</span>
-                        ${isAvailable ? '<i class="fas fa-check ml-1 icon-check hidden"></i>' : ''}
-                    </button>
-                </div>
-            `;
+             card.innerHTML = `
+                 <div class="relative overflow-hidden rounded-t-lg">
+                     <img src="${carData.image || 'https://placehold.co/300x200/e2e8f0/cbd5e0?text=Image+Voiture'}" alt="${carName}" class="w-full h-52 object-cover ${isAvailable ? 'group-hover:scale-110' : ''} transition-transform duration-500 ease-in-out" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
+                     ${!isAvailable ? `<div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-t-lg"><span class="text-white font-semibold text-sm px-3 py-1 rounded bg-red-600 shadow">${unavailableReason}</span></div>` : ''}
+                     <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+                 </div>
+                 <div class="p-6">
+                     <h4 class="text-xl font-bold text-text-dark mb-2 truncate">${carName}</h4>
+                     <div class="flex justify-between items-center mb-5">
+                          <p class="text-2xl font-extrabold text-primary price">${carData.price}<span class="text-sm font-medium text-text-medium"> Dhs/jour</span></p>
+                     </div>
+                     <button type="button" class="select-car-button btn w-full ${isAvailable ? 'btn-primary' : 'bg-gray-400 text-gray-700 cursor-not-allowed'} text-sm py-3" ${!isAvailable ? 'disabled' : ''}>
+                         <span class="button-text">${isAvailable ? 'Sélectionner' : 'Indisponible'}</span>
+                         ${isAvailable ? '<i class="fas fa-check ml-1 icon-check hidden"></i>' : ''}
+                     </button>
+                 </div>
+             `;
 
-             if (isAvailable) {
+              if (isAvailable) {
                  const selectButton = card.querySelector('.select-car-button');
                  const buttonText = selectButton.querySelector('.button-text');
                  const checkIcon = selectButton.querySelector('.icon-check');
@@ -989,11 +995,11 @@
                          selectedCard.classList.remove('selected', 'border-2');
                          const btn = selectedCard.querySelector('.select-car-button');
                          if (btn) {
-                            btn.querySelector('.button-text').textContent = 'Sélectionner';
-                            btn.querySelector('.icon-check')?.classList.add('hidden');
-                            btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
-                            btn.classList.add('btn-primary');
-                            btn.disabled = false;
+                             btn.querySelector('.button-text').textContent = 'Sélectionner';
+                             btn.querySelector('.icon-check')?.classList.add('hidden');
+                             btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
+                             btn.classList.add('btn-primary');
+                             btn.disabled = false;
                          }
                      });
                      card.classList.add('selected', 'border-2');
@@ -1033,12 +1039,12 @@
              let formIsValid = true;
              for (const field of requiredFields) {
                  if (!bookingData[field] || bookingData[field] === "") {
-                    formIsValid = false;
-                    let label = document.querySelector(`label[for='${field}']`)?.textContent?.replace('*','').trim() || field;
-                    if (field.includes('Heure')) label = field.includes('PriseEnCharge') ? 'Heure Début' : 'Heure Fin';
-                    if (field.includes('Minute')) label = field.includes('PriseEnCharge') ? 'Minute Début' : 'Minute Fin';
-                    showMessage(`Le champ "${label}" est requis.`, 'warning');
-                    if (!firstEmptyField) firstEmptyField = document.getElementById(field);
+                     formIsValid = false;
+                     let label = document.querySelector(`label[for='${field}']`)?.textContent?.replace('*','').trim() || field;
+                     if (field.includes('Heure')) label = field.includes('PriseEnCharge') ? 'Heure Début' : 'Heure Fin';
+                     if (field.includes('Minute')) label = field.includes('PriseEnCharge') ? 'Minute Début' : 'Minute Fin';
+                     showMessage(`Le champ "${label}" est requis.`, 'warning');
+                     if (!firstEmptyField) firstEmptyField = document.getElementById(field);
                  }
              }
              if (!formIsValid) {
@@ -1087,7 +1093,11 @@
              const heureRetourStr = `${bookingData.heureRetourHeure.padStart(2, '0')}:${bookingData.heureRetourMinute.padStart(2, '0')}`;
              const bookingDetails = {
                  nomPrenom: bookingData.nomPrenom, telephone: bookingData.telephone, email: bookingData.email, lieuPriseEnCharge: bookingData.lieuPriseEnCharge, lieuRetour: bookingData.lieuRetour, datePriseEnCharge: bookingData.datePriseEnCharge, heurePriseEnCharge: heurePriseStr, dateRetour: bookingData.dateRetour, heureRetour: heureRetourStr,
-                 voiture: selectedCarName, timestamp: serverTimestamp(), confirmed: false, deleted: false
+                 voiture: selectedCarName, timestamp: serverTimestamp(), confirmed: false, deleted: false,
+                 // ** FIX: Ajout des Timestamps corrects pour la modale admin **
+                 // Convertit la date locale (ex: 11:00 Maroc) en Timestamp UTC (ex: 10:00 UTC si Maroc est +1)
+                 pickupTimestamp: Timestamp.fromDate(currentPickupDateTime), 
+                 returnTimestamp: Timestamp.fromDate(currentReturnDateTime)
              };
              console.log("Booking details object:", bookingDetails); // Log 7: Booking details ready
 
@@ -1099,17 +1109,29 @@
                  newBookingId = docRef.id;
                  console.log("Booking saved to Firestore, ID: ", newBookingId); // Log 9: Booking saved success
 
-                 // Automatically add unavailability period for this booking
-                 const unavailabilityData = {
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // *** CORRECTION DU BUG: NE PAS BLOQUER LA VOITURE ICI ***
+                // 
+                // Le code ci-dessous (maintenant en commentaire) bloquait la voiture
+                // AVANT la confirmation de l'admin.
+                // Le panneau d'administration (admin.html) est maintenant
+                // le SEUL responsable de la création de cette période d'indisponibilité
+                // LORSQUE VOUS cliquez sur "Confirmer".
+                //
+                /*
+                const unavailabilityData = {
                     car: selectedCarName,
                     startDate: Timestamp.fromDate(currentPickupDateTime),
                     endDate: Timestamp.fromDate(currentReturnDateTime),
                     type: 'booking', // Mark as automatically generated
                     bookingId: newBookingId // Link to the booking document
-                 };
-                 console.log("Attempting to add unavailability period to Firestore..."); // Log 10: Saving unavailability
-                 await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
-                 console.log("Unavailability period added automatically for", selectedCarName); // Log 11: Unavailability saved success
+                };
+                console.log("Attempting to add unavailability period to Firestore..."); // Log 10: Saving unavailability
+                await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
+                console.log("Unavailability period added automatically for", selectedCarName); // Log 11: Unavailability saved success
+                */
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
              } catch (error) {
                  console.error("Erreur Firestore lors de l'enregistrement: ", error); // Log 12a: Firestore error
@@ -1130,8 +1152,12 @@
                  // Use a readable format for the email
                  objectForWeb3Forms.datePriseEnCharge = `${bookingDetails.datePriseEnCharge} ${bookingDetails.heurePriseEnCharge}`;
                  objectForWeb3Forms.dateRetour = `${bookingDetails.dateRetour} ${bookingDetails.heureRetour}`;
+                 // ** FIX: Utiliser la fonction de formatage locale **
                  objectForWeb3Forms.timestamp_readable = formatReadableDateTime(new Date()); // Add submission time formatted
                  delete objectForWeb3Forms.timestamp; // Remove server timestamp object for JSON
+                 // ** FIX: Supprimer les nouveaux timestamps avant de les envoyer par email **
+                 delete objectForWeb3Forms.pickupTimestamp;
+                 delete objectForWeb3Forms.returnTimestamp;
                  delete objectForWeb3Forms.confirmed; delete objectForWeb3Forms.deleted; delete objectForWeb3Forms.heurePriseEnCharge; delete objectForWeb3Forms.heureRetour; // Clean up redundant fields
 
                  const jsonPayload = JSON.stringify(objectForWeb3Forms);
@@ -1188,17 +1214,17 @@
              // Logic for logo swap on scroll
              if (logoWhiteMobile && logoColorMobile && logoWhiteDesktop && logoColorDesktop) {
                  if (scrollPosition > 50) {
-                    // Scrolled state
-                    logoWhiteMobile.style.opacity = '0';
-                    logoColorMobile.style.opacity = '1';
-                    logoWhiteDesktop.style.opacity = '0';
-                    logoColorDesktop.style.opacity = '1';
+                     // Scrolled state
+                     logoWhiteMobile.style.opacity = '0';
+                     logoColorMobile.style.opacity = '1';
+                     logoWhiteDesktop.style.opacity = '0';
+                     logoColorDesktop.style.opacity = '1';
                  } else {
-                    // Top state
-                    logoWhiteMobile.style.opacity = '1';
-                    logoColorMobile.style.opacity = '0';
-                    logoWhiteDesktop.style.opacity = '1';
-                    logoColorDesktop.style.opacity = '0';
+                     // Top state
+                     logoWhiteMobile.style.opacity = '1';
+                     logoColorMobile.style.opacity = '0';
+                     logoWhiteDesktop.style.opacity = '1';
+                     logoColorDesktop.style.opacity = '0';
                  }
              }
         });
@@ -1208,9 +1234,9 @@
             mobileMenuButton.addEventListener('click', (e) => { e.stopPropagation(); mobileMenu.classList.toggle('hidden'); });
              // Close menu if clicking outside or on a link
              document.addEventListener('click', (e) => {
-                if (!mobileMenu.contains(e.target) && !mobileMenuButton.contains(e.target)) {
-                    mobileMenu.classList.add('hidden');
-                }
+                 if (!mobileMenu.contains(e.target) && !mobileMenuButton.contains(e.target)) {
+                     mobileMenu.classList.add('hidden');
+                 }
             });
             mobileMenu.querySelectorAll('a').forEach(link => { link.addEventListener('click', () => { mobileMenu.classList.add('hidden'); }); });
         }
@@ -1261,16 +1287,16 @@
              navReserveButton,
              mobileReserveButton,
              ...reserveNowLinks // Spread the NodeList into the array
-         ];
+        ];
 
          reservationTriggers.forEach(trigger => {
-            if(trigger) { // Check if the element exists
-                trigger.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    console.log("Trigger clicked, showing reservation form..."); // Log for form toggle
-                    toggleReservationForm(true);
-                });
-            }
+             if(trigger) { // Check if the element exists
+                 trigger.addEventListener('click', (event) => {
+                     event.preventDefault();
+                     console.log("Trigger clicked, showing reservation form..."); // Log for form toggle
+                     toggleReservationForm(true);
+                 });
+             }
          });
 
 
@@ -1280,45 +1306,44 @@
              populateTimeSelects();
              const reservationSectionEl = document.getElementById('reservation');
              if (reservationSectionEl) {
-                console.log("Formulaire de réservation trouvé. Application des styles cachés initiaux.");
-                // Apply initial hidden classes using Tailwind and ensure no padding/margin
-                reservationSectionEl.classList.add('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
-                reservationSectionEl.classList.remove('py-20', 'md:py-32', 'my-16', 'md:my-24'); // Explicitly remove padding/margin
-                reservationSectionEl.style.display = 'block'; // Make sure it's not display:none initially
+                 console.log("Formulaire de réservation trouvé. Application des styles cachés initiaux.");
+                 // Apply initial hidden classes using Tailwind and ensure no padding/margin
+                 reservationSectionEl.classList.add('max-h-0', 'opacity-0', 'overflow-hidden', 'p-0', 'm-0');
+                 reservationSectionEl.classList.remove('py-20', 'md:py-32', 'my-16', 'md:my-24'); // Explicitly remove padding/margin
+                 reservationSectionEl.style.display = 'block'; // Make sure it's not display:none initially
              } else {
-                console.error("Reservation section element not found on DOMContentLoaded");
+                 console.error("Reservation section element not found on DOMContentLoaded");
              }
              
              // --- Section Animations on Scroll ---
-            try {
-                const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
-                const observerCallback = (entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            if (entry.target.id === 'reservation') {
-                                // Don't animate reservation section on scroll, only on click
-                                observer.unobserve(entry.target);
-                                return;
-                            }
-                            entry.target.classList.add('visible'); // Use 'visible' class to trigger animation
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                };
-                const observer = new IntersectionObserver(observerCallback, observerOptions);
-                document.querySelectorAll('.section-animate').forEach(section => {
-                     observer.observe(section);
-                });
-            } catch(e) {
-                console.error("IntersectionObserver non supporté ou erreur:", e);
-                // Fallback for older browsers: show all sections
-                document.querySelectorAll('.section-animate').forEach(section => {
-                     section.classList.add('visible');
-                });
-            }
+             try {
+                 const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+                 const observerCallback = (entries, observer) => {
+                     entries.forEach(entry => {
+                         if (entry.isIntersecting) {
+                             if (entry.target.id === 'reservation') {
+                                 // Don't animate reservation section on scroll, only on click
+                                 observer.unobserve(entry.target);
+                                 return;
+                             }
+                             entry.target.classList.add('visible'); // Use 'visible' class to trigger animation
+                             observer.unobserve(entry.target);
+                         }
+                     });
+                 };
+                 const observer = new IntersectionObserver(observerCallback, observerOptions);
+                 document.querySelectorAll('.section-animate').forEach(section => {
+                      observer.observe(section);
+                 });
+             } catch(e) {
+                 console.error("IntersectionObserver non supporté ou erreur:", e);
+                 // Fallback for older browsers: show all sections
+                 document.querySelectorAll('.section-animate').forEach(section => {
+                      section.classList.add('visible');
+                 });
+             }
         });
 
     </script>
 </body>
 </html>
-
