@@ -759,7 +759,8 @@
                     bookingId: currentBookingId // Lien vers la réservation
                 };
                 // Nous créons un nouveau doc dans la collection d'indisponibilité
-                const newPeriodRef = doc(collection(unavailabilityPeriodsCollectionRef));
+                // ** FIX: Corrected Firestore reference. Was doc(collection(unavailabilityPeriodsCollectionRef)) **
+                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef);
                 batch.set(newPeriodRef, unavailabilityData);
 
                 // 3. Exécuter le batch
