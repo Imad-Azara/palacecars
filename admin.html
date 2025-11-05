@@ -6,7 +6,7 @@
     <title>Palace Cars - Panneau d'Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome: CORRECTION 'xintegrity' en 'integrity' -->
+    <!-- Icônes Font Awesome: CORRECTION de xintegrity en integrity -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -59,7 +59,7 @@
     <!-- Authentification Overlay -->
     <div id="login-overlay" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-200">
-            <h2 class="text-3xl font-bold mb-6 text-primary">Accès Admin</h2>
+            <h2 class="text-3xl font-bold text-primary">Accès Admin</h2>
             <p class="text-gray-600 mb-6">Veuillez entrer le mot de passe pour accéder au panneau.</p>
             <input type="password" id="password-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg shadow-inner focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Entrez le mot de passe">
             <button id="login-button" class="btn btn-primary w-full mt-6 py-3 text-lg">
@@ -145,7 +145,7 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-1">Début Indisponibilité</label>
                                 <div class="flex gap-2">
                                     <input type="date" id="unav-start-date" name="startDate" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <input type="time" id="unav-start-time" name="startTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
+                                    <input type="time" id="unav-start-time" name="startTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                                 </div>
                             </div>
                              <!-- Date et Heure de Fin -->
@@ -153,7 +153,7 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-1">Fin Indisponibilité</label>
                                 <div class="flex gap-2">
                                     <input type="date" id="unav-end-date" name="endDate" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                                    <input type="time" id="unav-end-time" name="endTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
+                                    <input type="time" id="unav-end-time" name="endTime" required class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                                 </div>
                             </div>
                             <button type="submit" id="add-period-button" class="btn btn-primary w-full py-2.5">
@@ -170,13 +170,26 @@
                          </div>
                     </div>
 
-                      <!-- Périodes Programmées -->
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                     <!-- Périodes Programmées -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
                          <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
                          <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
                              <!-- Périodes chargées par JS -->
                              <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
                          </div>
+                    </div>
+
+                    <!-- NOUVELLE SECTION: Clients Fidèles -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                        <h3 class="text-xl font-bold text-text-dark mb-5">Historique des Clients</h3>
+                        <div class="flex justify-between items-center mb-3 border-b pb-2 text-sm font-semibold text-gray-500">
+                            <span>Client (Téléphone)</span>
+                            <span>Réservations</span>
+                        </div>
+                        <div id="client-history-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                            <p id="loading-client-history" class="text-center text-gray-500 py-4">Chargement...</p>
+                            <!-- Les clients fidèles seront injectés ici -->
+                        </div>
                     </div>
 
                 </div>
@@ -204,13 +217,13 @@
                 <div>
                     <label for="modal-start-date" class="block text-sm font-semibold text-gray-700 mb-1">Début Location</label>
                     <input type="date" id="modal-start-date" name="modalStartDate" required class="block w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                    <input type="time" id="modal-start-time" name="modalStartTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
+                    <input type="time" id="modal-start-time" name="modalStartTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
                 <!-- Date et Heure de Fin -->
                 <div>
                     <label for="modal-end-date" class="block text-sm font-semibold text-gray-700 mb-1">Fin Location</label>
                     <input type="date" id="modal-end-date" name="modalEndDate" required class="block w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                    <input type="time" id="modal-end-time" name="modalEndTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" step="900">
+                    <input type="time" id="modal-end-time" name="modalEndTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
                 </div>
             </div>
 
@@ -218,7 +231,7 @@
 
             <div class="mt-8 flex justify-end space-x-3">
                  <button id="cancel-modal-button" class="btn btn-secondary">Annuler</button>
-                 <button id="confirm-modal-button" class="btn btn-success">
+                 <button id="confirm-modal-button" class="btn btn-success" disabled>
                      <i class="fas fa-check mr-2"></i> Confirmer la Réservation
                  </button>
             </div>
@@ -235,17 +248,19 @@
             Timestamp, serverTimestamp, setDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // *** CONFIGURATION FIREBASE ***
+        // *** Configuration Firebase ***
+        // (L'utilisateur doit coller sa configuration ici)
         const firebaseConfig = {
-            apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
-            authDomain: "palace-cars.firebaseapp.com",
-            projectId: "palace-cars",
-            storageBucket: "palace-cars.firebasestorage.app",
-            messagingSenderId: "469852272715",
-            appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
-            measurementId: "G-KCEF4WBW0G"
+          apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+          authDomain: "palace-cars.firebaseapp.com",
+          projectId: "palace-cars",
+          storageBucket: "palace-cars.firebasestorage.app",
+          messagingSenderId: "469852272715",
+          appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+          measurementId: "G-KCEF4WBW0G"
         };
-        // *** FIN CONFIGURATION ***
+        // *** Fin Configuration Firebase ***
+
 
         // --- Variables Globales ---
         let db;
@@ -259,9 +274,6 @@
         let currentBookingData = null; // Pour la modale de confirmation
         let isConfirmationBusy = false; // Verrou pour éviter double-clic
 
-        // Fuseau horaire de référence
-        const TIMEZONE = 'Africa/Casablanca';
-
         // Liste statique des voitures
         const carOptions = [
             "Dacia Logan Diesel 2024",
@@ -270,63 +282,108 @@
             "Dacia Sandero Diesel"
         ];
         
-        // --- Références DOM Globales (pour éviter 'not defined') ---
-        let listDiv, loadingMsg, countNew, countConfirmed, periodsListDiv, loadingPeriodsMsg, manualStatusListDiv, unavCarSelect;
-        
+        // --- NOUVEAU: Map des éléments DOM ---
+        // (Pour éviter les erreurs "Éléments UI manquants")
+        const domElements = {};
+
         // --- FONCTIONS UTILITAIRES ---
 
         function formatReadableDateTime(timestamp) {
             if (!timestamp || !timestamp.seconds) {
-                // Tenter de parser une chaîne ISO (ex: 2025-11-05T19:00:00)
-                try {
-                    const d = new Date(timestamp);
-                    if (isNaN(d.getTime())) throw new Error();
-                    // Si c'est une chaîne valide, la formater
-                    return new Intl.DateTimeFormat('fr-FR', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TIMEZONE
-                    }).format(d).replace('à ', '');
-                } catch (e) {
-                     return "Date invalide";
+                // Essayer de le traiter comme une date-chaîne (ex: 2025-10-24 10:30)
+                if(typeof timestamp === 'string') {
+                    // Si c'est juste une date (YYYY-MM-DD) et une heure (HH:MM)
+                    const parts = timestamp.split(' ');
+                    if(parts.length === 2) {
+                        const dateParts = parts[0].split('-');
+                        const timeParts = parts[1].split(':');
+                        if (dateParts.length === 3 && timeParts.length >= 2) {
+                             // Utiliser le fuseau horaire du Maroc (WET = UTC+0/UTC+1, utilisons 'Africa/Casablanca' pour être sûr)
+                             // Note: Ceci est pour l'affichage. L'entrée est supposée être locale.
+                            try {
+                                const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1])-1, parseInt(dateParts[2]), parseInt(timeParts[0]), parseInt(timeParts[1]));
+                                if(!isNaN(date)) {
+                                    return new Intl.DateTimeFormat('fr-FR', {
+                                        day: '2-digit', month: '2-digit', year: 'numeric',
+                                        hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Casablanca'
+                                    }).format(date).replace('à ', '');
+                                }
+                            } catch (e) { console.error("Erreur formatage date string:", e); }
+                        }
+                    }
                 }
+                return "Date non spécifiée"; // Retour par défaut
             }
             // Si c'est un objet Timestamp Firebase
-            const date = timestamp.toDate(); // Convertit en objet Date local
+            const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
             return new Intl.DateTimeFormat('fr-FR', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TIMEZONE
+                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Casablanca' // Utiliser UTC+1
             }).format(date).replace('à ', '');
         }
 
-        // ** CORRECTION FUSEAU HORAIRE (Lecture) **
+        // Convertit un Timestamp Firebase en { date: 'YYYY-MM-DD', time: 'HH:MM' } (pour les inputs de la modale)
+        // ** NOUVELLE LOGIQUE: Utilise le fuseau horaire 'Africa/Casablanca' pour l'affichage **
         function getDateTimeObjectFromTimestamp(timestamp) {
-            if (!timestamp || !timestamp.seconds) return { date: '', time: '' };
-            const date = timestamp.toDate(); // Convertit en objet Date local
+            if (!timestamp || !timestamp.seconds) return { date: '', time: '12:00' }; // Défaut 12:00 si non trouvé
+            try {
+                const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+                
+                // Formater la date en utilisant IANA 'Africa/Casablanca'
+                const optionsDate = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Africa/Casablanca' };
+                const optionsTime = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Casablanca' };
 
-            // Formate la date en utilisant le fuseau horaire du Maroc
-            const year = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', timeZone: TIMEZONE }).format(date);
-            const month = new Intl.DateTimeFormat('fr-FR', { month: '2-digit', timeZone: TIMEZONE }).format(date);
-            const day = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', timeZone: TIMEZONE }).format(date);
-            const hour = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', hour12: false, timeZone: TIMEZONE }).format(date).replace('24', '00');
-            const minute = new Intl.DateTimeFormat('fr-FR', { minute: '2-digit', timeZone: TIMEZONE }).format(date).padStart(2, '0');
-            
-            const dateISO = `${year}-${month}-${day}`;
-            const timeISO = `${hour}:${minute}`;
-            
-            return { date: dateISO, time: timeISO };
+                const dateParts = new Intl.DateTimeFormat('fr-FR', optionsDate).format(date).split('/');
+                // Gérer le formatage fr-FR (DD/MM/YYYY)
+                if (dateParts.length === 3) {
+                    const dateISO = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Re-construire en YYYY-MM-DD
+                    
+                    const timeStr = new Intl.DateTimeFormat('fr-FR', optionsTime).format(date);
+                    
+                    // Gérer le cas '24:00' qui peut arriver
+                    const timeISO = timeStr.replace('24:', '00:');
+                    
+                    if (dateISO !== 'Invalid Date' && timeISO) {
+                        return { date: dateISO, time: timeISO };
+                    }
+                }
+                throw new Error("Format de date Intl inattendu");
+
+            } catch (e) {
+                console.error("Erreur conversion timestamp en ISO local:", e, timestamp);
+                // Fallback (peut être décalé si le serveur n'est pas au Maroc)
+                const d = new Date(timestamp.seconds * 1000);
+                d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); // Tenter de compenser l'UTC
+                
+                // Si le timestamp est valide, on essaie un fallback
+                if (!isNaN(d.getTime())) {
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const hour = String(d.getHours()).padStart(2, '0');
+                    const minute = String(d.getMinutes()).padStart(2, '0');
+                    return { date: `${year}-${month}-${day}`, time: `${hour}:${minute}` };
+                }
+                return { date: '', time: '12:00' }; // Fallback final
+            }
         }
 
-        // ** CORRECTION FUSEAU HORAIRE (Écriture) **
-        // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM (heure locale) en objet Date
+
+        // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM (depuis le formulaire) en objet Date (en UTC)
+        // ** CORRECTION FUSEAU HORAIRE **
         function getDateTimeObjectFromISO(dateStr, timeStr) {
              try {
                  if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
-                 // Crée la chaîne ISO locale (ex: "2025-11-05T19:00:00")
-                 const localIsoString = `${dateStr}T${timeStr}:00`;
-                 // Crée un objet Date. Le navigateur l'interprète comme heure locale.
-                 const d = new Date(localIsoString); 
+                 const [year, month, day] = dateStr.split('-');
+                 const [hour, minute] = timeStr.split(':');
+                 // Interprète la date comme étant locale au Maroc (Africa/Casablanca)
+                 // Puis crée un objet Date.
+                 // Note: C'est complexe. Le plus simple est de créer un objet Date en local (navigateur)
+                 // Le Timestamp.fromDate() le convertira en UTC.
+                 const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0);
+                 
                  if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
-                 return d; // Retourne l'objet Date correct (ex: 5 Nov 19:00 Maroc)
+                 return d;
              } catch (e) {
                  console.error("Erreur conversion ISO date/heure:", dateStr, timeStr, e);
                  return null;
@@ -334,7 +391,7 @@
         }
 
         function showAdminMessage(message, type = 'info', duration = 5000) {
-            const msgBox = document.getElementById('admin-message-box');
+            const msgBox = domElements.adminMessageBox;
             if (!msgBox) return;
 
             msgBox.textContent = message;
@@ -356,6 +413,7 @@
         }
 
         function populateCarSelects() {
+            const unavCarSelect = domElements.unavCarSelect;
             if (!unavCarSelect) return;
             const placeholder = unavCarSelect.querySelector('option[disabled]');
             unavCarSelect.innerHTML = '';
@@ -373,11 +431,20 @@
             card.className = 'border border-gray-200 rounded-xl shadow-sm overflow-hidden';
             card.id = `booking-${booking.id}`;
 
+            // Assurer que le timestamp est valide avant de formater
             const receivedAt = booking.timestamp ? formatReadableDateTime(booking.timestamp) : 'Date inconnue';
             
-            // ** FIX: Utiliser les Timestamps pour un affichage cohérent **
-            const pickupDateTime = booking.pickupTimestamp ? formatReadableDateTime(booking.pickupTimestamp) : `${booking.datePriseEnCharge} ${booking.heurePriseEnCharge}`;
-            const returnDateTime = booking.returnTimestamp ? formatReadableDateTime(booking.returnTimestamp) : `${booking.dateRetour} ${booking.heureRetour}`;
+            // Créer les chaînes de date/heure pour l'affichage (depuis les champs string ou timestamps)
+            let pickupDateTime = `${booking.datePriseEnCharge || 'jj/mm/aaaa'} ${booking.heurePriseEnCharge || 'hh:mm'}`;
+            let returnDateTime = `${booking.dateRetour || 'jj/mm/aaaa'} ${booking.heureRetour || 'hh:mm'}`;
+            
+            // Si les timestamps existent (préféré car plus précis), les utiliser
+            if (booking.pickupTimestamp) {
+                pickupDateTime = formatReadableDateTime(booking.pickupTimestamp);
+            }
+            if (booking.returnTimestamp) {
+                returnDateTime = formatReadableDateTime(booking.returnTimestamp);
+            }
 
             const statusClass = booking.confirmed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
             const statusText = booking.confirmed ? '<i class="fas fa-check-circle mr-1.5"></i> Confirmée' : '<i class="fas fa-hourglass-start mr-1.5"></i> Nouvelle Demande';
@@ -483,26 +550,59 @@
             });
             return item;
         }
+        
+        // --- NOUVELLE FONCTION: Créer un item pour l'historique client ---
+        function createClientHistoryItem(clientData) {
+            const item = document.createElement('div');
+            item.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-lg text-sm';
+            
+            // Couleur basée sur le nombre de réservations
+            let countColor = 'text-primary'; // Bleu (défaut)
+            if (clientData.count >= 5) {
+                countColor = 'text-accent'; // Jaune/Or
+            } else if (clientData.count >= 2) {
+                countColor = 'text-green-600'; // Vert
+            }
+
+            item.innerHTML = `
+                <div>
+                    <strong class="text-text-dark">${clientData.nom}</strong>
+                    <p class="text-xs text-gray-500">${clientData.telephone}</p>
+                </div>
+                <span class="font-bold text-lg ${countColor}">${clientData.count}</span>
+            `;
+            return item;
+        }
+
 
         // --- FONCTIONS LOGIQUES (Firestore) ---
 
+        // ** CORRECTION: LOGIQUE DE FILTRAGE DÉPLACÉE EN JAVASCRIPT **
         function displayBookings(view) {
+            const listDiv = domElements.bookingsList;
+            const loadingMsg = domElements.loadingBookings;
+            const countNew = domElements.countNew;
+            const countConfirmed = domElements.countConfirmed;
+            
             if (!listDiv || !loadingMsg || !countNew || !countConfirmed) {
-                 console.error("Éléments UI des réservations non trouvés (displayBookings)");
-                 return;
+                // Cette erreur ne devrait plus se produire grâce à initDomElements
+                console.error("Éléments UI manquants pour displayBookings");
+                return;
             }
 
             listDiv.innerHTML = ''; // Nettoyer la liste
             currentView = view;
 
             // Mettre à jour les styles des onglets
-            document.getElementById('tab-new').classList.toggle('active', view === 'new');
-            document.getElementById('tab-confirmed').classList.toggle('active', view === 'confirmed');
+            domElements.tabNew.classList.toggle('active', view === 'new');
+            domElements.tabConfirmed.classList.toggle('active', view === 'confirmed');
 
             const isConfirmedView = (view === 'confirmed');
             
             // Filtrer le cache JavaScript
             const bookingsToDisplay = allBookingsCache.filter(booking => {
+                // (booking.confirmed === true) pour 'confirmed'
+                // (booking.confirmed === false) pour 'new'
                 return booking.confirmed === isConfirmedView;
             });
 
@@ -520,11 +620,58 @@
                 });
             }
         }
+        
+        // --- NOUVELLE FONCTION: Mettre à jour l'historique des clients ---
+        function updateClientHistory(allBookings) {
+            const listDiv = domElements.clientHistoryList;
+            const loadingMsg = domElements.loadingClientHistory;
+            if (!listDiv || !loadingMsg) {
+                 console.error("Éléments UI manquants pour updateClientHistory");
+                 return;
+            }
 
-        function loadBookings() {
-            if (!loadingMsg) { console.error("Élément loading-bookings non trouvé."); return; }
+            // 1. Filtrer pour les réservations CONFIRMÉES
+            const confirmedBookings = allBookings.filter(b => b.confirmed === true);
+            const clientCounts = new Map();
+
+            // 2. Compter par client (téléphone + nom comme clé)
+            for (const booking of confirmedBookings) {
+                if (!booking.telephone || !booking.nomPrenom) continue; // Ignorer si données incomplètes
+                
+                // Clé unique basée sur le téléphone normalisé ET le nom
+                const phone = booking.telephone.replace(/\s+/g, '');
+                const name = booking.nomPrenom.toLowerCase().trim();
+                const key = `${phone}::${name}`;
+                
+                if (!clientCounts.has(key)) {
+                    // Utiliser le nom avec la bonne casse pour l'affichage
+                    clientCounts.set(key, { nom: booking.nomPrenom, telephone: booking.telephone, count: 0 });
+                }
+                clientCounts.get(key).count++;
+            }
+
+            listDiv.innerHTML = ''; // Vider la liste
             
-            // Requête simplifiée: ne trie que par date.
+            // 3. Afficher
+            if (clientCounts.size === 0) {
+                loadingMsg.textContent = 'Aucun client confirmé.';
+                loadingMsg.style.display = 'block';
+            } else {
+                loadingMsg.style.display = 'none';
+                // Convertir en tableau, trier par count (descendant)
+                const sortedClients = Array.from(clientCounts.values()).sort((a, b) => b.count - a.count);
+                
+                sortedClients.forEach(clientData => {
+                    listDiv.appendChild(createClientHistoryItem(clientData));
+                });
+            }
+        }
+
+
+        // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE (Évite l'erreur d'index) **
+        function loadBookings() {
+            const loadingMsg = domElements.loadingBookings;
+
             const q = query(
                 bookingsCollectionRef, 
                 orderBy("timestamp", "desc")
@@ -544,6 +691,9 @@
                 
                 // Afficher la vue actuellement sélectionnée avec les données mises à jour
                 displayBookings(currentView); 
+                
+                // NOUVEAU: Mettre à jour l'historique client
+                updateClientHistory(allBookingsCache);
 
             }, (error) => {
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
@@ -557,7 +707,8 @@
 
 
         function listenForPeriods() {
-             if (!periodsListDiv || !loadingPeriodsMsg) { console.error("Éléments UI des périodes non trouvés."); return; }
+            const listDiv = domElements.periodsList;
+            const loadingMsg = domElements.loadingPeriods;
 
             const q = query(
                 unavailabilityPeriodsCollectionRef, 
@@ -565,28 +716,28 @@
             );
 
             onSnapshot(q, (snapshot) => {
-                periodsListDiv.innerHTML = ''; // Clear list
+                listDiv.innerHTML = ''; // Clear list
                 if (snapshot.empty) {
-                    loadingPeriodsMsg.textContent = 'Aucune période programmée.';
-                    loadingPeriodsMsg.style.display = 'block';
+                    loadingMsg.textContent = 'Aucune période programmée.';
+                    loadingMsg.style.display = 'block';
                 } else {
-                    loadingPeriodsMsg.style.display = 'none';
+                    loadingMsg.style.display = 'none';
                     snapshot.forEach((doc) => {
-                        periodsListDiv.appendChild(createPeriodListItem({ ...doc.data(), id: doc.id }));
+                        listDiv.appendChild(createPeriodListItem({ ...doc.data(), id: doc.id }));
                     });
                 }
             }, (error) => {
                 console.error("Erreur écoute périodes:", error);
-                loadingPeriodsMsg.textContent = 'Erreur chargement périodes.';
-                loadingPeriodsMsg.style.color = 'red';
+                loadingMsg.textContent = 'Erreur chargement périodes.';
+                loadingMsg.style.color = 'red';
                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     loadingPeriodsMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant (périodes). <br>Suivez le lien dans la console (F12) pour le créer.`;
+                     loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant (périodes). <br>Suivez le lien dans la console (F12) pour le créer.`;
                 }
             });
         }
 
         function listenForManualStatusChanges() {
-             if (!manualStatusListDiv) { console.error("Élément UI des statuts manuels non trouvé."); return; }
+            const listDiv = domElements.manualStatusList;
             const statusMap = new Map();
 
             // Initialiser toutes les voitures comme "disponibles"
@@ -594,20 +745,22 @@
 
             // Écouter les changements dans la collection 'car_manual_status'
             onSnapshot(carManualStatusCollectionRef, (snapshot) => {
+                // Réinitialiser les statuts (au cas où un doc est supprimé)
+                 carOptions.forEach(carName => statusMap.set(carName, 'available'));
                 // Mettre à jour le statut pour les voitures présentes dans la collection
                 snapshot.forEach((doc) => {
                     statusMap.set(doc.id, doc.data().status || 'available');
                 });
 
                 // Rafraîchir l'affichage
-                manualStatusListDiv.innerHTML = '';
+                listDiv.innerHTML = '';
                 statusMap.forEach((status, carName) => {
-                    manualStatusListDiv.appendChild(createManualStatusItem(carName, status));
+                    listDiv.appendChild(createManualStatusItem(carName, status));
                 });
 
             }, (error) => {
                 console.error("Erreur écoute statuts manuels:", error);
-                manualStatusListDiv.innerHTML = '<p class="text-red-500">Erreur chargement statuts.</p>';
+                listDiv.innerHTML = '<p class="text-red-500">Erreur chargement statuts.</p>';
             });
         }
 
@@ -622,12 +775,13 @@
                 return;
             }
 
-            const modal = document.getElementById('confirmation-modal');
-            const detailsDiv = document.getElementById('modal-booking-details');
-            const startDateInput = document.getElementById('modal-start-date');
-            const startTimeInput = document.getElementById('modal-start-time');
-            const endDateInput = document.getElementById('modal-end-date');
-            const endTimeInput = document.getElementById('modal-end-time');
+            const modal = domElements.confirmationModal;
+            const detailsDiv = domElements.modalBookingDetails;
+            const startDateInput = domElements.modalStartDate;
+            const startTimeInput = domElements.modalStartTime;
+            const endDateInput = domElements.modalEndDate;
+            const endTimeInput = domElements.modalEndTime;
+            const confirmButton = domElements.confirmModalButton;
 
             // Remplir les détails
             detailsDiv.innerHTML = `
@@ -635,15 +789,22 @@
                 <p><strong>Voiture:</strong> ${currentBookingData.voiture}</p>
             `;
             
-            // ** FIX: Utiliser les Timestamps pour remplir la modale **
-            let pickupDate = { date: currentBookingData.datePriseEnCharge, time: currentBookingData.heurePriseEnCharge };
-            let returnDate = { date: currentBookingData.dateRetour, time: currentBookingData.heureRetour };
+            // Remplir les dates/heures actuelles
+            // Préférer les timestamps s'ils existent (plus fiables)
+            let pickupDate, returnDate;
 
             if (currentBookingData.pickupTimestamp) {
                 pickupDate = getDateTimeObjectFromTimestamp(currentBookingData.pickupTimestamp);
+            } else {
+                // Fallback pour les anciennes réservations sans timestamp (string)
+                pickupDate = { date: currentBookingData.datePriseEnCharge || '', time: currentBookingData.heurePriseEnCharge || '12:00' };
             }
+
             if (currentBookingData.returnTimestamp) {
                 returnDate = getDateTimeObjectFromTimestamp(currentBookingData.returnTimestamp);
+            } else {
+                // Fallback pour les anciennes réservations sans timestamp (string)
+                returnDate = { date: currentBookingData.dateRetour || '', time: currentBookingData.heureRetour || '12:00' };
             }
             
             startDateInput.value = pickupDate.date;
@@ -651,14 +812,18 @@
             endDateInput.value = returnDate.date;
             endTimeInput.value = returnDate.time;
 
+            // Activer le bouton de confirmation
+            confirmButton.disabled = false;
+
             modal.classList.remove('hidden');
             setTimeout(() => modal.classList.remove('opacity-0'), 10);
             setTimeout(() => modal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95', '-translate-y-10'), 50);
         }
 
         function closeConfirmationModal() {
-            const modal = document.getElementById('confirmation-modal');
-            const modalError = document.getElementById('modal-error');
+            const modal = domElements.confirmationModal;
+            const modalError = domElements.modalError;
+            const confirmButton = domElements.confirmModalButton;
             
             modal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95', '-translate-y-10');
             setTimeout(() => {
@@ -668,7 +833,7 @@
                     modalError.classList.add('hidden');
                     currentBookingId = null;
                     currentBookingData = null;
-                    isConfirmationBusy = false; // Relâcher le verrou
+                    confirmButton.disabled = true; // Désactiver pour la prochaine ouverture
                 }, 300);
             }, 300);
         }
@@ -676,31 +841,33 @@
         // --- ACTIONS ADMIN (Confirmation, Suppression, etc.) ---
 
         async function handleFinalConfirmation() {
-            if (!currentBookingId || !currentBookingData || isConfirmationBusy) return; // Vérifier le verrou
-            
-            isConfirmationBusy = true; // Activer le verrou
+            if (!currentBookingId || !currentBookingData || isConfirmationBusy) return;
 
-            const modalError = document.getElementById('modal-error');
-            const confirmButton = document.getElementById('confirm-modal-button');
+            isConfirmationBusy = true; // Activer le verrou
+            const modalError = domElements.modalError;
+            const confirmButton = domElements.confirmModalButton;
             modalError.classList.add('hidden');
             confirmButton.disabled = true;
+            confirmButton.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Confirmation...';
+
 
             // Récupérer les dates (potentiellement modifiées)
-            const newStartDate = document.getElementById('modal-start-date').value;
-            const newStartTime = document.getElementById('modal-start-time').value;
-            const newEndDate = document.getElementById('modal-end-date').value;
-            const newEndTime = document.getElementById('modal-end-time').value;
+            const newStartDate = domElements.modalStartDate.value;
+            const newStartTime = domElements.modalStartTime.value;
+            const newEndDate = domElements.modalEndDate.value;
+            const newEndTime = domElements.modalEndTime.value;
 
-            // ** FIX: NOUVELLE VALIDATION **
+            // Validation (ajoutée)
             if (!newStartDate || !newStartTime || !newEndDate || !newEndTime) {
                 modalError.textContent = "Erreur : Tous les champs de date et d'heure sont requis.";
                 modalError.classList.remove('hidden');
                 confirmButton.disabled = false;
-                isConfirmationBusy = false; // Relâcher le verrou en cas d'erreur
+                confirmButton.innerHTML = '<i class="fas fa-check mr-2"></i> Confirmer la Réservation';
+                isConfirmationBusy = false; // Relâcher le verrou
                 return;
             }
 
-            // ** FIX: Utiliser la fonction locale **
+            // Combiner date et heure
             const newPickupDateTime = getDateTimeObjectFromISO(newStartDate, newStartTime);
             const newReturnDateTime = getDateTimeObjectFromISO(newEndDate, newEndTime);
 
@@ -709,7 +876,8 @@
                 modalError.textContent = "Erreur : La date/heure de fin doit être après la date/heure de début.";
                 modalError.classList.remove('hidden');
                 confirmButton.disabled = false;
-                isConfirmationBusy = false; // Relâcher le verrou en cas d'erreur
+                confirmButton.innerHTML = '<i class="fas fa-check mr-2"></i> Confirmer la Réservation';
+                isConfirmationBusy = false; // Relâcher le verrou
                 return;
             }
             
@@ -737,23 +905,40 @@
                     type: 'booking', // Marqué comme généré par une réservation
                     bookingId: currentBookingId // Lien vers la réservation
                 };
-                // ** FIX: Correction de l'erreur "empty path". On passe directement la CollectionReference. **
-                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef);
+                // Nous créons un nouveau doc dans la collection d'indisponibilité
+                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef); // CORRECTION: doc(collection(...)) -> doc(...)
                 batch.set(newPeriodRef, unavailabilityData);
 
                 // 3. Exécuter le batch
                 await batch.commit();
 
                 showAdminMessage(`Réservation ${currentBookingId.substring(0, 5)}... confirmée et voiture bloquée.`, 'success');
-                closeConfirmationModal(); // Relâchera le verrou
+                closeConfirmationModal();
+                
+                // NOUVEAU: Mettre à jour manuellement le cache et rafraîchir les vues
+                // (onSnapshot prendra quelques secondes, ceci est plus rapide)
+                const index = allBookingsCache.findIndex(b => b.id === currentBookingId);
+                if (index > -1) {
+                    allBookingsCache[index].confirmed = true;
+                    // Mettre à jour les données de date/heure aussi
+                    allBookingsCache[index].datePriseEnCharge = newStartDate;
+                    allBookingsCache[index].heurePriseEnCharge = newStartTime;
+                    allBookingsCache[index].dateRetour = newEndDate;
+                    allBookingsCache[index].heureRetour = newEndTime;
+                    allBookingsCache[index].pickupTimestamp = Timestamp.fromDate(newPickupDateTime);
+                    allBookingsCache[index].returnTimestamp = Timestamp.fromDate(newReturnDateTime);
+                }
+                displayBookings(currentView);
+                updateClientHistory(allBookingsCache); // Rafraîchir l'historique client
+
             } catch (error) {
                 console.error("Erreur lors de la confirmation finale:", error);
                 modalError.textContent = "Erreur Firestore. Vérifiez la console.";
                 modalError.classList.remove('hidden');
-                isConfirmationBusy = false; // Relâcher le verrou en cas d'erreur
             } finally {
                 confirmButton.disabled = false;
-                // Le verrou est relâché dans closeConfirmationModal() ou dans les catch
+                confirmButton.innerHTML = '<i class="fas fa-check mr-2"></i> Confirmer la Réservation';
+                isConfirmationBusy = false; // Relâcher le verrou
             }
         }
 
@@ -769,7 +954,7 @@
                 batch.update(bookingRef, { deleted: true });
 
                 // 2. Trouver et supprimer la période d'indisponibilité associée
-                // ** NÉCESSITE L'INDEX SUR 'bookingId' **
+                // (Nécessite l'index sur 'bookingId' dans 'car_unavailability_periods')
                 const q = query(unavailabilityPeriodsCollectionRef, where("bookingId", "==", bookingId));
                 const periodSnapshot = await getDocs(q);
                 
@@ -778,15 +963,18 @@
                         batch.delete(docSnap.ref);
                     });
                     console.log("Période d'indisponibilité associée supprimée.");
-                } else {
-                    console.log("Aucune période d'indisponibilité trouvée pour ce bookingId (c'est normal si la résa n'a jamais été confirmée).");
                 }
 
                 // 3. Exécuter le batch
                 await batch.commit();
 
                 showAdminMessage(`Réservation ${bookingId.substring(0, 5)}... supprimée/archivée.`, 'success');
-                // L'affichage se mettra à jour via onSnapshot
+                
+                // NOUVEAU: Mettre à jour manuellement le cache et rafraîchir les vues
+                allBookingsCache = allBookingsCache.filter(b => b.id !== bookingId);
+                displayBookings(currentView);
+                updateClientHistory(allBookingsCache); // Rafraîchir l'historique client
+
             } catch (error) {
                 console.error("Erreur lors de la suppression:", error);
                 showAdminMessage("Erreur lors de la suppression. Vérifiez la console.", 'error');
@@ -882,49 +1070,56 @@
         function toggleView(view) {
             displayBookings(view); // Appelle la nouvelle fonction de filtrage JS
         }
+        
+        // --- NOUVELLE FONCTION: Initialisation des éléments DOM ---
+        function initDomElements() {
+             const ids = [
+                'login-overlay', 'login-button', 'password-input', 'login-error', 'main-content',
+                'admin-message-box', 'tab-new', 'tab-confirmed', 'count-new', 'count-confirmed',
+                'bookings-list', 'loading-bookings', 'unavailability-form', 'unav-car',
+                'manual-status-list', 'periods-list', 'loading-periods',
+                'confirmation-modal', 'close-modal-button', 'modal-booking-details',
+                'modal-start-date', 'modal-start-time', 'modal-end-date', 'modal-end-time',
+                'modal-error', 'cancel-modal-button', 'confirm-modal-button',
+                'enable-notifications', 'notifications-status',
+                // Nouveaux éléments
+                'client-history-list', 'loading-client-history'
+            ];
+            let allFound = true;
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) {
+                    console.error(`Élément DOM manquant: #${id}`);
+                    allFound = false;
+                }
+                // Convertir 'client-history-list' en 'clientHistoryList'
+                const camelCaseId = id.replace(/-(\w)/g, (match, p1) => p1.toUpperCase());
+                domElements[camelCaseId] = el;
+            });
+            return allFound;
+        }
 
 
         // --- INITIALISATION (Login, PWA, etc.) ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            // -- Récupérer les éléments DOM --
-            // (Fait ici pour garantir qu'ils existent)
-            listDiv = document.getElementById('bookings-list');
-            loadingMsg = document.getElementById('loading-bookings');
-            countNew = document.getElementById('count-new');
-            countConfirmed = document.getElementById('count-confirmed');
-            periodsListDiv = document.getElementById('periods-list');
-            loadingPeriodsMsg = document.getElementById('loading-periods');
-            manualStatusListDiv = document.getElementById('manual-status-list');
-            unavCarSelect = document.getElementById('unav-car');
             
-            const loginOverlay = document.getElementById('login-overlay');
-            const loginButton = document.getElementById('login-button');
-            const passwordInput = document.getElementById('password-input');
-            const loginError = document.getElementById('login-error');
-            const mainContent = document.getElementById('main-content');
-
-            // -- Vérification de la présence des éléments --
-            if (!listDiv || !loadingMsg || !countNew || !countConfirmed || !periodsListDiv || !loadingPeriodsMsg || !manualStatusListDiv || !unavCarSelect) {
-                 console.error("Erreur critique: Un ou plusieurs éléments DOM principaux sont manquants.");
-                 // Affiche une erreur majeure si le DOM est cassé
-                 if (loginError) {
-                    loginError.textContent = "Erreur critique de la page. Vérifiez la console.";
-                    loginError.classList.remove('hidden');
-                 }
-                 return; // Arrête l'exécution si les éléments de base sont absents
+            // 1. Initialiser tous les éléments DOM
+            if (!initDomElements()) {
+                alert("Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.");
+                return;
             }
             
-            // Liste des voitures
+            // 2. Remplir les listes de voitures
             populateCarSelects();
 
-            // Gestion Login
+            // 3. Gestion Login
             function handleLogin() {
-                if (passwordInput.value === "12234") {
-                    loginOverlay.classList.add('opacity-0', 'pointer-events-none');
-                    mainContent.classList.remove('hidden');
-                    setTimeout(() => mainContent.classList.remove('opacity-0'), 50); // Fade in
-                    setTimeout(() => loginOverlay.style.display = 'none', 500); // Hide completely
+                if (domElements.passwordInput.value === "12234") {
+                    domElements.loginOverlay.classList.add('opacity-0', 'pointer-events-none');
+                    domElements.mainContent.classList.remove('hidden');
+                    setTimeout(() => domElements.mainContent.classList.remove('opacity-0'), 50); // Fade in
+                    setTimeout(() => domElements.loginOverlay.style.display = 'none', 500); // Hide completely
 
                     // Démarrer les écouteurs Firestore SEULEMENT APRES le login
                     if (dbReady) {
@@ -942,54 +1137,54 @@
                     }
 
                 } else {
-                    loginError.classList.remove('hidden');
-                    passwordInput.classList.add('border-red-500', 'ring-red-500');
-                    passwordInput.focus();
+                    domElements.loginError.classList.remove('hidden');
+                    domElements.passwordInput.classList.add('border-red-500', 'ring-red-500');
+                    domElements.passwordInput.focus();
                 }
             }
             
-            loginButton.addEventListener('click', handleLogin);
-            passwordInput.addEventListener('keyup', (e) => {
-                loginError.classList.add('hidden');
-                passwordInput.classList.remove('border-red-500', 'ring-red-500');
+            domElements.loginButton.addEventListener('click', handleLogin);
+            domElements.passwordInput.addEventListener('keyup', (e) => {
+                domElements.loginError.classList.add('hidden');
+                domElements.passwordInput.classList.remove('border-red-500', 'ring-red-500');
                 if (e.key === 'Enter') handleLogin();
             });
 
-            // Écouteurs Modale
-            document.getElementById('close-modal-button').addEventListener('click', closeConfirmationModal);
-            document.getElementById('cancel-modal-button').addEventListener('click', closeConfirmationModal);
-            document.getElementById('confirm-modal-button').addEventListener('click', handleFinalConfirmation);
+            // 4. Écouteurs Modale
+            domElements.closeModalButton.addEventListener('click', closeConfirmationModal);
+            domElements.cancelModalButton.addEventListener('click', closeConfirmationModal);
+            domElements.confirmModalButton.addEventListener('click', handleFinalConfirmation);
 
-            // Écouteurs Formulaire Indisponibilité
-            document.getElementById('unavailability-form').addEventListener('submit', addUnavailability);
+            // 5. Écouteurs Formulaire Indisponibilité
+            domElements.unavailabilityForm.addEventListener('submit', addUnavailability);
 
-            // Écouteurs Onglets
-            document.getElementById('tab-new').addEventListener('click', () => toggleView('new'));
-            document.getElementById('tab-confirmed').addEventListener('click', () => toggleView('confirmed'));
+            // 6. Écouteurs Onglets
+            domElements.tabNew.addEventListener('click', () => toggleView('new'));
+            domElements.tabConfirmed.addEventListener('click', () => toggleView('confirmed'));
 
-            // Initialisation PWA (Service Worker & Notifications)
-            const notifButton = document.getElementById('enable-notifications');
-            const notifStatus = document.getElementById('notifications-status');
+            // 7. Initialisation PWA (Service Worker & Notifications)
+            const notifButton = domElements.enableNotifications;
+            const notifStatus = domElements.notificationsStatus;
             
-            // 1. Enregistrement Service Worker
+            // 7.1 Enregistrement Service Worker
             if ('serviceWorker' in navigator) {
-                 // Vérifier le protocole
-                if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-                    window.addEventListener('load', () => {
-                        navigator.serviceWorker.register('/sw.js')
-                            .then(registration => {
-                                console.log('Service Worker enregistré avec succès:', registration.scope);
-                            })
-                            .catch(error => {
-                                console.error('Échec de l\'enregistrement du Service Worker:', error);
-                            });
-                    });
-                } else {
-                    console.warn("Le Service Worker ne peut pas être enregistré sur ce protocole:", window.location.protocol);
-                }
+                 // ** CORRECTION: Vérifier le protocole **
+                 if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                     window.addEventListener('load', () => {
+                         navigator.serviceWorker.register('/sw.js')
+                             .then(registration => {
+                                 console.log('Service Worker enregistré avec succès:', registration.scope);
+                             })
+                             .catch(error => {
+                                 console.error('Échec de l\'enregistrement du Service Worker:', error);
+                             });
+                     });
+                 } else {
+                     console.warn("Le Service Worker ne peut pas être enregistré sur ce protocole:", window.location.protocol);
+                 }
             }
 
-            // 2. Demande de Permission Notification
+            // 7.2 Demande de Permission Notification
             function requestNotificationPermission() {
                 if ('Notification' in window) {
                     Notification.requestPermission().then(permission => {
@@ -1029,7 +1224,7 @@
             }
 
 
-            // --- Connexion Firebase ---
+            // 8. --- Connexion Firebase ---
             (async () => {
                 try {
                     const app = initializeApp(firebaseConfig);
@@ -1041,10 +1236,10 @@
                     console.log("Firebase initialisé avec succès (DOMContentLoaded).");
                 } catch (error) {
                     console.error("Erreur critique d'initialisation Firebase:", error);
-                    loginButton.disabled = true;
-                    loginButton.textContent = "Erreur DB";
-                    loginError.textContent = "Impossible de connecter à Firebase. Vérifiez la console.";
-                    loginError.classList.remove('hidden');
+                    domElements.loginButton.disabled = true;
+                    domElements.loginButton.textContent = "Erreur DB";
+                    domElements.loginError.textContent = "Impossible de connecter à Firebase. Vérifiez la console.";
+                    domElements.loginError.classList.remove('hidden');
                 }
             })();
 
