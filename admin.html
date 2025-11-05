@@ -276,6 +276,9 @@
         // --- FONCTIONS UTILITAIRES ---
 
         function formatReadableDateTime(timestamp) {
+            // ** FIX: Définir le fuseau horaire du Maroc **
+            const timeZone = 'Africa/Casablanca';
+
             if (!timestamp || !timestamp.seconds) {
                 // Essayer de le traiter comme une date-chaîne (ex: 2025-10-24 10:30)
                 if(typeof timestamp === 'string') {
@@ -285,11 +288,13 @@
                         const dateParts = parts[0].split('-');
                         const timeParts = parts[1].split(':');
                         if (dateParts.length === 3 && timeParts.length === 2) {
+                             // On suppose que la chaîne est en UTC, puis on la formate pour le Maroc
                              const date = new Date(Date.UTC(dateParts[0], dateParts[1]-1, dateParts[2], timeParts[0], timeParts[1]));
                              if(!isNaN(date)) {
                                  return new Intl.DateTimeFormat('fr-FR', {
                                     day: '2-digit', month: '2-digit', year: 'numeric',
-                                    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'
+                                    hour: '2-digit', minute: '2-digit', hour12: false, 
+                                    timeZone: timeZone // Utiliser le fuseau horaire du Maroc
                                 }).format(date).replace('à ', '');
                              }
                         }
@@ -301,7 +306,8 @@
             const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
             return new Intl.DateTimeFormat('fr-FR', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' // Utiliser UTC pour la cohérence
+                hour: '2-digit', minute: '2-digit', hour12: false, 
+                timeZone: timeZone // Utiliser le fuseau horaire du Maroc
             }).format(date).replace('à ', '');
         }
 
@@ -312,6 +318,8 @@
             const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
             
             // Crée des chaînes ISO distinctes pour la date et l'heure en UTC
+            // Les champs de la modale (date/heure) doivent rester en UTC
+            // car ils sont lus et écrits comme UTC. Seul l'affichage est changé.
             const year = date.getUTCFullYear();
             const month = String(date.getUTCMonth() + 1).padStart(2, '0');
             const day = String(date.getUTCDate()).padStart(2, '0');
@@ -330,6 +338,7 @@
                  if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
                  const [year, month, day] = dateStr.split('-');
                  const [hour, minute] = timeStr.split(':');
+                 // Lit les entrées comme si elles étaient UTC
                  const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
                  if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
                  return d;
@@ -381,11 +390,15 @@
             card.id = `booking-${booking.id}`;
 
             // Assurer que le timestamp est valide avant de formater
+            // Utilise maintenant formatReadableDateTime qui est réglé sur Africa/Casablanca
             const receivedAt = booking.timestamp ? formatReadableDateTime(booking.timestamp) : 'Date inconnue';
             
             // Créer les chaînes de date/heure pour l'affichage
-            const pickupDateTime = `${booking.datePriseEnCharge || 'jj/mm/aaaa'} ${booking.heurePriseEnCharge || 'hh:mm'}`;
-            const returnDateTime = `${booking.dateRetour || 'jj/mm/aaaa'} ${booking.heureRetour || 'hh:mm'}`;
+            // Celles-ci proviennent de la base de données (qui sont en UTC)
+            // Nous les affichons telles quelles, mais le "Reçu le" est corrigé.
+            // Si pickupTimestamp existe, nous devrions l'utiliser pour un affichage localisé.
+            const pickupDateTime = booking.pickupTimestamp ? formatReadableDateTime(booking.pickupTimestamp) : `${booking.datePriseEnCharge || 'jj/mm/aaaa'} ${booking.heurePriseEnCharge || 'hh:mm'}`;
+            const returnDateTime = booking.returnTimestamp ? formatReadableDateTime(booking.returnTimestamp) : `${booking.dateRetour || 'jj/mm/aaaa'} ${booking.heureRetour || 'hh:mm'}`;
 
             const statusClass = booking.confirmed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
             const statusText = booking.confirmed ? '<i class="fas fa-check-circle mr-1.5"></i> Confirmée' : '<i class="fas fa-hourglass-start mr-1.5"></i> Nouvelle Demande';
@@ -445,6 +458,7 @@
             item.id = `period-${period.id}`;
 
             const carName = period.car || "Inconnue";
+            // Utilise la fonction mise à jour pour l'heure du Maroc
             const startDate = period.startDate ? formatReadableDateTime(period.startDate) : "N/A";
             const endDate = period.endDate ? formatReadableDateTime(period.endDate) : "N/A";
             const typeText = period.type === 'booking' ? '(Réservé)' : '(Manuel)';
@@ -670,6 +684,7 @@
             
             // Remplir les dates/heures actuelles
             // Tenter de parser les timestamps s'ils existent, sinon utiliser les strings
+            // On utilise getDateTimeObjectFromTimestamp qui formate en UTC pour les champs
             let pickupDate = { date: currentBookingData.datePriseEnCharge, time: currentBookingData.heurePriseEnCharge };
             let returnDate = { date: currentBookingData.dateRetour, time: currentBookingData.heureRetour };
 
@@ -803,7 +818,7 @@
                 // 3. Exécuter le batch
                 await batch.commit();
 
-                showAdminMessage(`Réservation ${bookingId.substring(0, 5)}... supprimée/archivée.`, 'success');
+                showAdminMessage(`Réservation ${currentBookingId.substring(0, 5)}... supprimée/archivée.`, 'success');
                 // L'affichage se mettra à jour via onSnapshot
             } catch (error) {
                 console.error("Erreur lors de la suppression:", error);
