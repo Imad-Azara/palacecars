@@ -260,27 +260,101 @@
 
         function formatReadableDateTime(timestamp) {
             if (!timestamp || !timestamp.seconds) {
-                return "Date non spécifiée";
+                // Essayer de le traiter comme une date-chaîne (ex: 2025-10-24 10:30)
+                if(typeof timestamp === 'string') {
+                    // Si c'est juste une date (YYYY-MM-DD) et une heure (HH:MM)
+                    const parts = timestamp.split(' ');
+                    if(parts.length === 2) {
+                        const dateParts = parts[0].split('-');
+                        const timeParts = parts[1].split(':');
+                        if (dateParts.length === 3 && timeParts.length === 2) {
+                             const date = new Date(Date.UTC(dateParts[0], dateParts[1]-1, dateParts[2], timeParts[0], timeParts[1]));
+                             if(!isNaN(date)) {
+                                 return new Intl.DateTimeFormat('fr-FR', {
+                                    day: '2-digit', month: '2-digit', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'
+                                }).format(date).replace('à ', '');
+                             }
+                        }
+                    }
+                }
+                return "Date non spécifiée"; // Retour par défaut
             }
+            // Si c'est un objet Timestamp Firebase
             const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
             return new Intl.DateTimeFormat('fr-FR', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: false
+                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' // Utiliser UTC pour la cohérence
             }).format(date).replace('à ', '');
         }
 
+
         function getDateTimeObjectFromTimestamp(timestamp) {
             if (!timestamp || !timestamp.seconds) return { date: '', time: '' };
+            // Crée un objet Date à partir du timestamp Firebase
             const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
             
-            // Format YYYY-MM-DD
-            const dateISO = date.toISOString().split('T')[0];
+            // Crée des chaînes ISO distinctes pour la date et l'heure en UTC
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const hour = String(date.getUTCHours()).padStart(2, '0');
+            const minute = String(date.getUTCMinutes()).padStart(2, '0');
             
-            // Format HH:MM (attention au fuseau horaire, on utilise UTC pour la cohérence)
-            const timeISO = date.toISOString().split('T')[1].substring(0, 5);
+            const dateISO = `${year}-${month}-${day}`;
+            const timeISO = `${hour}:${minute}`;
             
             return { date: dateISO, time: timeISO };
         }
+
+        // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM en objet Date (en UTC)
+        function getDateTimeObjectFromISO(dateStr, timeStr) {
+             try {
+                if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
+                const [year, month, day] = dateStr.split('-');
+                const [hour, minute] = timeStr.split(':');
+                const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
+                if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
+                return d;
+            } catch (e) {
+                console.error("Erreur conversion ISO date/heure:", dateStr, timeStr, e);
+                return null;
+            }
+        }
+
+        function showAdminMessage(message, type = 'info', duration = 5000) {
+            const msgBox = document.getElementById('admin-message-box');
+            if (!msgBox) return;
+
+            msgBox.textContent = message;
+            msgBox.className = 'p-4 rounded-lg text-center mb-6 font-medium border text-sm'; // Reset
+            msgBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
+
+            if (type === 'success') {
+                msgBox.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
+            } else if (type === 'error') {
+                msgBox.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
+            } else if (type === 'warning') {
+                msgBox.classList.add('bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
+            }
+            msgBox.classList.remove('hidden');
+            
+            setTimeout(() => {
+                msgBox.classList.add('hidden');
+            }, duration);
+        }
+
+        function populateCarSelects() {
+            const unavCarSelect = document.getElementById('unav-car');
+            if (!unavCarSelect) return;
+            const placeholder = unavCarSelect.querySelector('option[disabled]');
+            unavCarSelect.innerHTML = '';
+            if (placeholder) unavCarSelect.appendChild(placeholder);
+            carOptions.forEach(car => {
+                unavCarSelect.options.add(new Option(car, car));
+            });
+        }
+
 
         // --- FONCTIONS D'AFFICHAGE (Rendering) ---
 
@@ -289,9 +363,13 @@
             card.className = 'border border-gray-200 rounded-xl shadow-sm overflow-hidden';
             card.id = `booking-${booking.id}`;
 
+            // Assurer que le timestamp est valide avant de formater
             const receivedAt = booking.timestamp ? formatReadableDateTime(booking.timestamp) : 'Date inconnue';
-            const pickupDateTime = `${booking.datePriseEnCharge} ${booking.heurePriseEnCharge}`;
-            const returnDateTime = `${booking.dateRetour} ${booking.heureRetour}`;
+            
+            // Créer les chaînes de date/heure pour l'affichage
+            const pickupDateTime = `${booking.datePriseEnCharge || 'jj/mm/aaaa'} ${booking.heurePriseEnCharge || 'hh:mm'}`;
+            const returnDateTime = `${booking.dateRetour || 'jj/mm/aaaa'} ${booking.heureRetour || 'hh:mm'}`;
+
             const statusClass = booking.confirmed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
             const statusText = booking.confirmed ? '<i class="fas fa-check-circle mr-1.5"></i> Confirmée' : '<i class="fas fa-hourglass-start mr-1.5"></i> Nouvelle Demande';
 
@@ -304,7 +382,7 @@
                         </div>
                     </div>
                     <h3 class="text-xl font-bold text-text-dark mb-1">${booking.nomPrenom || 'Nom non spécifié'}</h3>
-                    <p class="text-sm text-gray-600 mb-4">
+                    <p class="text-sm text-gray-600 mb-4 break-words">
                         <a href="tel:${booking.telephone}" class="text-primary hover:underline">${booking.telephone || 'Téléphone non spécifié'}</a> | 
                         <a href="mailto:${booking.email}" class="text-primary hover:underline">${booking.email || 'Email non spécifié'}</a>
                     </p>
@@ -315,12 +393,12 @@
                             <div class="text-gray-700"><i class="fas fa-calendar-alt w-5 text-gray-400 mr-1"></i> <strong class="font-medium">Prise en charge:</strong></div>
                             <div class="font-semibold text-gray-800">${pickupDateTime}</div>
                             <div class="text-gray-700"><i class="fas fa-map-marker-alt w-5 text-gray-400 mr-1"></i> <strong class="font-medium">Lieu:</strong></div>
-                            <div class="text-gray-800">${booking.lieuPriseEnCharge || 'Non spécifié'}</div>
+                            <div class="text-gray-800 break-words">${booking.lieuPriseEnCharge || 'Non spécifié'}</div>
                             
                             <div class="text-gray-700"><i class="fas fa-calendar-check w-5 text-gray-400 mr-1"></i> <strong class="font-medium">Retour:</strong></div>
                             <div class="font-semibold text-gray-800">${returnDateTime}</div>
                             <div class="text-gray-700"><i class="fas fa-map-marker-alt w-5 text-gray-400 mr-1"></i> <strong class="font-medium">Lieu:</strong></div>
-                            <div class="text-gray-800">${booking.lieuRetour || 'Non spécifié'}</div>
+                            <div class="text-gray-800 break-words">${booking.lieuRetour || 'Non spécifié'}</div>
                         </div>
                     </div>
                 </div>
@@ -380,7 +458,7 @@
 
             item.innerHTML = `
                 <span class="font-medium text-text-dark">${carName}</span>
-                <div class_="${statusClass} text-sm">${statusText}</div>
+                <div class="${statusClass} text-sm">${statusText}</div>
                 <button data-car="${carName}" data-status="${isUnavailable ? 'available' : 'unavailable'}" class="toggle-status-button btn ${buttonClass} btn-sm py-1">
                     ${buttonText}
                 </button>
@@ -397,16 +475,6 @@
             return item;
         }
 
-        function populateCarSelects() {
-            const unavCarSelect = document.getElementById('unav-car');
-            const placeholder = unavCarSelect.querySelector('option[disabled]');
-            unavCarSelect.innerHTML = '';
-            if (placeholder) unavCarSelect.appendChild(placeholder);
-            carOptions.forEach(car => {
-                unavCarSelect.options.add(new Option(car, car));
-            });
-        }
-
         // --- FONCTIONS LOGIQUES (Firestore) ---
 
         // ** CORRECTION: LOGIQUE DE FILTRAGE DÉPLACÉE EN JAVASCRIPT **
@@ -415,6 +483,11 @@
             const loadingMsg = document.getElementById('loading-bookings');
             const countNew = document.getElementById('count-new');
             const countConfirmed = document.getElementById('count-confirmed');
+            
+            if (!listDiv || !loadingMsg || !countNew || !countConfirmed) {
+                console.error("Éléments UI manquants pour displayBookings");
+                return;
+            }
 
             listDiv.innerHTML = ''; // Nettoyer la liste
             currentView = view;
@@ -425,15 +498,12 @@
 
             const isConfirmedView = (view === 'confirmed');
             
-            // Filtrer le cache JavaScript au lieu de requêter Firestore
+            // Filtrer le cache JavaScript
             const bookingsToDisplay = allBookingsCache.filter(booking => {
                 // (booking.confirmed === true) pour 'confirmed'
                 // (booking.confirmed === false) pour 'new'
                 return booking.confirmed === isConfirmedView;
             });
-            
-            // Trier par date (le cache est déjà trié par timestamp desc)
-            // .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
             // Mettre à jour les compteurs
             countNew.textContent = allBookingsCache.filter(b => !b.confirmed).length;
@@ -450,25 +520,31 @@
             }
         }
 
-        // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE **
+        // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE (Évite l'erreur d'index) **
         function loadBookings() {
-            const listDiv = document.getElementById('bookings-list');
             const loadingMsg = document.getElementById('loading-bookings');
 
-            // Requête simplifiée: ne filtre que sur 'deleted' et trie.
-            // Le filtrage 'new'/'confirmed' se fait en JS (fonction displayBookings).
+            // Requête simplifiée: ne trie que par date.
+            // Le filtrage 'deleted' et 'confirmed' se fait en JS (fonction displayBookings).
+            // CELA PEUT NÉCESSITER UN INDEX SIMPLE SUR 'timestamp', mais évite l'index composite.
+            // **MISE À JOUR :** La requête précédente (`where("deleted", "==", false)`) nécessitait un index.
+            // Nous allons essayer SANS le `where` pour tout télécharger et filtrer en JS.
+            
             const q = query(
                 bookingsCollectionRef, 
-                where("deleted", "==", false),
                 orderBy("timestamp", "desc")
             );
 
-            // Écouter les changements en temps réel
             onSnapshot(q, (snapshot) => {
                 loadingMsg.textContent = 'Chargement des réservations...';
                 allBookingsCache = []; // Vider le cache
+                
                 snapshot.forEach((doc) => {
-                    allBookingsCache.push({ ...doc.data(), id: doc.id });
+                    const data = doc.data();
+                    // **FILTRAGE JS** : Ignorer les réservations marquées comme supprimées
+                    if (data.deleted !== true) {
+                        allBookingsCache.push({ ...data, id: doc.id });
+                    }
                 });
                 
                 // Afficher la vue actuellement sélectionnée avec les données mises à jour
@@ -478,9 +554,9 @@
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
                 loadingMsg.textContent = "Erreur: Impossible de charger les réservations. Vérifiez la console (F12).";
                 loadingMsg.style.color = 'red';
-                // Si l'erreur est un index manquant, le message s'affiche
+                // Si l'erreur est un index manquant (maintenant juste sur 'timestamp')
                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer.`;
+                     loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer (index sur 'timestamp' desc).`;
                 }
             });
         }
@@ -524,7 +600,6 @@
             carOptions.forEach(carName => statusMap.set(carName, 'available'));
 
             // Écouter les changements dans la collection 'car_manual_status'
-            // ** CORRECTION: Appel onSnapshot correct **
             onSnapshot(carManualStatusCollectionRef, (snapshot) => {
                 // Mettre à jour le statut pour les voitures présentes dans la collection
                 snapshot.forEach((doc) => {
@@ -548,7 +623,11 @@
         function openConfirmationModal(bookingId) {
             currentBookingId = bookingId;
             currentBookingData = allBookingsCache.find(b => b.id === bookingId);
-            if (!currentBookingData) return;
+            if (!currentBookingData) {
+                console.error("Impossible de trouver les données pour la réservation:", bookingId);
+                showAdminMessage("Erreur: Impossible de charger les détails de cette réservation.", "error");
+                return;
+            }
 
             const modal = document.getElementById('confirmation-modal');
             const detailsDiv = document.getElementById('modal-booking-details');
@@ -564,10 +643,21 @@
             `;
             
             // Remplir les dates/heures actuelles
-            startDateInput.value = currentBookingData.datePriseEnCharge;
-            startTimeInput.value = currentBookingData.heurePriseEnCharge;
-            endDateInput.value = currentBookingData.dateRetour;
-            endTimeInput.value = currentBookingData.heureRetour;
+            // Tenter de parser les timestamps s'ils existent, sinon utiliser les strings
+            let pickupDate = { date: currentBookingData.datePriseEnCharge, time: currentBookingData.heurePriseEnCharge };
+            let returnDate = { date: currentBookingData.dateRetour, time: currentBookingData.heureRetour };
+
+            if (currentBookingData.pickupTimestamp) {
+                pickupDate = getDateTimeObjectFromTimestamp(currentBookingData.pickupTimestamp);
+            }
+            if (currentBookingData.returnTimestamp) {
+                returnDate = getDateTimeObjectFromTimestamp(currentBookingData.returnTimestamp);
+            }
+            
+            startDateInput.value = pickupDate.date;
+            startTimeInput.value = pickupDate.time;
+            endDateInput.value = returnDate.date;
+            endTimeInput.value = returnDate.time;
 
             modal.classList.remove('hidden');
             setTimeout(() => modal.classList.remove('opacity-0'), 10);
@@ -629,7 +719,7 @@
                     heurePriseEnCharge: newStartTime,
                     dateRetour: newEndDate,
                     heureRetour: newEndTime,
-                    // Mettre à jour les timestamps si nécessaire (assure la cohérence)
+                    // Mettre à jour les timestamps (très important pour la vérification)
                     pickupTimestamp: Timestamp.fromDate(newPickupDateTime), 
                     returnTimestamp: Timestamp.fromDate(newReturnDateTime)
                 });
@@ -651,7 +741,7 @@
 
                 showAdminMessage(`Réservation ${currentBookingId.substring(0, 5)}... confirmée et voiture bloquée.`, 'success');
                 closeConfirmationModal();
-                // loadBookings() sera appelé par onSnapshot
+                // L'affichage se mettra à jour via onSnapshot de loadBookings
             } catch (error) {
                 console.error("Erreur lors de la confirmation finale:", error);
                 modalError.textContent = "Erreur Firestore. Vérifiez la console.";
@@ -663,7 +753,7 @@
 
 
         async function handleDeleteBooking(bookingId) {
-            if (!confirm(`Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?`)) return;
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?\n(Cela libérera aussi le créneau si elle était confirmée.)`)) return;
 
             try {
                 const batch = writeBatch(db);
@@ -708,8 +798,7 @@
                     await setDoc(carStatusRef, { status: 'unavailable' });
                     showAdminMessage(`${carName} est maintenant marqué INDISPONIBLE.`, 'warning');
                 } else {
-                    // Marquer comme disponible (en supprimant le document ou en changeant le statut)
-                    // Nous allons le supprimer pour le marquer comme disponible par défaut
+                    // Marquer comme disponible (en supprimant le document)
                     await deleteDoc(carStatusRef);
                     showAdminMessage(`${carName} est maintenant DISPONIBLE.`, 'success');
                 }
@@ -781,48 +870,8 @@
             }
         }
 
-        // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM en objet Date (en UTC)
-        function getDateTimeObjectFromISO(dateStr, timeStr) {
-             try {
-                const [year, month, day] = dateStr.split('-');
-                const [hour, minute] = timeStr.split(':');
-                const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
-                if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
-                return d;
-            } catch (e) {
-                console.error("Erreur conversion ISO date/heure:", dateStr, timeStr, e);
-                return null;
-            }
-        }
-
-        function showAdminMessage(message, type = 'info', duration = 5000) {
-            const msgBox = document.getElementById('admin-message-box');
-            if (!msgBox) return;
-
-            msgBox.textContent = message;
-            msgBox.className = 'p-4 rounded-lg text-center mb-6 font-medium border text-sm'; // Reset
-            msgBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
-
-            if (type === 'success') {
-                msgBox.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
-            } else if (type === 'error') {
-                msgBox.classList.add('bg-red-100', 'border-red-300', 'text-red-800');
-            } else if (type === 'warning') {
-                msgBox.classList.add('bg-yellow-100', 'border-yellow-300', 'text-yellow-800');
-            }
-            msgBox.classList.remove('hidden');
-            
-            setTimeout(() => {
-                msgBox.classList.add('hidden');
-            }, duration);
-        }
-
         function toggleView(view) {
-            if (view === 'new') {
-                displayBookings('new');
-            } else {
-                displayBookings('confirmed');
-            }
+            displayBookings(view); // Appelle la nouvelle fonction de filtrage JS
         }
 
 
