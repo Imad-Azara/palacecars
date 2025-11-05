@@ -6,7 +6,7 @@
     <title>Palace Cars - Panneau d'Administration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icônes Font Awesome: CORRECTION DÉFINITIVE DE L'ATTRIBUT INTEGRITY -->
+    <!-- Icônes Font Awesome: CORRECTION de 'xintegrity' en 'integrity' -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJd4qFf3F5f5qK2K6Q24L+nkA5bf5F3Gmf0iVCi/2fA/wz2N9H/Gz9oW9sP7Cg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -170,12 +170,12 @@
                          </div>
                     </div>
 
-                     <!-- Périodes Programmées -->
+                      <!-- Périodes Programmées -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
                          <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
                          <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
                             <!-- Périodes chargées par JS -->
-                            <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
+                             <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
                          </div>
                     </div>
 
@@ -219,7 +219,7 @@
             <div class="mt-8 flex justify-end space-x-3">
                  <button id="cancel-modal-button" class="btn btn-secondary">Annuler</button>
                  <button id="confirm-modal-button" class="btn btn-success">
-                    <i class="fas fa-check mr-2"></i> Confirmer la Réservation
+                     <i class="fas fa-check mr-2"></i> Confirmer la Réservation
                  </button>
             </div>
         </div>
@@ -235,6 +235,18 @@
             Timestamp, serverTimestamp, setDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // *** C'EST ICI : Votre configuration Firebase ***
+        const firebaseConfig = {
+          apiKey: "AIzaSyCsPHf_v8-gEiWGQzkwses-jOiDXs9tvWo",
+          authDomain: "palace-cars.firebaseapp.com",
+          projectId: "palace-cars",
+          storageBucket: "palace-cars.firebasestorage.app",
+          messagingSenderId: "469852272715",
+          appId: "1:469852272715:web:6e87dc7083cdc04e03b5ce",
+          measurementId: "G-KCEF4WBW0G"
+        };
+        // *** FIN DE LA CONFIGURATION ***
+
         // *** CORRECTION : DÉPLACEMENT DE TOUTES LES FONCTIONS EN HAUT ***
         // (Pour corriger les erreurs 'ReferenceError: ... is not defined')
 
@@ -247,6 +259,11 @@
         let currentView = 'new'; // 'new' or 'confirmed'
         let currentBookingId = null; // Pour la modale de confirmation
         let currentBookingData = null; // Pour la modale de confirmation
+
+        // ** FIX: Variables pour les éléments DOM importants **
+        let listDiv, loadingMsg, countNew, countConfirmed;
+        let tabNew, tabConfirmed;
+        // ** FIN FIX **
 
         // Liste statique des voitures
         const carOptions = [
@@ -310,16 +327,16 @@
         // Fonction utilitaire pour convertir YYYY-MM-DD et HH:MM en objet Date (en UTC)
         function getDateTimeObjectFromISO(dateStr, timeStr) {
              try {
-                if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
-                const [year, month, day] = dateStr.split('-');
-                const [hour, minute] = timeStr.split(':');
-                const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
-                if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
-                return d;
-            } catch (e) {
-                console.error("Erreur conversion ISO date/heure:", dateStr, timeStr, e);
-                return null;
-            }
+                 if (!dateStr || !timeStr) throw new Error("Date ou heure manquante");
+                 const [year, month, day] = dateStr.split('-');
+                 const [hour, minute] = timeStr.split(':');
+                 const d = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), 0));
+                 if (isNaN(d.getTime())) { throw new Error("Date invalide"); }
+                 return d;
+             } catch (e) {
+                 console.error("Erreur conversion ISO date/heure:", dateStr, timeStr, e);
+                 return null;
+             }
         }
 
         function showAdminMessage(message, type = 'info', duration = 5000) {
@@ -479,13 +496,14 @@
 
         // ** CORRECTION: LOGIQUE DE FILTRAGE DÉPLACÉE EN JAVASCRIPT **
         function displayBookings(view) {
-            const listDiv = document.getElementById('bookings-list');
-            const loadingMsg = document.getElementById('loading-bookings');
-            const countNew = document.getElementById('count-new');
-            const countConfirmed = document.getElementById('count-confirmed');
+            // ** FIX: Utilisation des variables globales mises en cache **
+            // const listDiv = document.getElementById('bookings-list');
+            // const loadingMsg = document.getElementById('loading-bookings');
+            // const countNew = document.getElementById('count-new');
+            // const countConfirmed = document.getElementById('count-confirmed');
             
             if (!listDiv || !loadingMsg || !countNew || !countConfirmed) {
-                console.error("Éléments UI manquants pour displayBookings");
+                console.error("Éléments UI manquants pour displayBookings (Vérification échouée)");
                 return;
             }
 
@@ -493,8 +511,9 @@
             currentView = view;
 
             // Mettre à jour les styles des onglets
-            document.getElementById('tab-new').classList.toggle('active', view === 'new');
-            document.getElementById('tab-confirmed').classList.toggle('active', view === 'confirmed');
+            // ** FIX: Utilisation des variables globales mises en cache **
+            tabNew.classList.toggle('active', view === 'new');
+            tabConfirmed.classList.toggle('active', view === 'confirmed');
 
             const isConfirmedView = (view === 'confirmed');
             
@@ -522,7 +541,8 @@
 
         // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE (Évite l'erreur d'index) **
         function loadBookings() {
-            const loadingMsg = document.getElementById('loading-bookings');
+            // ** FIX: Utilisation de la variable globale 'loadingMsg' **
+            // const loadingMsg = document.getElementById('loading-bookings');
 
             // Requête simplifiée: ne trie que par date.
             // Le filtrage 'deleted' et 'confirmed' se fait en JS (fonction displayBookings).
@@ -536,6 +556,10 @@
             );
 
             onSnapshot(q, (snapshot) => {
+                if (!loadingMsg) { // Sécurité supplémentaire
+                    console.error("loadBookings: loadingMsg est null");
+                    return;
+                }
                 loadingMsg.textContent = 'Chargement des réservations...';
                 allBookingsCache = []; // Vider le cache
                 
@@ -552,11 +576,13 @@
 
             }, (error) => {
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
-                loadingMsg.textContent = "Erreur: Impossible de charger les réservations. Vérifiez la console (F12).";
-                loadingMsg.style.color = 'red';
-                // Si l'erreur est un index manquant (maintenant juste sur 'timestamp')
-                if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                     loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer (index sur 'timestamp' desc).`;
+                if (loadingMsg) {
+                    loadingMsg.textContent = "Erreur: Impossible de charger les réservations. Vérifiez la console (F12).";
+                    loadingMsg.style.color = 'red';
+                    // Si l'erreur est un index manquant (maintenant juste sur 'timestamp')
+                    if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                         loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer (index sur 'timestamp' desc).`;
+                    }
                 }
             });
         }
@@ -851,12 +877,12 @@
 
             try {
                  const unavailabilityData = {
-                    car: car,
-                    startDate: Timestamp.fromDate(pickupDateTime),
-                    endDate: Timestamp.fromDate(returnDateTime),
-                    type: 'manual', // Marqué comme manuel
-                    bookingId: null // Pas de lien de réservation
-                };
+                     car: car,
+                     startDate: Timestamp.fromDate(pickupDateTime),
+                     endDate: Timestamp.fromDate(returnDateTime),
+                     type: 'manual', // Marqué comme manuel
+                     bookingId: null // Pas de lien de réservation
+                 };
                 
                 await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
                 showAdminMessage(`Période d'indisponibilité ajoutée pour ${car}.`, 'success');
@@ -878,11 +904,31 @@
         // --- INITIALISATION (Login, PWA, etc.) ---
 
         document.addEventListener('DOMContentLoaded', () => {
+            // ** FIX: Assignation des variables DOM globales **
+            listDiv = document.getElementById('bookings-list');
+            loadingMsg = document.getElementById('loading-bookings');
+            countNew = document.getElementById('count-new');
+            countConfirmed = document.getElementById('count-confirmed');
+            tabNew = document.getElementById('tab-new');
+            tabConfirmed = document.getElementById('tab-confirmed');
+            
             const loginOverlay = document.getElementById('login-overlay');
             const loginButton = document.getElementById('login-button');
             const passwordInput = document.getElementById('password-input');
             const loginError = document.getElementById('login-error');
             const mainContent = document.getElementById('main-content');
+
+            // ** FIX: Vérification initiale des éléments DOM **
+            if (!listDiv || !loadingMsg || !countNew || !countConfirmed || !tabNew || !tabConfirmed || !loginError || !loginButton || !passwordInput || !mainContent) {
+                console.error("ERREUR CRITIQUE: Éléments DOM non trouvés au chargement.");
+                // Afficher une erreur à l'utilisateur si possible
+                if(loginError) {
+                    loginError.textContent = "Erreur de chargement de l'application (DOM).";
+                    loginError.classList.remove('hidden');
+                }
+                // Empêcher le reste du script de s'exécuter
+                return; 
+            }
 
             // Liste des voitures
             populateCarSelects();
@@ -933,8 +979,9 @@
             document.getElementById('unavailability-form').addEventListener('submit', addUnavailability);
 
             // Écouteurs Onglets
-            document.getElementById('tab-new').addEventListener('click', () => toggleView('new'));
-            document.getElementById('tab-confirmed').addEventListener('click', () => toggleView('confirmed'));
+            // ** FIX: Utilisation des variables globales mises en cache **
+            tabNew.addEventListener('click', () => toggleView('new'));
+            tabConfirmed.addEventListener('click', () => toggleView('confirmed'));
 
             // Initialisation PWA (Service Worker & Notifications)
             const notifButton = document.getElementById('enable-notifications');
@@ -943,19 +990,19 @@
             // 1. Enregistrement Service Worker
             if ('serviceWorker' in navigator) {
                  // ** CORRECTION: Vérifier le protocole **
-                if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-                    window.addEventListener('load', () => {
-                        navigator.serviceWorker.register('/sw.js')
-                            .then(registration => {
-                                console.log('Service Worker enregistré avec succès:', registration.scope);
-                            })
-                            .catch(error => {
-                                console.error('Échec de l\'enregistrement du Service Worker:', error);
-                            });
-                    });
-                } else {
-                    console.warn("Le Service Worker ne peut pas être enregistré sur ce protocole:", window.location.protocol);
-                }
+                 if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                     window.addEventListener('load', () => {
+                         navigator.serviceWorker.register('/sw.js')
+                             .then(registration => {
+                                 console.log('Service Worker enregistré avec succès:', registration.scope);
+                             })
+                             .catch(error => {
+                                 console.error('Échec de l\'enregistrement du Service Worker:', error);
+                             });
+                     });
+                 } else {
+                     console.warn("Le Service Worker ne peut pas être enregistré sur ce protocole:", window.location.protocol);
+                 }
             }
 
             // 2. Demande de Permission Notification
@@ -1001,6 +1048,7 @@
             // --- Connexion Firebase ---
             (async () => {
                 try {
+                    // Cette ligne va maintenant fonctionner car firebaseConfig est défini juste au-dessus
                     const app = initializeApp(firebaseConfig);
                     db = getFirestore(app);
                     bookingsCollectionRef = collection(db, "palace_cars_bookings");
