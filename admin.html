@@ -52,6 +52,18 @@
 
         /* Login Form */
         #login-overlay { background-color: rgba(241, 245, 249, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+        /* NOUVEAU: Modale de confirmation custom */
+        #custom-confirm-modal {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+            transition: opacity 0.3s ease-in-out;
+            z-index: 60; /* Au-dessus de la modale de réservation */
+        }
+        #custom-confirm-modal:not(.hidden) { opacity: 1; }
+        #custom-confirm-modal:not(.hidden) .modal-content {
+             opacity: 1; transform: translateY(0) scale(1);
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -164,19 +176,19 @@
 
                     <!-- Statut Manuel -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
-                          <h3 class="text-xl font-bold text-text-dark mb-5">Statut Actuel des Voitures</h3>
-                          <div id="manual-status-list" class="space-y-3">
-                               <!-- Statuts chargés par JS -->
-                          </div>
+                         <h3 class="text-xl font-bold text-text-dark mb-5">Statut Actuel des Voitures</h3>
+                         <div id="manual-status-list" class="space-y-3">
+                             <!-- Statuts chargés par JS -->
+                         </div>
                     </div>
 
-                    <!-- Périodes Programmées -->
+                      <!-- Périodes Programmées -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
-                          <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
-                          <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                               <!-- Périodes chargées par JS -->
-                               <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
-                          </div>
+                         <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
+                         <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                             <!-- Périodes chargées par JS -->
+                             <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
+                         </div>
                     </div>
 
                     <!-- NOUVELLE SECTION: Clients Fidèles -->
@@ -213,7 +225,7 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <!-- Date et Heure de Début -->
+                  <!-- Date et Heure de Début -->
                 <div>
                     <label for="modal-start-date" class="block text-sm font-semibold text-gray-700 mb-1">Début Location</label>
                     <input type="date" id="modal-start-date" name="modalStartDate" required class="block w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
@@ -238,6 +250,18 @@
         </div>
     </div>
 
+    <!-- NOUVELLE Modale de Confirmation Custom (pour alert/confirm) -->
+    <div id="custom-confirm-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 hidden opacity-0">
+        <div class="modal-content bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md opacity-0 transform scale-95 -translate-y-10 border border-gray-200">
+            <h2 id="custom-confirm-title" class="text-2xl font-bold text-text-dark mb-4">Confirmation</h2>
+            <p id="custom-confirm-message" class="text-gray-600 mb-8">Êtes-vous sûr ?</p>
+            <div class="flex justify-end space-x-3">
+                 <button id="custom-confirm-cancel" class="btn btn-secondary">Annuler</button>
+                 <button id="custom-confirm-ok" class="btn btn-danger">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Imports Firebase -->
     <script type="module">
@@ -247,12 +271,7 @@
             where, orderBy, doc, getDoc, getDocs, updateDoc, deleteDoc, 
             Timestamp, serverTimestamp, setDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // CORRECTION: Pour éviter l'utilisation de window.confirm/alert
-        function customConfirm(message) {
-            return window.prompt(message + " (Tapez 'OUI' pour confirmer)") === 'OUI';
-        }
-        
+
         // *** Configuration Firebase ***
         // (L'utilisateur doit coller sa configuration ici)
         const firebaseConfig = {
@@ -278,6 +297,7 @@
         let currentBookingId = null; // Pour la modale de confirmation
         let currentBookingData = null; // Pour la modale de confirmation
         let isConfirmationBusy = false; // Verrou pour éviter double-clic
+        let isFirstLoad = true; // NOUVEAU: Pour la gestion des notifications
 
         // Liste statique des voitures
         const carOptions = [
@@ -285,12 +305,60 @@
             "Dacia Logan Diesel 2025",
             "Dacia Sandero Essence",
             "Dacia Sandero Diesel",
-            "Renault Clio 5 Diesel" // NOUVEAU
+            "Renault Clio 5 Diesel"
         ];
         
         // --- NOUVEAU: Map des éléments DOM ---
         // (Pour éviter les erreurs "Éléments UI manquants")
         const domElements = {};
+        
+        // --- NOUVEAU: Logique de Confirmation Custom ---
+        let confirmResolve = null;
+        function customConfirm(message, title = "Confirmation", okClass = 'btn-danger') {
+            const modal = domElements.customConfirmModal;
+            const titleEl = domElements.customConfirmTitle;
+            const messageEl = domElements.customConfirmMessage;
+            const okButton = domElements.customConfirmOk;
+            const cancelButton = domElements.customConfirmCancel;
+
+            titleEl.textContent = title;
+            messageEl.innerHTML = message.replace(/\n/g, '<br>'); // Supporte les sauts de ligne
+            
+            // Appliquer le style au bouton OK (par ex. btn-danger pour suppression)
+            okButton.className = `btn ${okClass}`;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            setTimeout(() => modal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95', '-translate-y-10'), 50);
+
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+            });
+        }
+        
+        function setupCustomConfirmListeners() {
+            domElements.customConfirmOk.addEventListener('click', () => {
+                if (confirmResolve) confirmResolve(true);
+                closeCustomConfirm();
+            });
+            domElements.customConfirmCancel.addEventListener('click', () => {
+                if (confirmResolve) confirmResolve(false);
+                closeCustomConfirm();
+            });
+        }
+        
+        function closeCustomConfirm() {
+            const modal = domElements.customConfirmModal;
+            modal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95', '-translate-y-10');
+            setTimeout(() => {
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    confirmResolve = null;
+                }, 300);
+            }, 300);
+        }
+
 
         // --- FONCTIONS UTILITAIRES ---
 
@@ -419,7 +487,7 @@
         }
 
         function populateCarSelects() {
-            const unavCarSelect = domElements.unavCar;
+            const unavCarSelect = domElements.unavCar; // CORRECTION: "unavCarSelect" remplacé par "unavCar"
             if (!unavCarSelect) return;
             const placeholder = unavCarSelect.querySelector('option[disabled]');
             unavCarSelect.innerHTML = '';
@@ -491,7 +559,7 @@
                     <button class="btn btn-danger btn-sm delete-button" data-id="${booking.id}">
                         <i class="fas fa-trash-alt mr-1.5"></i> Supprimer
                     </button>
-                    <a href="https://wa.me/${(booking.telephone || '').replace(/\D/g, '')}" target="_blank" class="btn btn-secondary btn-sm !bg-green-500 hover:!bg-green-600">
+                    <a href="https://wa.me/${(booking.telephone || '').replace(/\D/g, '')}?text=Bonjour%20${encodeURIComponent(booking.nomPrenom || '')},%20concernant%20votre%20demande%20de%20r%C3%A9servation%20pour%20la%20${encodeURIComponent(booking.voiture || '')}%20du%20${encodeURIComponent(pickupDateTime)}%20au%20${encodeURIComponent(returnDateTime)}..." target="_blank" class="btn btn-secondary btn-sm !bg-green-500 hover:!bg-green-600">
                         <i class="fab fa-whatsapp mr-1.5"></i> Contacter
                     </a>
                 </div>
@@ -524,12 +592,7 @@
                 </button>
             `;
 
-            // Utiliser customConfirm
-            item.querySelector('.delete-period-button').addEventListener('click', () => {
-                if (customConfirm(`Êtes-vous sûr de vouloir supprimer cette période d'indisponibilité ?`)) {
-                    deletePeriod(period.id);
-                }
-            });
+            item.querySelector('.delete-period-button').addEventListener('click', () => deletePeriod(period.id, `Supprimer cette période d'indisponibilité ?`));
             return item;
         }
 
@@ -557,11 +620,7 @@
                 const confirmMsg = newStatus === 'unavailable' 
                     ? `Marquer ${car} comme INDISPONIBLE manuellement ? (bloquera toutes les réservations)`
                     : `Marquer ${car} comme DISPONIBLE ?`;
-                
-                // Utiliser customConfirm
-                if (customConfirm(confirmMsg)) {
-                    toggleManualStatus(car, newStatus);
-                }
+                toggleManualStatus(car, newStatus, confirmMsg);
             });
             return item;
         }
@@ -682,6 +741,40 @@
             }
         }
 
+        // --- NOUVEAU: Fonction pour envoyer la notification ---
+        function sendNewBookingNotification(booking) {
+             if (Notification.permission !== 'granted') {
+                 console.warn('Permission de notification non accordée, impossible d_envoyer.');
+                 return;
+             }
+             if (!navigator.serviceWorker.controller) {
+                 console.warn('Service Worker non actif, notification différée.');
+                 // Tenter une notification locale (moins fiable)
+                 new Notification("Nouvelle Réservation !", {
+                     body: `${booking.nomPrenom} - ${booking.voiture}`,
+                     icon: '/icons/icon-192x192.png',
+                     badge: '/icons/icon-192x192.png'
+                 });
+                 return;
+             }
+             
+             const title = 'Nouvelle Réservation !';
+             const options = {
+                body: `${booking.nomPrenom} demande la ${booking.voiture}.`,
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/icon-192x192.png',
+                vibrate: [200, 100, 200],
+                tag: 'new-booking' // Permet de remplacer les notifs non lues
+             };
+
+             // Envoyer au Service Worker pour affichage
+             navigator.serviceWorker.controller.postMessage({
+                 type: 'show-notification',
+                 title: title,
+                 options: options
+             });
+        }
+
 
         // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE (Évite l'erreur d'index) **
         function loadBookings() {
@@ -694,45 +787,51 @@
 
             onSnapshot(q, (snapshot) => {
                 loadingMsg.textContent = 'Chargement des réservations...';
-                allBookingsCache = []; // Vider le cache
                 
-                let newCount = 0;
-                let confirmedCount = 0;
+                // NOUVEAU: Logique de détection de changement pour les notifications
+                snapshot.docChanges().forEach((change) => {
+                    const data = change.doc.data();
+                    const booking = { ...data, id: change.doc.id };
 
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    // **FILTRAGE JS** : Ignorer les réservations marquées comme supprimées
-                    if (data.deleted !== true) {
-                        allBookingsCache.push({ ...data, id: doc.id });
-                        if (data.confirmed) {
-                            confirmedCount++;
-                        } else {
-                            newCount++;
+                    if (change.type === "added") {
+                        if (data.deleted !== true) {
+                            console.log("Nouvelle réservation détectée:", booking.id);
+                            allBookingsCache.unshift(booking); // Ajouter au début
                             
-                            // Tenter d'afficher une notification pour chaque nouvelle réservation
-                            if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
-                                // Ne pas montrer de notification si l'utilisateur est déjà sur l'onglet "Nouvelles Demandes"
-                                if (currentView !== 'new' && data.timestamp && (Date.now() - data.timestamp.toMillis() < 10000)) {
-                                     navigator.serviceWorker.controller.postMessage({
-                                        type: 'show-notification',
-                                        title: '🚨 NOUVELLE RÉSERVATION !',
-                                        options: {
-                                            body: `${data.voiture} par ${data.nomPrenom || 'un client'}.`,
-                                            icon: '/icons/icon-192x192.png',
-                                            vibrate: [500, 100, 500]
-                                        }
-                                    });
-                                }
+                            // NOUVEAU: Déclencher la notif SEULEMENT si ce n'est pas le chargement initial
+                            if (!isFirstLoad && data.confirmed === false) {
+                                sendNewBookingNotification(booking);
                             }
                         }
+                    } 
+                    else if (change.type === "modified") {
+                        console.log("Réservation modifiée:", booking.id);
+                        const index = allBookingsCache.findIndex(b => b.id === booking.id);
+                        if (index > -1) {
+                            allBookingsCache[index] = booking; // Mettre à jour
+                            // Si elle est marquée comme "deleted: true", on la retire du cache
+                            if (data.deleted === true) {
+                                 allBookingsCache.splice(index, 1);
+                            }
+                        }
+                    } 
+                    else if (change.type === "removed") {
+                        console.log("Réservation supprimée (hard delete):", booking.id);
+                        allBookingsCache = allBookingsCache.filter(b => b.id !== booking.id);
                     }
                 });
-                
+
+                // Trier le cache au cas où (bien que 'unshift' devrait maintenir l'ordre)
+                allBookingsCache.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
                 // Afficher la vue actuellement sélectionnée avec les données mises à jour
                 displayBookings(currentView); 
                 
                 // NOUVEAU: Mettre à jour l'historique client
                 updateClientHistory(allBookingsCache);
+
+                // Marquer la fin du premier chargement
+                isFirstLoad = false;
 
             }, (error) => {
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
@@ -945,7 +1044,7 @@
                     bookingId: currentBookingId // Lien vers la réservation
                 };
                 // Nous créons un nouveau doc dans la collection d'indisponibilité
-                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef); // doc(collection(...)) -> doc(...)
+                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef); // CORRECTION: doc(collection(...)) -> doc(...)
                 batch.set(newPeriodRef, unavailabilityData);
 
                 // 3. Exécuter le batch
@@ -983,8 +1082,13 @@
 
 
         async function handleDeleteBooking(bookingId) {
-            // Utiliser customConfirm à la place de window.confirm
-            if (!customConfirm(`Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?\n(Cela libérera aussi le créneau si elle était confirmée.)`)) return;
+            // Utiliser la modale de confirmation custom
+            const confirmed = await customConfirm(
+                `Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?<br>(Cela libérera aussi le créneau si elle était confirmée.)`,
+                "Supprimer Réservation",
+                "btn-danger"
+            );
+            if (!confirmed) return;
 
             try {
                 const batch = writeBatch(db);
@@ -1024,8 +1128,13 @@
             }
         }
 
-        async function toggleManualStatus(carName, newStatus) {
-            // Confirmation déjà faite via customConfirm dans createManualStatusItem
+        async function toggleManualStatus(carName, newStatus, confirmMsg) {
+            const confirmed = await customConfirm(
+                confirmMsg,
+                "Changer Statut Manuel",
+                newStatus === 'unavailable' ? 'btn-warning' : 'btn-success'
+            );
+            if (!confirmed) return;
 
             const carStatusRef = doc(db, "car_manual_status", carName);
 
@@ -1046,8 +1155,13 @@
             }
         }
 
-        async function deletePeriod(periodId) {
-            // Confirmation déjà faite via customConfirm dans createPeriodListItem
+        async function deletePeriod(periodId, confirmMsg) {
+            const confirmed = await customConfirm(
+                confirmMsg,
+                "Supprimer Période",
+                "btn-danger"
+            );
+            if (!confirmed) return;
             
             try {
                 const periodRef = doc(db, "car_unavailability_periods", periodId);
@@ -1088,11 +1202,11 @@
 
             try {
                  const unavailabilityData = {
-                     car: car,
-                     startDate: Timestamp.fromDate(pickupDateTime),
-                     endDate: Timestamp.fromDate(returnDateTime),
-                     type: 'manual', // Marqué comme manuel
-                     bookingId: null // Pas de lien de réservation
+                      car: car,
+                      startDate: Timestamp.fromDate(pickupDateTime),
+                      endDate: Timestamp.fromDate(returnDateTime),
+                      type: 'manual', // Marqué comme manuel
+                      bookingId: null // Pas de lien de réservation
                  };
                 
                  await addDoc(unavailabilityPeriodsCollectionRef, unavailabilityData);
@@ -1114,16 +1228,18 @@
         // --- NOUVELLE FONCTION: Initialisation des éléments DOM ---
         function initDomElements() {
              const ids = [
-                'login-overlay', 'login-button', 'password-input', 'login-error', 'main-content',
-                'admin-message-box', 'tab-new', 'tab-confirmed', 'count-new', 'count-confirmed',
-                'bookings-list', 'loading-bookings', 'unavailability-form', 'unav-car',
-                'manual-status-list', 'periods-list', 'loading-periods',
-                'confirmation-modal', 'close-modal-button', 'modal-booking-details',
-                'modal-start-date', 'modal-start-time', 'modal-end-date', 'modal-end-time',
-                'modal-error', 'cancel-modal-button', 'confirm-modal-button',
-                'enable-notifications', 'notifications-status',
-                // Nouveaux éléments
-                'client-history-list', 'loading-client-history'
+                 'login-overlay', 'login-button', 'password-input', 'login-error', 'main-content',
+                 'admin-message-box', 'tab-new', 'tab-confirmed', 'count-new', 'count-confirmed',
+                 'bookings-list', 'loading-bookings', 'unavailability-form', 'unav-car',
+                 'manual-status-list', 'periods-list', 'loading-periods',
+                 'confirmation-modal', 'close-modal-button', 'modal-booking-details',
+                 'modal-start-date', 'modal-start-time', 'modal-end-date', 'modal-end-time',
+                 'modal-error', 'cancel-modal-button', 'confirm-modal-button',
+                 'enable-notifications', 'notifications-status',
+                 // Nouveaux éléments
+                 'client-history-list', 'loading-client-history',
+                 'custom-confirm-modal', 'custom-confirm-title', 'custom-confirm-message',
+                 'custom-confirm-cancel', 'custom-confirm-ok'
              ];
              let allFound = true;
              ids.forEach(id => {
@@ -1146,11 +1262,14 @@
             
             // 1. Initialiser tous les éléments DOM
             if (!initDomElements()) {
-                // Utiliser une méthode de log car alert() est interdit
-                console.error("Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.");
+                // Remplacer l'alert() natif
+                document.body.innerHTML = `<div style="padding: 2rem; background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-family: sans-serif; text-align: center;">Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.</div>`;
                 return;
             }
             
+            // 1.5 Initialiser les écouteurs de la modale de confirmation custom
+            setupCustomConfirmListeners();
+
             // 2. Remplir les listes de voitures
             populateCarSelects();
 
@@ -1212,7 +1331,7 @@
                  // ** CORRECTION: Vérifier le protocole **
                  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                      window.addEventListener('load', () => {
-                         navigator.serviceWorker.register('sw.js') // Correction: pas de / au début car ce n'est pas la racine ici
+                         navigator.serviceWorker.register('/sw.js')
                              .then(registration => {
                                  console.log('Service Worker enregistré avec succès:', registration.scope);
                              })
@@ -1240,8 +1359,7 @@
                                     title: 'Palace Cars Admin',
                                     options: {
                                         body: 'Les notifications sont activées !',
-                                        // Utilisez une URL absolue ou relative correcte pour les icônes
-                                        icon: '/icons/icon-192x192.png', 
+                                        icon: '/icons/icon-192x192.png',
                                         badge: '/icons/icon-192x192.png',
                                         vibrate: [200, 100, 200]
                                     }
