@@ -479,7 +479,7 @@
                      <div id="available-cars-section" class="mt-16 hidden">
                          <hr class="mb-12 border-gray-200">
                          <h3 class="section-title text-3xl mb-12 text-primary" data-key="formAvailableCarsTitle">Voitures Disponibles</h3>
-                         <div id="available-cars-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                         <div id="available-cars-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                              <!-- Les cartes de voitures seront injectées ici -->
                          </div>
                          <p id="no-cars-message" class="text-center text-text-medium mt-8 hidden text-lg" data-key="formNoCars">Désolé, aucune voiture n'est disponible pour les dates sélectionnées.</p>
@@ -583,6 +583,21 @@
                          </div>
                      </div>
                  </div>
+                 <!-- Car Card 5: Renault Clio 5 Diesel -->
+                <div class="car-card">
+                    <div class="relative group overflow-hidden rounded-t-lg">
+                        <img src="https://placehold.co/300x200/e2e8f0/334155?text=Clio+5+D" alt="Renault Clio 5 Diesel" class="w-full h-52 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/300x200/e0e0e0/a0a0a0?text=Image+Indispo';">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl mb-2" data-key="car5Name">Renault Clio 5 Diesel</h3>
+                        <p class="mb-4 text-sm h-10 text-text-medium" data-key="car5Desc">Élégante et moderne, excellente pour les longs trajets.</p>
+                        <div class="flex justify-between items-center mt-4">
+                            <p class="text-xl price">300 Dhs <span class="text-sm font-normal text-text-medium" data-key="carPricePerDay">/ jour</span></p>
+                            <a href="#reservation" class="btn btn-primary text-xs px-4 py-2 reserve-now-link" data-key="carReserve">Réserver</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -809,6 +824,8 @@
                 car3Desc: "Compacte et agile, parfaite pour la ville.",
                 car4Name: "Dacia Sandero Diesel",
                 car4Desc: "Version diesel économique et polyvalente.",
+                car5Name: "Renault Clio 5 Diesel", // NOUVEAU
+                car5Desc: "Élégante et moderne, excellente pour les longs trajets.", // NOUVEAU
                 servicesTitle: "Nos Engagements Qualité",
                 servicesSubtitle: "Votre satisfaction est notre priorité.",
                 service1Title: "Livraison Aéroport",
@@ -908,6 +925,8 @@
                 car3Desc: "Compact and agile, perfect for the city.",
                 car4Name: "Dacia Sandero Diesel",
                 car4Desc: "Economical and versatile diesel version.",
+                car5Name: "Renault Clio 5 Diesel", // NOUVEAU
+                car5Desc: "Stylish and modern, excellent for long trips.", // NOUVEAU
                 servicesTitle: "Our Quality Commitments",
                 servicesSubtitle: "Your satisfaction is our priority.",
                 service1Title: "Airport Delivery",
@@ -1007,6 +1026,8 @@
                 car3Desc: "مدمجة ورشيقة، مثالية للمدينة.",
                 car4Name: "داسIA سانديرو ديزل",
                 car4Desc: "نسخة ديزل اقتصادية ومتعددة الاستخدامات.",
+                car5Name: "رينو كليو 5 ديزل", // NOUVEAU
+                car5Desc: "أنيقة وعصرية، ممتازة للرحلات الطويلة.", // NOUVEAU
                 servicesTitle: "التزاماتنا بالجودة",
                 servicesSubtitle: "رضاكم هو أولويتنا.",
                 service1Title: "التسليم في المطار",
@@ -1096,6 +1117,7 @@
              "Dacia Logan Diesel 2025": { price: 250, image: "https://placehold.co/300x200/e2e8f0/334155?text=Logan+D+25" },
              "Dacia Sandero Essence": { price: 300, image: "https://placehold.co/300x200/e2e8f0/334155?text=Sandero+E" },
              "Dacia Sandero Diesel": { price: 250, image: "https://placehold.co/300x200/e2e8f0/334155?text=Sandero+D" },
+             "Renault Clio 5 Diesel": { price: 300, image: "https://placehold.co/300x200/e2e8f0/334155?text=Clio+5+D" }, // NOUVEAU
          };
          const carNames = Object.keys(carFleet);
 
@@ -1457,8 +1479,12 @@
              const selectText = translations[lang]['formSelectCar'];
              const selectedText = translations[lang]['formSelectedCar'];
              const unavailableText = translations[lang][unavailableReasonKey];
-             const carNameKey = `car${carNames.indexOf(carName) + 1}Name`; // ex: car1Name, car2Name...
-             const carDescKey = `car${carNames.indexOf(carName) + 1}Desc`;
+             
+             // Utiliser Object.keys pour trouver l'index de la voiture
+             const carIndex = carNames.indexOf(carName);
+             const carNameKey = `car${carIndex + 1}Name`;
+             const carDescKey = `car${carIndex + 1}Desc`;
+             
              const pricePerDayText = translations[lang]['carPricePerDay'];
              const reserveText = translations[lang]['carReserve'];
 
