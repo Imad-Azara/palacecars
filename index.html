@@ -271,6 +271,13 @@
         #lang-menu-dropdown a { 
             color: var(--color-text-dark) !important; /* Force la couleur sombre */
         }
+
+        /* CORRECTION: Désactiver l'effet parallaxe sur mobile */
+        @media (max-width: 767px) { /* Cible les écrans plus petits que le breakpoint 'md' de Tailwind */
+          .hero-bg {
+            background-attachment: scroll; /* Remplace 'fixed' par 'scroll' (défaut) */
+          }
+        }
     </style>
 </head>
 <body class="bg-bg-light text-text-dark">
@@ -279,7 +286,7 @@
     <header id="main-header" class="fixed top-0 left-0 right-0 z-50 py-6 md:py-4 transition-all duration-300">
         <!-- CORRECTION STRUCTURE HEADER : Conteneur principal pour gérer le flex mobile/desktop -->
         <nav class="container mx-auto px-6 flex justify-between items-center relative">
-                        
+                            
             <!-- Mobile: Logo (Gauche) et Bouton Menu (Droite) -->
             <div class="flex justify-between items-center w-full md:hidden">
                 <!-- Mobile Logo (Gauche) -->
@@ -306,17 +313,17 @@
 
                 <!-- Desktop Logo (Center) -->
                 <div class="flex w-1/3 justify-center">
-                     <a href="#accueil" class="logo-container">
-                         <img id="logo-desktop-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
-                         <img id="logo-desktop-color" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur">
-                     </a>
+                       <a href="#accueil" class="logo-container">
+                           <img id="logo-desktop-white" src="https://i.imgur.com/uPC4OVz.png" alt="Palace Cars Logo Blanc">
+                           <img id="logo-desktop-color" src="https://i.imgur.com/htqH0IE.png" alt="Palace Cars Logo Couleur">
+                       </a>
                 </div>
 
                 <!-- Desktop Links & Button (Right) -->
                 <div class="flex items-center justify-end space-x-6 w-1/3"> <!-- Espace réduit pour la langue -->
                     <a href="#faq" class="hover:text-accent font-medium" data-key="navFAQ">FAQ</a>
                     <a href="#contact" class="hover:text-accent font-medium" data-key="navContact">Contact</a>
-                                        
+                                    
                     <!-- NOUVEAU: Sélecteur de Langue Manuel (Desktop) -->
                     <div class="relative hidden md:block">
                         <button id="lang-menu-button" type="button" class="flex items-center font-medium transition-colors duration-300 px-2 py-1">
@@ -657,10 +664,10 @@
     <!-- FAQ Section - Redesigned -->
     <section id="faq" class="py-24 bg-bg-light section-animate" style="animation-delay: 0.4s;">
            <div class="container mx-auto px-6 max-w-4xl"> <!-- Wider container -->
-             <h2 class="section-title" data-key="faqTitle">Questions Fréquentes</h2>
-             <p class="section-subtitle" data-key="faqSubtitle">Trouvez rapidement les informations dont vous avez besoin.</p>
+            <h2 class="section-title" data-key="faqTitle">Questions Fréquentes</h2>
+            <p class="section-subtitle" data-key="faqSubtitle">Trouvez rapidement les informations dont vous avez besoin.</p>
 
-             <div class="space-y-4">
+            <div class="space-y-4">
                  <details class="group">
                      <summary class="flex justify-between items-center cursor-pointer">
                          <span data-key="faq1Q">Quels documents sont nécessaires pour louer une voiture ?</span>
@@ -692,7 +699,7 @@
                      </summary>
                      <div data-key="faq4A">Absolument ! Nos véhicules peuvent être conduits dans tout le Maroc. Nous vous demandons simplement de nous informer si vous prévoyez de très longs trajets ou de vous rendre dans des zones spécifiques. La sortie du territoire marocain n'est pas autorisée.</div>
                  </details>
-             </div>
+           </div>
            </div>
     </section>
 
@@ -1157,9 +1164,9 @@
                 console.warn(`Langue non trouvée: ${lang}`);
                 return;
             }
-                        
+                            
             const translationData = translations[lang];
-                        
+                            
             document.querySelectorAll('[data-key]').forEach(element => {
                 const key = element.dataset.key;
                 let text = translationData[key];
@@ -1203,7 +1210,7 @@
 
         function changeLanguage(lang) {
             if (!translations[lang]) lang = 'fr'; // Revenir au français par défaut
-                        
+                            
             // 1. Sauvegarder la langue
             localStorage.setItem('language', lang);
 
@@ -1235,7 +1242,7 @@
                     }
                 });
             }
-                        
+                            
             // 6. Fermer le menu déroulant (Desktop)
             if (langMenuButton && langMenuDropdown) {
                 langMenuButton.classList.remove('active');
@@ -1248,14 +1255,14 @@
         function showMessage(messageKey, type = 'info', params = {}) {
             const msgBox = document.getElementById('message-box');
             if (!msgBox) return;
-                        
+                            
             const lang = document.documentElement.lang || 'fr';
             let message = translations[lang][messageKey] || messageKey; // Utiliser la clé si la traduction n'est pas trouvée
 
             // Remplacer les placeholders
             if (params.field) message = message.replace('[FIELD]', params.field);
             if (params.car) message = message.replace('[CAR]', params.car);
-                        
+                            
             // Stocker les params pour la re-traduction
             msgBox.dataset.key = messageKey;
             msgBox.dataset.messageParams = JSON.stringify(params);
@@ -1263,9 +1270,9 @@
             msgBox.textContent = message;
             msgBox.className = 'p-4 rounded-lg text-center mb-6 font-medium border text-sm md:text-base';
             msgBox.classList.remove('hidden');
-                        
-            msgBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800', 'bg-blue-100', 'border-blue-300', 'text-blue-800'); 
                             
+            msgBox.classList.remove('bg-green-100', 'border-green-300', 'text-green-800', 'bg-red-100', 'border-red-300', 'text-red-800', 'bg-yellow-100', 'border-yellow-300', 'text-yellow-800', 'bg-blue-100', 'border-blue-300', 'text-blue-800'); 
+                                
             if (type === 'success') {
                 msgBox.classList.add('bg-green-100', 'border-green-300', 'text-green-800');
             } else if (type === 'error') {
@@ -1275,15 +1282,15 @@
             } else {
                 msgBox.classList.add('bg-blue-100', 'border-blue-300', 'text-blue-800');
             }
-                        
+                            
             msgBox.style.opacity = '1'; 
             msgBox.style.transform = 'translateY(0)';
-                        
+                            
             setTimeout(() => {
                 if (!msgBox.classList.contains('hidden')) {
                      msgBox.style.opacity = '0'; msgBox.style.transform = 'translateY(-10px)'; 
                      setTimeout(() => msgBox.classList.add('hidden'), 300); 
-                 }
+                }
             }, 7000);
         }
 
@@ -1310,18 +1317,18 @@
             if (!dateObj || isNaN(dateObj.getTime())) return "Date invalide"; 
             const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }; 
             try { 
-                 let formatted = new Intl.DateTimeFormat('fr-FR', options).format(dateObj); 
-                 formatted = formatted.replace(/[\s,]+/g, ' ').trim(); 
-                 return formatted; 
-             } catch (e) { 
-                 console.error("Error formatting date:", e); 
-                 const day = String(dateObj.getUTCDate()).padStart(2, '0'); 
-                 const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); 
-                 const year = dateObj.getUTCFullYear(); 
-                 const hours = String(dateObj.getUTCHours()).padStart(2, '0'); 
-                 const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0'); 
-                 return `${day}/${month}/${year} ${hours}h${minutes}`; 
-             }
+                let formatted = new Intl.DateTimeFormat('fr-FR', options).format(dateObj); 
+                formatted = formatted.replace(/[\s,]+/g, ' ').trim(); 
+                return formatted; 
+            } catch (e) { 
+                console.error("Error formatting date:", e); 
+                const day = String(dateObj.getUTCDate()).padStart(2, '0'); 
+                const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); 
+                const year = dateObj.getUTCFullYear(); 
+                const hours = String(dateObj.getUTCHours()).padStart(2, '0'); 
+                const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0'); 
+                return `${day}/${month}/${year} ${hours}h${minutes}`; 
+            }
         }
 
         // --- Remplissage des Selects Heure/Minute ---
@@ -1346,10 +1353,10 @@
                  const placeholder = select.querySelector('option[disabled]');
                  const placeholderKey = placeholder.dataset.key;
                  select.innerHTML = ''; 
-                  if (placeholder) {
-                      select.appendChild(placeholder);
-                      placeholder.textContent = translations[document.documentElement.lang || 'fr'][placeholderKey];
-                  }
+                 if (placeholder) {
+                     select.appendChild(placeholder);
+                     placeholder.textContent = translations[document.documentElement.lang || 'fr'][placeholderKey];
+                 }
                  ['00', '15', '30', '45'].forEach(value => { 
                      select.options.add(new Option(value, value)); 
                  });
@@ -1400,7 +1407,7 @@
         async function handleCheckAvailability() {
              console.log("Vérification de la disponibilité lancée...");
              if (!dbReady) { showMessage("formErrorDB", "error"); return; }
-                             
+                                 
              const datePriseEnChargeInput = document.getElementById('datePriseEnCharge');
              const heurePriseEnChargeHeureSelect = document.getElementById('heurePriseEnChargeHeure');
              const heurePriseEnChargeMinuteSelect = document.getElementById('heurePriseEnChargeMinute');
@@ -1463,7 +1470,7 @@
                  carNames.forEach((carName) => {
                      const carData = carFleet[carName];
                      const availability = checkCarAvailabilityJS(carName, currentPickupDateTime, currentReturnDateTime, manualStatusMap, unavailabilityMap);
-                                         
+                                           
                      availableCarsListDiv.appendChild(createCarCard(carName, carData, availability.available, availability.reasonKey));
                      if (availability.available) {
                          availableCarsCount++;
@@ -1514,7 +1521,7 @@
                      <h4 class="text-xl font-bold text-text-dark mb-2 truncate" data-key="${carNameKey}">${translations[lang][carNameKey]}</h4>
                      <p class="mb-4 text-sm h-10 text-text-medium" data-key="${carDescKey}">${translations[lang][carDescKey]}</p>
                      <div class="flex justify-between items-center mb-5">
-                          <p class="text-2xl font-extrabold text-primary price">${carData.price}<span class="text-sm font-medium text-text-medium" data-key="carPricePerDay"> ${pricePerDayText}</span></p>
+                         <p class="text-2xl font-extrabold text-primary price">${carData.price}<span class="text-sm font-medium text-text-medium" data-key="carPricePerDay"> ${pricePerDayText}</span></p>
                      </div>
                      <button type="button" class="select-car-button btn w-full ${isAvailable ? 'btn-primary' : 'bg-gray-400 text-gray-700 cursor-not-allowed'} text-sm py-3" ${!isAvailable ? 'disabled' : ''}>
                          <span class="button-text">${isAvailable ? selectText : unavailableText}</span>
@@ -1523,59 +1530,59 @@
                  </div>
              `;
 
-              if (isAvailable) {
-                  const selectButton = card.querySelector('.select-car-button');
-                  const buttonText = selectButton.querySelector('.button-text');
-                  const checkIcon = selectButton.querySelector('.icon-check');
-                                      
-                  const availableCarsListDiv = document.getElementById('available-cars-list');
-                  const submitBookingButton = document.getElementById('submit-booking-button');
-                  const selectedCarInput = document.getElementById('selectedCar');
-                  const submitSpinner = document.getElementById('submit-spinner');
+             if (isAvailable) {
+                 const selectButton = card.querySelector('.select-car-button');
+                 const buttonText = selectButton.querySelector('.button-text');
+                 const checkIcon = selectButton.querySelector('.icon-check');
+                                       
+                 const availableCarsListDiv = document.getElementById('available-cars-list');
+                 const submitBookingButton = document.getElementById('submit-booking-button');
+                 const selectedCarInput = document.getElementById('selectedCar');
+                 const submitSpinner = document.getElementById('submit-spinner');
 
 
-                  card.addEventListener('click', (e) => {
-                      if (e.target.closest('button') && e.target.closest('button').disabled) return;
-                                          
-                      const currentLang = document.documentElement.lang || 'fr';
-                      const selectText = translations[currentLang]['formSelectCar'];
-                      const selectedText = translations[currentLang]['formSelectedCar'];
+                 card.addEventListener('click', (e) => {
+                     if (e.target.closest('button') && e.target.closest('button').disabled) return;
+                                         
+                     const currentLang = document.documentElement.lang || 'fr';
+                     const selectText = translations[currentLang]['formSelectCar'];
+                     const selectedText = translations[currentLang]['formSelectedCar'];
 
-                      document.querySelectorAll('.car-card.selected').forEach(selectedCard => {
-                          selectedCard.classList.remove('selected', 'border-2');
-                          const btn = selectedCard.querySelector('.select-car-button');
-                          if (btn) {
-                              btn.querySelector('.button-text').textContent = selectText;
-                              btn.querySelector('.icon-check')?.classList.add('hidden');
-                              btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
-                              btn.classList.add('btn-primary');
-                              btn.disabled = false;
-                          }
-                      });
-                      
-                      card.classList.add('selected', 'border-2');
-                      
-                      buttonText.textContent = selectedText;
-                      checkIcon?.classList.remove('hidden');
-                      selectButton.classList.remove('btn-primary');
-                      selectButton.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
-                      selectButton.disabled = true;
-                      
-                      selectedCarName = carName;
-                      selectedCarInput.value = carName;
-                      
-                      submitBookingButton.classList.remove('hidden');
-                      submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
-                  });
-              }
-             return card;
+                     document.querySelectorAll('.car-card.selected').forEach(selectedCard => {
+                         selectedCard.classList.remove('selected', 'border-2');
+                         const btn = selectedCard.querySelector('.select-car-button');
+                         if (btn) {
+                             btn.querySelector('.button-text').textContent = selectText;
+                             btn.querySelector('.icon-check')?.classList.add('hidden');
+                             btn.classList.remove('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
+                             btn.classList.add('btn-primary');
+                             btn.disabled = false;
+                         }
+                     });
+                     
+                     card.classList.add('selected', 'border-2');
+                     
+                     buttonText.textContent = selectedText;
+                     checkIcon?.classList.remove('hidden');
+                     selectButton.classList.remove('btn-primary');
+                     selectButton.classList.add('bg-green-600', 'hover:bg-green-700', 'cursor-not-allowed', 'selected-btn', 'text-white');
+                     selectButton.disabled = true;
+                     
+                     selectedCarName = carName;
+                     selectedCarInput.value = carName;
+                     
+                     submitBookingButton.classList.remove('hidden');
+                     submitBookingButton.disabled = false; submitSpinner.classList.add('hidden');
+                 });
+             }
+            return card;
          }
 
 
         // --- Logique de Soumission Finale (Mise à jour pour traduction) ---
         async function handleSubmitBooking() {
              console.log("Submit button clicked");
-                             
+                                 
              const form = document.getElementById('booking-form');
              const submitBookingButton = document.getElementById('submit-booking-button');
              const submitSpinner = document.getElementById('submit-spinner');
@@ -1650,7 +1657,7 @@
              
              const heurePriseStr = `${bookingData.heurePriseEnChargeHeure.padStart(2, '0')}:${bookingData.heurePriseEnChargeMinute.padStart(2, '0')}`;
              const heureRetourStr = `${bookingData.heureRetourHeure.padStart(2, '0')}:${bookingData.heureRetourMinute.padStart(2, '0')}`;
-                             
+                                 
              const pickupTimestamp = Timestamp.fromDate(currentPickupDateTime);
              const returnTimestamp = Timestamp.fromDate(currentReturnDateTime);
 
@@ -1699,7 +1706,7 @@
                  const jsonPayload = JSON.stringify(objectForWeb3Forms);
                  const web3Response = await fetch("https://api.web3forms.com/submit", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: jsonPayload });
                  const result = await web3Response.json();
-                                     
+                                         
                  const availableCarsSection = document.getElementById('available-cars-section');
                  const selectedCarInput = document.getElementById('selectedCar');
 
@@ -1762,7 +1769,7 @@
              } else {
                  mainHeader.classList.remove('scrolled');
              }
-                             
+                                 
              if (logoWhiteMobile && logoColorMobile && logoWhiteDesktop && logoColorDesktop) {
                  if (scrollPosition > 50) {
                      logoWhiteMobile.style.opacity = '0';
@@ -1861,7 +1868,7 @@
              navReserveButton = document.getElementById('nav-reserve-button');
              mobileReserveButton = document.getElementById('mobile-reserve-button');
              reserveNowLinks = document.querySelectorAll('.reserve-now-link');
-                             
+                                 
              logoWhiteMobile = document.getElementById('logo-mobile-white');
              logoColorMobile = document.getElementById('logo-mobile-color');
              logoWhiteDesktop = document.getElementById('logo-desktop-white');
@@ -1887,7 +1894,7 @@
              mobileLangOptions = document.querySelectorAll('#mobile-menu .lang-option');
              currentLangText = document.getElementById('current-lang-text');
 
-                             
+                                 
              // --- ATTACHEMENT DES ÉCOUTEURS D'ÉVÉNEMENTS ---
 
              if (checkAvailabilityButton) {
@@ -1896,11 +1903,11 @@
              if (submitBookingButton) {
                  submitBookingButton.addEventListener('click', handleSubmitBooking);
              }
-                             
+                                 
              window.addEventListener('scroll', handleScroll);
-                             
+                                 
              setupMobileMenu(); // Gère les écouteurs du menu mobile
-                             
+                                 
              // --- Footer Current Year ---
              if (currentYearSpan) {
                  currentYearSpan.textContent = new Date().getFullYear();
@@ -1957,7 +1964,7 @@
 
              // --- Initialisation ---
              populateTimeSelects();
-                             
+                                 
              // Appliquer la langue sauvegardée (ou le français par défaut)
              const savedLang = localStorage.getItem('language') || 'fr';
              changeLanguage(savedLang);
@@ -1970,7 +1977,7 @@
              } else {
                  console.error("Reservation section element not found on DOMContentLoaded");
              }
-                             
+                                 
              // --- Section Animations on Scroll ---
              try {
                  const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
