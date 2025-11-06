@@ -263,6 +263,10 @@
             right: auto;
             left: 0;
         }
+        /* CORRECTION CONTRASTE: Rendre le texte des options de langue sombre sur fond blanc */
+        #lang-menu-dropdown a { 
+            color: var(--color-text-dark) !important; /* Force la couleur sombre */
+        }
     </style>
 </head>
 <body class="bg-bg-light text-text-dark">
@@ -317,9 +321,9 @@
                             <i class="fas fa-chevron-down ml-1.5 text-xs opacity-70"></i>
                         </button>
                         <div id="lang-menu-dropdown" class="hidden absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-50 overflow-hidden border border-gray-100">
-                            <a href="#" class="lang-option block px-4 py-2 text-sm text-text-dark hover:bg-primary-lighter hover:text-primary" data-lang="fr">Français</a>
-                            <a href="#" class="lang-option block px-4 py-2 text-sm text-text-dark hover:bg-primary-lighter hover:text-primary" data-lang="en">English</a>
-                            <a href="#" class="lang-option block px-4 py-2 text-sm text-text-dark hover:bg-primary-lighter hover:text-primary" data-lang="ar">العربية</a>
+                            <a href="#" class="lang-option block px-4 py-2 text-sm hover:bg-primary-lighter hover:text-primary" data-lang="fr">Français</a>
+                            <a href="#" class="lang-option block px-4 py-2 text-sm hover:bg-primary-lighter hover:text-primary" data-lang="en">English</a>
+                            <a href="#" class="lang-option block px-4 py-2 text-sm hover:bg-primary-lighter hover:text-primary" data-lang="ar">العربية</a>
                         </div>
                     </div>
 
