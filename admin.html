@@ -164,19 +164,19 @@
 
                     <!-- Statut Manuel -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
-                         <h3 class="text-xl font-bold text-text-dark mb-5">Statut Actuel des Voitures</h3>
-                         <div id="manual-status-list" class="space-y-3">
-                             <!-- Statuts chargés par JS -->
-                         </div>
+                          <h3 class="text-xl font-bold text-text-dark mb-5">Statut Actuel des Voitures</h3>
+                          <div id="manual-status-list" class="space-y-3">
+                               <!-- Statuts chargés par JS -->
+                          </div>
                     </div>
 
-                     <!-- Périodes Programmées -->
+                    <!-- Périodes Programmées -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
-                         <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
-                         <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                             <!-- Périodes chargées par JS -->
-                             <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
-                         </div>
+                          <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
+                          <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                               <!-- Périodes chargées par JS -->
+                               <p id="loading-periods" class="text-center text-gray-500 py-4">Chargement...</p>
+                          </div>
                     </div>
 
                     <!-- NOUVELLE SECTION: Clients Fidèles -->
@@ -247,7 +247,12 @@
             where, orderBy, doc, getDoc, getDocs, updateDoc, deleteDoc, 
             Timestamp, serverTimestamp, setDoc, writeBatch 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+        
+        // CORRECTION: Pour éviter l'utilisation de window.confirm/alert
+        function customConfirm(message) {
+            return window.prompt(message + " (Tapez 'OUI' pour confirmer)") === 'OUI';
+        }
+        
         // *** Configuration Firebase ***
         // (L'utilisateur doit coller sa configuration ici)
         const firebaseConfig = {
@@ -413,7 +418,7 @@
         }
 
         function populateCarSelects() {
-            const unavCarSelect = domElements.unavCarSelect;
+            const unavCarSelect = domElements.unavCar;
             if (!unavCarSelect) return;
             const placeholder = unavCarSelect.querySelector('option[disabled]');
             unavCarSelect.innerHTML = '';
@@ -518,7 +523,12 @@
                 </button>
             `;
 
-            item.querySelector('.delete-period-button').addEventListener('click', () => deletePeriod(period.id, `Supprimer cette période d'indisponibilité ?`));
+            // Utiliser customConfirm
+            item.querySelector('.delete-period-button').addEventListener('click', () => {
+                if (customConfirm(`Êtes-vous sûr de vouloir supprimer cette période d'indisponibilité ?`)) {
+                    deletePeriod(period.id);
+                }
+            });
             return item;
         }
 
@@ -546,7 +556,11 @@
                 const confirmMsg = newStatus === 'unavailable' 
                     ? `Marquer ${car} comme INDISPONIBLE manuellement ? (bloquera toutes les réservations)`
                     : `Marquer ${car} comme DISPONIBLE ?`;
-                toggleManualStatus(car, newStatus, confirmMsg);
+                
+                // Utiliser customConfirm
+                if (customConfirm(confirmMsg)) {
+                    toggleManualStatus(car, newStatus);
+                }
             });
             return item;
         }
@@ -681,11 +695,35 @@
                 loadingMsg.textContent = 'Chargement des réservations...';
                 allBookingsCache = []; // Vider le cache
                 
+                let newCount = 0;
+                let confirmedCount = 0;
+
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     // **FILTRAGE JS** : Ignorer les réservations marquées comme supprimées
                     if (data.deleted !== true) {
                         allBookingsCache.push({ ...data, id: doc.id });
+                        if (data.confirmed) {
+                            confirmedCount++;
+                        } else {
+                            newCount++;
+                            
+                            // Tenter d'afficher une notification pour chaque nouvelle réservation
+                            if (Notification.permission === 'granted' && navigator.serviceWorker.controller) {
+                                // Ne pas montrer de notification si l'utilisateur est déjà sur l'onglet "Nouvelles Demandes"
+                                if (currentView !== 'new' && data.timestamp && (Date.now() - data.timestamp.toMillis() < 10000)) {
+                                     navigator.serviceWorker.controller.postMessage({
+                                        type: 'show-notification',
+                                        title: '🚨 NOUVELLE RÉSERVATION !',
+                                        options: {
+                                            body: `${data.voiture} par ${data.nomPrenom || 'un client'}.`,
+                                            icon: '/icons/icon-192x192.png',
+                                            vibrate: [500, 100, 500]
+                                        }
+                                    });
+                                }
+                            }
+                        }
                     }
                 });
                 
@@ -906,7 +944,7 @@
                     bookingId: currentBookingId // Lien vers la réservation
                 };
                 // Nous créons un nouveau doc dans la collection d'indisponibilité
-                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef); // CORRECTION: doc(collection(...)) -> doc(...)
+                const newPeriodRef = doc(unavailabilityPeriodsCollectionRef); // doc(collection(...)) -> doc(...)
                 batch.set(newPeriodRef, unavailabilityData);
 
                 // 3. Exécuter le batch
@@ -944,7 +982,8 @@
 
 
         async function handleDeleteBooking(bookingId) {
-            if (!confirm(`Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?\n(Cela libérera aussi le créneau si elle était confirmée.)`)) return;
+            // Utiliser customConfirm à la place de window.confirm
+            if (!customConfirm(`Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?\n(Cela libérera aussi le créneau si elle était confirmée.)`)) return;
 
             try {
                 const batch = writeBatch(db);
@@ -984,8 +1023,8 @@
             }
         }
 
-        async function toggleManualStatus(carName, newStatus, confirmMsg) {
-            if (!confirm(confirmMsg)) return;
+        async function toggleManualStatus(carName, newStatus) {
+            // Confirmation déjà faite via customConfirm dans createManualStatusItem
 
             const carStatusRef = doc(db, "car_manual_status", carName);
 
@@ -1006,8 +1045,8 @@
             }
         }
 
-        async function deletePeriod(periodId, confirmMsg) {
-            if (!confirm(confirmMsg)) return;
+        async function deletePeriod(periodId) {
+            // Confirmation déjà faite via customConfirm dans createPeriodListItem
             
             try {
                 const periodRef = doc(db, "car_unavailability_periods", periodId);
@@ -1084,19 +1123,19 @@
                 'enable-notifications', 'notifications-status',
                 // Nouveaux éléments
                 'client-history-list', 'loading-client-history'
-            ];
-            let allFound = true;
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) {
-                    console.error(`Élément DOM manquant: #${id}`);
-                    allFound = false;
-                }
-                // Convertir 'client-history-list' en 'clientHistoryList'
-                const camelCaseId = id.replace(/-(\w)/g, (match, p1) => p1.toUpperCase());
-                domElements[camelCaseId] = el;
-            });
-            return allFound;
+             ];
+             let allFound = true;
+             ids.forEach(id => {
+                 const el = document.getElementById(id);
+                 if (!el) {
+                     console.error(`Élément DOM manquant: #${id}`);
+                     allFound = false;
+                 }
+                 // Convertir 'client-history-list' en 'clientHistoryList'
+                 const camelCaseId = id.replace(/-(\w)/g, (match, p1) => p1.toUpperCase());
+                 domElements[camelCaseId] = el;
+             });
+             return allFound;
         }
 
 
@@ -1106,7 +1145,8 @@
             
             // 1. Initialiser tous les éléments DOM
             if (!initDomElements()) {
-                alert("Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.");
+                // Utiliser une méthode de log car alert() est interdit
+                console.error("Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.");
                 return;
             }
             
@@ -1171,7 +1211,7 @@
                  // ** CORRECTION: Vérifier le protocole **
                  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
                      window.addEventListener('load', () => {
-                         navigator.serviceWorker.register('/sw.js')
+                         navigator.serviceWorker.register('sw.js') // Correction: pas de / au début car ce n'est pas la racine ici
                              .then(registration => {
                                  console.log('Service Worker enregistré avec succès:', registration.scope);
                              })
@@ -1199,7 +1239,8 @@
                                     title: 'Palace Cars Admin',
                                     options: {
                                         body: 'Les notifications sont activées !',
-                                        icon: '/icons/icon-192x192.png',
+                                        // Utilisez une URL absolue ou relative correcte pour les icônes
+                                        icon: '/icons/icon-192x192.png', 
                                         badge: '/icons/icon-192x192.png',
                                         vibrate: [200, 100, 200]
                                     }
