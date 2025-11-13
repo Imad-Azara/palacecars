@@ -479,6 +479,7 @@
             
             // Corps de l'email (formaté pour mailto: qui gère mal les sauts de ligne complexes)
             // \r\n est plus fiable pour les sauts de ligne dans mailto:
+            /* SUPPRIMÉ: Le corps du message n'est plus pré-rempli
             const mailBody = [
                 `Bonjour ${booking.nomPrenom || 'Client'},`,
                 "\r\n\r\nMerci d'avoir loué chez Palacecars Agadir. Pourriez-vous prendre un moment pour évaluer notre service ? Votre avis nous est précieux pour nous améliorer.",
@@ -491,8 +492,10 @@
                 `\r\n\r\n: ${GOOGLE_REVIEW_LINK} انقر هنا لتقييمنا`,
                 "\r\n\r\nCordialement,\r\nL'équipe Palace Cars"
             ].join('');
+            */
             
-            const reviewMailtoLink = `mailto:${clientEmail}?subject=${mailSubject}&body=${encodeURIComponent(mailBody)}`;
+            // MODIFIÉ: Le lien mailto: ne contient plus de corps de message
+            const reviewMailtoLink = `mailto:${clientEmail}?subject=${mailSubject}`;
 
             card.innerHTML = `
                 <div class="p-5">
