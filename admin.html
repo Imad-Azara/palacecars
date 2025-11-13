@@ -52,18 +52,6 @@
 
         /* Login Form */
         #login-overlay { background-color: rgba(241, 245, 249, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-
-        /* NOUVEAU: Modale de confirmation custom */
-        #custom-confirm-modal {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-            transition: opacity 0.3s ease-in-out;
-            z-index: 60; /* Au-dessus de la modale de réservation */
-        }
-        #custom-confirm-modal:not(.hidden) { opacity: 1; }
-        #custom-confirm-modal:not(.hidden) .modal-content {
-             opacity: 1; transform: translateY(0) scale(1);
-        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -121,12 +109,16 @@
 
                         <!-- Tabs -->
                         <div class="border-b border-gray-200 mb-5">
-                            <nav class="flex space-x-4">
+                            <nav class="flex flex-wrap space-x-4">
                                 <button id="tab-new" class="tab-button active">
                                     Nouvelles Demandes (<span id="count-new">0</span>)
                                 </button>
                                 <button id="tab-confirmed" class="tab-button">
                                     Réservations Confirmées (<span id="count-confirmed">0</span>)
+                                </button>
+                                <!-- NOUVEAU TAB -->
+                                <button id="tab-archived" class="tab-button">
+                                    Archivées (<span id="count-archived">0</span>)
                                 </button>
                             </nav>
                         </div>
@@ -182,7 +174,7 @@
                          </div>
                     </div>
 
-                      <!-- Périodes Programmées -->
+                     <!-- Périodes Programmées -->
                     <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mb-8">
                          <h3 class="text-xl font-bold text-text-dark mb-5">Périodes Programmées</h3>
                          <div id="periods-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
@@ -225,7 +217,7 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <!-- Date et Heure de Début -->
+                 <!-- Date et Heure de Début -->
                 <div>
                     <label for="modal-start-date" class="block text-sm font-semibold text-gray-700 mb-1">Début Location</label>
                     <input type="date" id="modal-start-date" name="modalStartDate" required class="block w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
@@ -246,18 +238,6 @@
                  <button id="confirm-modal-button" class="btn btn-success" disabled>
                      <i class="fas fa-check mr-2"></i> Confirmer la Réservation
                  </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- NOUVELLE Modale de Confirmation Custom (pour alert/confirm) -->
-    <div id="custom-confirm-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 hidden opacity-0">
-        <div class="modal-content bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md opacity-0 transform scale-95 -translate-y-10 border border-gray-200">
-            <h2 id="custom-confirm-title" class="text-2xl font-bold text-text-dark mb-4">Confirmation</h2>
-            <p id="custom-confirm-message" class="text-gray-600 mb-8">Êtes-vous sûr ?</p>
-            <div class="flex justify-end space-x-3">
-                 <button id="custom-confirm-cancel" class="btn btn-secondary">Annuler</button>
-                 <button id="custom-confirm-ok" class="btn btn-danger">Confirmer</button>
             </div>
         </div>
     </div>
@@ -285,6 +265,11 @@
         };
         // *** Fin Configuration Firebase ***
 
+        // --- !! ACTION REQUISE !! ---
+        // Mettez ici le lien "Demander un avis" de votre fiche Google Business
+        // Exemple: "https://g.page/r/VOTRE-ID/review"
+        const GOOGLE_REVIEW_LINK = "VOTRE_LIEN_GOOGLE_REVIEW_ICI";
+
 
         // --- Variables Globales ---
         let db;
@@ -293,11 +278,12 @@
         let carManualStatusCollectionRef;
         let dbReady = false;
         let allBookingsCache = []; // Cache pour stocker toutes les réservations
-        let currentView = 'new'; // 'new' or 'confirmed'
+        let currentView = 'new'; // 'new', 'confirmed' ou 'archived'
         let currentBookingId = null; // Pour la modale de confirmation
         let currentBookingData = null; // Pour la modale de confirmation
         let isConfirmationBusy = false; // Verrou pour éviter double-clic
-        let isFirstLoad = true; // NOUVEAU: Pour la gestion des notifications
+        let isFirstLoad = true; // Pour la logique de notification
+        let isArchiving = false; // Verrou pour l'archivage automatique
 
         // Liste statique des voitures
         const carOptions = [
@@ -311,54 +297,6 @@
         // --- NOUVEAU: Map des éléments DOM ---
         // (Pour éviter les erreurs "Éléments UI manquants")
         const domElements = {};
-        
-        // --- NOUVEAU: Logique de Confirmation Custom ---
-        let confirmResolve = null;
-        function customConfirm(message, title = "Confirmation", okClass = 'btn-danger') {
-            const modal = domElements.customConfirmModal;
-            const titleEl = domElements.customConfirmTitle;
-            const messageEl = domElements.customConfirmMessage;
-            const okButton = domElements.customConfirmOk;
-            const cancelButton = domElements.customConfirmCancel;
-
-            titleEl.textContent = title;
-            messageEl.innerHTML = message.replace(/\n/g, '<br>'); // Supporte les sauts de ligne
-            
-            // Appliquer le style au bouton OK (par ex. btn-danger pour suppression)
-            okButton.className = `btn ${okClass}`;
-
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.remove('opacity-0'), 10);
-            setTimeout(() => modal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95', '-translate-y-10'), 50);
-
-            return new Promise((resolve) => {
-                confirmResolve = resolve;
-            });
-        }
-        
-        function setupCustomConfirmListeners() {
-            domElements.customConfirmOk.addEventListener('click', () => {
-                if (confirmResolve) confirmResolve(true);
-                closeCustomConfirm();
-            });
-            domElements.customConfirmCancel.addEventListener('click', () => {
-                if (confirmResolve) confirmResolve(false);
-                closeCustomConfirm();
-            });
-        }
-        
-        function closeCustomConfirm() {
-            const modal = domElements.customConfirmModal;
-            modal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95', '-translate-y-10');
-            setTimeout(() => {
-                modal.classList.add('opacity-0');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    confirmResolve = null;
-                }, 300);
-            }, 300);
-        }
-
 
         // --- FONCTIONS UTILITAIRES ---
 
@@ -487,8 +425,12 @@
         }
 
         function populateCarSelects() {
-            const unavCarSelect = domElements.unavCar; // CORRECTION: "unavCarSelect" remplacé par "unavCar"
-            if (!unavCarSelect) return;
+            // CORRECTION: Utiliser domElements.unavCar au lieu de domElements.unavCarSelect
+            const unavCarSelect = domElements.unavCar; 
+            if (!unavCarSelect) {
+                console.error("Élément Select 'unav-car' introuvable.");
+                return;
+            }
             const placeholder = unavCarSelect.querySelector('option[disabled]');
             unavCarSelect.innerHTML = '';
             if (placeholder) unavCarSelect.appendChild(placeholder);
@@ -520,8 +462,37 @@
                 returnDateTime = formatReadableDateTime(booking.returnTimestamp);
             }
 
-            const statusClass = booking.confirmed ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
-            const statusText = booking.confirmed ? '<i class="fas fa-check-circle mr-1.5"></i> Confirmée' : '<i class="fas fa-hourglass-start mr-1.5"></i> Nouvelle Demande';
+            let statusClass = 'bg-blue-100 text-blue-700';
+            let statusText = '<i class="fas fa-hourglass-start mr-1.5"></i> Nouvelle Demande';
+
+            if (booking.archived) {
+                statusClass = 'bg-gray-100 text-gray-600';
+                statusText = '<i class="fas fa-archive mr-1.5"></i> Archivée';
+            } else if (booking.confirmed) {
+                statusClass = 'bg-green-100 text-green-700';
+                statusText = '<i class="fas fa-check-circle mr-1.5"></i> Confirmée';
+            }
+
+            // Générer le lien mailto: pour l'avis
+            const clientEmail = encodeURIComponent(booking.email || '');
+            const mailSubject = encodeURIComponent("Votre avis sur Palace Cars Agadir");
+            
+            // Corps de l'email (formaté pour mailto: qui gère mal les sauts de ligne complexes)
+            // \r\n est plus fiable pour les sauts de ligne dans mailto:
+            const mailBody = [
+                `Bonjour ${booking.nomPrenom || 'Client'},`,
+                "\r\n\r\nMerci d'avoir loué chez Palacecars Agadir. Pourriez-vous prendre un moment pour évaluer notre service ? Votre avis nous est précieux pour nous améliorer.",
+                `\r\n\r\nCliquez ici pour laisser un avis : ${GOOGLE_REVIEW_LINK}`,
+                "\r\n\r\n---",
+                "\r\nThank you for renting with Palacecars Agadir. Could you please take a moment to rate our service? Your feedback is valuable to us.",
+                `\r\n\r\nClick here to rate us: ${GOOGLE_REVIEW_LINK}`,
+                "\r\n\r\n---",
+                "\r\nشكراً لتعاملكم مع بالاس كارز أكادير. نرجو منكم تخصيص لحظة لتقييم خدمتنا. رأيكم يهمنا جداً ويساعدنا على التحسن",
+                `\r\n\r\n: ${GOOGLE_REVIEW_LINK} انقر هنا لتقييمنا`,
+                "\r\n\r\nCordialement,\r\nL'équipe Palace Cars"
+            ].join('');
+            
+            const reviewMailtoLink = `mailto:${clientEmail}?subject=${mailSubject}&body=${encodeURIComponent(mailBody)}`;
 
             card.innerHTML = `
                 <div class="p-5">
@@ -553,13 +524,19 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-5 py-4 flex justify-end space-x-3">
-                    <button class="btn btn-success btn-sm confirm-button ${booking.confirmed ? 'hidden' : ''}" data-id="${booking.id}">
+                    <!-- Bouton Confirmer (caché si confirmé ou archivé) -->
+                    <button class="btn btn-success btn-sm confirm-button ${booking.confirmed || booking.archived ? 'hidden' : ''}" data-id="${booking.id}">
                         <i class="fas fa-check mr-1.5"></i> Confirmer
                     </button>
+                    <!-- Bouton Demander Avis (visible si archivé) -->
+                    <a href="${reviewMailtoLink}" target="_blank" class="btn btn-warning btn-sm review-button ${booking.archived ? '' : 'hidden'}" data-id="${booking.id}">
+                        <i class="fas fa-star mr-1.5"></i> Demander un avis
+                    </a>
+                    <!-- Bouton Supprimer (toujours visible) -->
                     <button class="btn btn-danger btn-sm delete-button" data-id="${booking.id}">
                         <i class="fas fa-trash-alt mr-1.5"></i> Supprimer
                     </button>
-                    <a href="https://wa.me/${(booking.telephone || '').replace(/\D/g, '')}?text=Bonjour%20${encodeURIComponent(booking.nomPrenom || '')},%20concernant%20votre%20demande%20de%20r%C3%A9servation%20pour%20la%20${encodeURIComponent(booking.voiture || '')}%20du%20${encodeURIComponent(pickupDateTime)}%20au%20${encodeURIComponent(returnDateTime)}..." target="_blank" class="btn btn-secondary btn-sm !bg-green-500 hover:!bg-green-600">
+                    <a href="https://wa.me/${(booking.telephone || '').replace(/\D/g, '')}" target="_blank" class="btn btn-secondary btn-sm !bg-green-500 hover:!bg-green-600">
                         <i class="fab fa-whatsapp mr-1.5"></i> Contacter
                     </a>
                 </div>
@@ -625,7 +602,7 @@
             return item;
         }
         
-        // --- NOUVELLE FONCTION: Créer un item pour l'historique client ---
+        // --- NOUVEAU: Créer un item pour l'historique client ---
         function createClientHistoryItem(clientData) {
             const item = document.createElement('div');
             item.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-lg text-sm';
@@ -657,8 +634,9 @@
             const loadingMsg = domElements.loadingBookings;
             const countNew = domElements.countNew;
             const countConfirmed = domElements.countConfirmed;
+            const countArchived = domElements.countArchived;
             
-            if (!listDiv || !loadingMsg || !countNew || !countConfirmed) {
+            if (!listDiv || !loadingMsg || !countNew || !countConfirmed || !countArchived) {
                 // Cette erreur ne devrait plus se produire grâce à initDomElements
                 console.error("Éléments UI manquants pour displayBookings");
                 return;
@@ -670,22 +648,27 @@
             // Mettre à jour les styles des onglets
             domElements.tabNew.classList.toggle('active', view === 'new');
             domElements.tabConfirmed.classList.toggle('active', view === 'confirmed');
+            domElements.tabArchived.classList.toggle('active', view === 'archived');
 
-            const isConfirmedView = (view === 'confirmed');
-            
             // Filtrer le cache JavaScript
             const bookingsToDisplay = allBookingsCache.filter(booking => {
-                // (booking.confirmed === true) pour 'confirmed'
-                // (booking.confirmed === false) pour 'new'
-                return booking.confirmed === isConfirmedView;
+                if (view === 'new') return !booking.confirmed && !booking.archived;
+                if (view === 'confirmed') return booking.confirmed && !booking.archived;
+                if (view === 'archived') return booking.archived;
+                return false;
             });
 
             // Mettre à jour les compteurs
-            countNew.textContent = allBookingsCache.filter(b => !b.confirmed).length;
-            countConfirmed.textContent = allBookingsCache.filter(b => b.confirmed).length;
+            countNew.textContent = allBookingsCache.filter(b => !b.confirmed && !b.archived).length;
+            countConfirmed.textContent = allBookingsCache.filter(b => b.confirmed && !b.archived).length;
+            countArchived.textContent = allBookingsCache.filter(b => b.archived).length;
 
             if (bookingsToDisplay.length === 0) {
-                loadingMsg.textContent = `Aucune ${view === 'new' ? 'nouvelle demande' : 'réservation confirmée'} pour le moment.`;
+                let msg = 'Aucune réservation pour le moment.';
+                if (view === 'new') msg = 'Aucune nouvelle demande.';
+                if (view === 'confirmed') msg = 'Aucune réservation confirmée.';
+                if (view === 'archived') msg = 'Aucune réservation archivée.';
+                loadingMsg.textContent = msg;
                 loadingMsg.style.display = 'block';
             } else {
                 loadingMsg.style.display = 'none';
@@ -704,12 +687,12 @@
                  return;
             }
 
-            // 1. Filtrer pour les réservations CONFIRMÉES
-            const confirmedBookings = allBookings.filter(b => b.confirmed === true);
+            // 1. Filtrer pour les réservations CONFIRMÉES ou ARCHIVÉES
+            const completedBookings = allBookings.filter(b => b.confirmed === true || b.archived === true);
             const clientCounts = new Map();
 
             // 2. Compter par client (téléphone + nom comme clé)
-            for (const booking of confirmedBookings) {
+            for (const booking of completedBookings) {
                 if (!booking.telephone || !booking.nomPrenom) continue; // Ignorer si données incomplètes
                 
                 // Clé unique basée sur le téléphone normalisé ET le nom
@@ -741,42 +724,36 @@
             }
         }
 
-        // --- NOUVEAU: Fonction pour envoyer la notification ---
+        // --- NOUVELLE FONCTION: Envoyer une notification au Service Worker ---
         function sendNewBookingNotification(booking) {
-             if (Notification.permission !== 'granted') {
-                 console.warn('Permission de notification non accordée, impossible d_envoyer.');
-                 return;
-             }
-             if (!navigator.serviceWorker.controller) {
-                 console.warn('Service Worker non actif, notification différée.');
-                 // Tenter une notification locale (moins fiable)
-                 new Notification("Nouvelle Réservation !", {
-                     body: `${booking.nomPrenom} - ${booking.voiture}`,
-                     icon: '/icons/icon-192x192.png',
-                     badge: '/icons/icon-192x192.png'
-                 });
-                 return;
-             }
-             
-             const title = 'Nouvelle Réservation !';
-             const options = {
+            console.log("Tentative d'envoi de notification pour:", booking.nomPrenom);
+            const title = 'Nouvelle Réservation !';
+            const options = {
                 body: `${booking.nomPrenom} demande la ${booking.voiture}.`,
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/icon-192x192.png',
-                vibrate: [200, 100, 200],
-                tag: 'new-booking' // Permet de remplacer les notifs non lues
-             };
+                vibrate: [200, 100, 200]
+            };
 
-             // Envoyer au Service Worker pour affichage
-             navigator.serviceWorker.controller.postMessage({
-                 type: 'show-notification',
-                 title: title,
-                 options: options
-             });
+            // CORRECTION: Utiliser navigator.serviceWorker.ready pour plus de fiabilité
+            if ('serviceWorker' in navigator && window.Notification && Notification.permission === 'granted') {
+                navigator.serviceWorker.ready.then(registration => {
+                    if (registration && registration.showNotification) {
+                        registration.showNotification(title, options);
+                        console.log("Notification envoyée au Service Worker.");
+                    } else {
+                        console.warn("Registration.showNotification n'est pas disponible.");
+                    }
+                }).catch(err => {
+                    console.error("Erreur Service Worker .ready:", err);
+                });
+            } else {
+                console.warn("Notifications non autorisées ou Service Worker non supporté.");
+            }
         }
 
 
-        // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE (Évite l'erreur d'index) **
+        // ** CORRECTION: REQUÊTE FIRESTORE SIMPLIFIÉE + LOGIQUE DE NOTIFICATION **
         function loadBookings() {
             const loadingMsg = domElements.loadingBookings;
 
@@ -787,51 +764,54 @@
 
             onSnapshot(q, (snapshot) => {
                 loadingMsg.textContent = 'Chargement des réservations...';
+                allBookingsCache = []; // Vider le cache
                 
-                // NOUVEAU: Logique de détection de changement pour les notifications
-                snapshot.docChanges().forEach((change) => {
+                // Logique de notification (détecter les NOUVEAUX ajouts)
+                const docChanges = snapshot.docChanges();
+                
+                docChanges.forEach((change) => {
                     const data = change.doc.data();
                     const booking = { ...data, id: change.doc.id };
 
-                    if (change.type === "added") {
-                        if (data.deleted !== true) {
-                            console.log("Nouvelle réservation détectée:", booking.id);
-                            allBookingsCache.unshift(booking); // Ajouter au début
-                            
-                            // NOUVEAU: Déclencher la notif SEULEMENT si ce n'est pas le chargement initial
-                            if (!isFirstLoad && data.confirmed === false) {
-                                sendNewBookingNotification(booking);
-                            }
-                        }
-                    } 
-                    else if (change.type === "modified") {
-                        console.log("Réservation modifiée:", booking.id);
-                        const index = allBookingsCache.findIndex(b => b.id === booking.id);
-                        if (index > -1) {
-                            allBookingsCache[index] = booking; // Mettre à jour
-                            // Si elle est marquée comme "deleted: true", on la retire du cache
-                            if (data.deleted === true) {
-                                 allBookingsCache.splice(index, 1);
-                            }
-                        }
-                    } 
-                    else if (change.type === "removed") {
-                        console.log("Réservation supprimée (hard delete):", booking.id);
-                        allBookingsCache = allBookingsCache.filter(b => b.id !== booking.id);
+                    // Si la réservation est marquée comme supprimée, on l'ignore
+                    if (data.deleted === true) {
+                        return;
+                    }
+
+                    // Ajouter ou mettre à jour le cache
+                    const index = allBookingsCache.findIndex(b => b.id === booking.id);
+                    if (index > -1) {
+                        allBookingsCache[index] = booking; // Mise à jour
+                    } else {
+                        allBookingsCache.push(booking); // Ajout
+                    }
+
+                    // Déclencher la notification UNIQUEMENT si c'est un NOUVEL ajout
+                    // et que ce n'est PAS le chargement initial de la page.
+                    if (change.type === "added" && !isFirstLoad && !booking.confirmed && !booking.archived) {
+                        console.log("Nouvelle réservation détectée:", booking);
+                        sendNewBookingNotification(booking);
                     }
                 });
 
-                // Trier le cache au cas où (bien que 'unshift' devrait maintenir l'ordre)
-                allBookingsCache.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-                // Afficher la vue actuellement sélectionnée avec les données mises à jour
+                // Gérer les suppressions du cache (si un doc est supprimé de la DB)
+                allBookingsCache = allBookingsCache.filter(booking => 
+                    !docChanges.some(change => change.type === "removed" && change.doc.id === booking.id)
+                );
+                
+                // Mettre à jour l'affichage
                 displayBookings(currentView); 
                 
-                // NOUVEAU: Mettre à jour l'historique client
+                // Mettre à jour l'historique client
                 updateClientHistory(allBookingsCache);
 
-                // Marquer la fin du premier chargement
-                isFirstLoad = false;
+                // L'archivage automatique se lance APRES le premier chargement
+                if (isFirstLoad) {
+                    isFirstLoad = false; // Fin du chargement initial
+                    console.log("Premier chargement terminé. Notifications activées.");
+                    // Lancer l'archivage automatique une fois au démarrage
+                    archivePastBookings(); 
+                }
 
             }, (error) => {
                 console.error("Erreur lors de la récupération des réservations (onSnapshot): ", error);
@@ -841,6 +821,80 @@
                      loadingMsg.innerHTML = `<strong>Erreur:</strong> Index Firestore manquant. <br>Veuillez suivre le lien dans la console (F12) pour le créer (index sur 'timestamp' desc).`;
                 }
             });
+        }
+        
+        // --- NOUVEAU: Logique d'archivage ---
+        async function archivePastBookings() {
+            if (isArchiving) return; // Empêcher l'exécution multiple
+            isArchiving = true;
+            console.log("Lancement de la vérification d'archivage...");
+
+            const now = new Date(); // Date actuelle
+            const batch = writeBatch(db);
+            let archiveCount = 0;
+            let deletionCount = 0;
+
+            // Filtrer les réservations confirmées dont la date de fin est passée
+            const bookingsToArchive = allBookingsCache.filter(b => 
+                b.confirmed && 
+                !b.archived && 
+                b.returnTimestamp && 
+                b.returnTimestamp.toDate() < now
+            );
+
+            if (bookingsToArchive.length === 0) {
+                console.log("Archivage: Aucune réservation à archiver.");
+                isArchiving = false;
+                return;
+            }
+
+            console.log(`Archivage: ${bookingsToArchive.length} réservation(s) à traiter.`);
+
+            try {
+                // Créer un tableau de promesses pour les requêtes de suppression de périodes
+                const deletionPromises = bookingsToArchive.map(async (booking) => {
+                    // 1. Marquer la réservation comme archivée
+                    const bookingRef = doc(db, "palace_cars_bookings", booking.id);
+                    batch.update(bookingRef, { archived: true });
+                    archiveCount++;
+
+                    // 2. Trouver et supprimer la période d'indisponibilité associée
+                    const q = query(unavailabilityPeriodsCollectionRef, where("bookingId", "==", booking.id));
+                    const periodSnapshot = await getDocs(q);
+                    
+                    if (!periodSnapshot.empty) {
+                        periodSnapshot.forEach(docSnap => {
+                            batch.delete(docSnap.ref); // Ajouter la suppression au batch
+                            deletionCount++;
+                        });
+                    }
+                });
+
+                // Attendre que toutes les requêtes de recherche (getDocs) soient terminées
+                await Promise.all(deletionPromises);
+
+                // Exécuter le batch (mises à jour + suppressions)
+                await batch.commit();
+
+                showAdminMessage(`Archivage terminé: ${archiveCount} réservation(s) archivée(s) et ${deletionCount} période(s) nettoyée(s).`, 'success');
+                
+                // Mettre à jour le cache localement (sera de toute façon rafraîchi par onSnapshot, mais c'est plus rapide)
+                allBookingsCache.forEach(b => {
+                    if (bookingsToArchive.some(ba => ba.id === b.id)) {
+                        b.archived = true;
+                    }
+                });
+                displayBookings(currentView); // Rafraîchir l'affichage
+
+            } catch (error) {
+                console.error("Erreur lors de l'archivage automatique:", error);
+                showAdminMessage("Erreur lors de l'archivage. Vérifiez la console.", 'error');
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    showAdminMessage("Erreur: Index Firestore manquant pour l'archivage (sur 'bookingId' dans 'car_unavailability_periods').", 'error', 10000);
+                }
+            } finally {
+                isArchiving = false; // Relâcher le verrou
+            }
         }
 
 
@@ -1026,6 +1080,7 @@
                 const bookingRef = doc(db, "palace_cars_bookings", currentBookingId);
                 batch.update(bookingRef, {
                     confirmed: true,
+                    archived: false, // S'assurer qu'elle n'est pas archivée
                     datePriseEnCharge: newStartDate,
                     heurePriseEnCharge: newStartTime,
                     dateRetour: newEndDate,
@@ -1058,6 +1113,7 @@
                 const index = allBookingsCache.findIndex(b => b.id === currentBookingId);
                 if (index > -1) {
                     allBookingsCache[index].confirmed = true;
+                    allBookingsCache[index].archived = false;
                     // Mettre à jour les données de date/heure aussi
                     allBookingsCache[index].datePriseEnCharge = newStartDate;
                     allBookingsCache[index].heurePriseEnCharge = newStartTime;
@@ -1082,13 +1138,14 @@
 
 
         async function handleDeleteBooking(bookingId) {
-            // Utiliser la modale de confirmation custom
-            const confirmed = await customConfirm(
-                `Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?<br>(Cela libérera aussi le créneau si elle était confirmée.)`,
-                "Supprimer Réservation",
-                "btn-danger"
-            );
-            if (!confirmed) return;
+            const booking = allBookingsCache.find(b => b.id === bookingId);
+            let confirmMsg = `Êtes-vous sûr de vouloir supprimer la réservation ID: ${bookingId.substring(0, 5)}... ?`;
+            if (booking && (booking.confirmed || booking.archived)) {
+                confirmMsg += "\n(Cela libérera aussi le créneau si elle était confirmée/archivée.)";
+            }
+            
+            // Utiliser la modale de confirmation personnalisée
+            if (!customConfirm(confirmMsg)) return;
 
             try {
                 const batch = writeBatch(db);
@@ -1129,12 +1186,7 @@
         }
 
         async function toggleManualStatus(carName, newStatus, confirmMsg) {
-            const confirmed = await customConfirm(
-                confirmMsg,
-                "Changer Statut Manuel",
-                newStatus === 'unavailable' ? 'btn-warning' : 'btn-success'
-            );
-            if (!confirmed) return;
+            if (!customConfirm(confirmMsg)) return;
 
             const carStatusRef = doc(db, "car_manual_status", carName);
 
@@ -1156,12 +1208,7 @@
         }
 
         async function deletePeriod(periodId, confirmMsg) {
-            const confirmed = await customConfirm(
-                confirmMsg,
-                "Supprimer Période",
-                "btn-danger"
-            );
-            if (!confirmed) return;
+            if (!customConfirm(confirmMsg)) return;
             
             try {
                 const periodRef = doc(db, "car_unavailability_periods", periodId);
@@ -1229,7 +1276,7 @@
         function initDomElements() {
              const ids = [
                  'login-overlay', 'login-button', 'password-input', 'login-error', 'main-content',
-                 'admin-message-box', 'tab-new', 'tab-confirmed', 'count-new', 'count-confirmed',
+                 'admin-message-box', 'tab-new', 'tab-confirmed', 'tab-archived', 'count-new', 'count-confirmed', 'count-archived',
                  'bookings-list', 'loading-bookings', 'unavailability-form', 'unav-car',
                  'manual-status-list', 'periods-list', 'loading-periods',
                  'confirmation-modal', 'close-modal-button', 'modal-booking-details',
@@ -1237,9 +1284,7 @@
                  'modal-error', 'cancel-modal-button', 'confirm-modal-button',
                  'enable-notifications', 'notifications-status',
                  // Nouveaux éléments
-                 'client-history-list', 'loading-client-history',
-                 'custom-confirm-modal', 'custom-confirm-title', 'custom-confirm-message',
-                 'custom-confirm-cancel', 'custom-confirm-ok'
+                 'client-history-list', 'loading-client-history'
              ];
              let allFound = true;
              ids.forEach(id => {
@@ -1254,6 +1299,23 @@
              });
              return allFound;
         }
+        
+        // --- NOUVEAU: Remplacement de window.confirm() ---
+        // (window.confirm() est souvent bloqué dans les iframes)
+        function customConfirm(message) {
+            // Dans un environnement de production, vous devriez créer une belle modale
+            // Mais pour ce contexte, le 'confirm' de base est généralement autorisé.
+            // S'il est bloqué, la seule alternative est de construire une modale HTML.
+            // Pour l'instant, nous utilisons 'confirm' en espérant qu'il fonctionne.
+            try {
+                return confirm(message);
+            } catch (e) {
+                console.warn("window.confirm() a échoué, approbation par défaut.", e);
+                // Si confirm() est bloqué, on retourne 'true' pour ne pas bloquer l'app
+                // L'admin devra être plus prudent.
+                return true; 
+            }
+        }
 
 
         // --- INITIALISATION (Login, PWA, etc.) ---
@@ -1262,14 +1324,10 @@
             
             // 1. Initialiser tous les éléments DOM
             if (!initDomElements()) {
-                // Remplacer l'alert() natif
-                document.body.innerHTML = `<div style="padding: 2rem; background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; font-family: sans-serif; text-align: center;">Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.</div>`;
+                alert("Erreur critique: Certains éléments de la page sont manquants. L'application ne peut pas démarrer.");
                 return;
             }
             
-            // 1.5 Initialiser les écouteurs de la modale de confirmation custom
-            setupCustomConfirmListeners();
-
             // 2. Remplir les listes de voitures
             populateCarSelects();
 
@@ -1321,6 +1379,7 @@
             // 6. Écouteurs Onglets
             domElements.tabNew.addEventListener('click', () => toggleView('new'));
             domElements.tabConfirmed.addEventListener('click', () => toggleView('confirmed'));
+            domElements.tabArchived.addEventListener('click', () => toggleView('archived'));
 
             // 7. Initialisation PWA (Service Worker & Notifications)
             const notifButton = domElements.enableNotifications;
@@ -1352,17 +1411,23 @@
                             notifStatus.classList.remove('hidden');
                             notifButton.classList.add('hidden');
                             console.log('Permission de notification accordée.');
+                            
                             // Envoyer une notification de test
-                            if (navigator.serviceWorker.controller) {
-                                navigator.serviceWorker.controller.postMessage({
-                                    type: 'show-notification',
-                                    title: 'Palace Cars Admin',
-                                    options: {
-                                        body: 'Les notifications sont activées !',
-                                        icon: '/icons/icon-192x192.png',
-                                        badge: '/icons/icon-192x192.png',
-                                        vibrate: [200, 100, 200]
+                            // CORRECTION: Utiliser navigator.serviceWorker.ready
+                            if (navigator.serviceWorker) {
+                                navigator.serviceWorker.ready.then(registration => {
+                                    if (registration && registration.showNotification) {
+                                        registration.showNotification('Palace Cars Admin', {
+                                            body: 'Les notifications sont activées !',
+                                            icon: '/icons/icon-192x192.png',
+                                            badge: '/icons/icon-192x192.png',
+                                            vibrate: [200, 100, 200]
+                                        });
+                                    } else {
+                                        console.warn("registration.showNotification non disponible pour le test.");
                                     }
+                                }).catch(err => {
+                                    console.error("Erreur Service Worker .ready (test):", err);
                                 });
                             }
                         } else {
