@@ -127,11 +127,18 @@
 
         /* Hero Section Styling */
         .hero-bg {
-            background-image: linear-gradient(rgba(10, 20, 80, 0.6), rgba(0, 0, 0, 0.8)), url('https://i.imgur.com/U6teGY7.jpeg');
-            background-size: cover;
-            background-position: center center;
-            background-attachment: fixed; /* Parallax effect */
-        }
+    background-image: linear-gradient(rgba(10, 20, 80, 0.6), rgba(0, 0, 0, 0.8)), url('https://i.imgur.com/U6teGY7.jpeg');
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed; /* Effet fixe pour PC */
+}
+
+/* AJOUTE CECI JUSTE EN DESSOUS : Cela force l'image à défiler normalement sur téléphone */
+@media (max-width: 1024px) {
+    .hero-bg {
+        background-attachment: scroll !important;
+    }
+}
         .text-shadow-lg { text-shadow: 0 4px 8px rgba(0,0,0,0.5); }
 
         /* Loader */
